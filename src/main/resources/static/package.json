@@ -1,0 +1,1 @@
+{"name":"quick-qa-frontend","version":"1.0.0","scripts":{"start":"serve"},"dependencies":{"serve":"^14.2.1"}}

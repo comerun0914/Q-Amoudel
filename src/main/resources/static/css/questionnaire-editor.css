@@ -1,0 +1,131 @@
+:root {
+  --primary: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-dark: #2563eb;
+  --neutral-100: #f3f4f6;
+  --neutral-200: #e5e7eb;
+  --neutral-700: #374151;
+  --neutral-800: #1f2937;
+  --white: #ffffff;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: var(--neutral-800);
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.question-section {
+  margin-bottom: 30px;
+}
+
+.question-item {
+  background-color: var(--neutral-100);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.question-content {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+}
+
+.question-type {
+  padding: 8px 12px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 4px;
+  margin-bottom: 15px;
+  background-color: var(--white);
+}
+
+.options {
+  margin-bottom: 15px;
+}
+
+.option {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--neutral-200);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.add-option, .delete-question, .add-question, .save-draft, .publish {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  border: none;
+  transition: all 0.2s;
+}
+
+.add-option {
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.delete-question {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  color: #ef4444;
+  padding: 5px;
+}
+
+.add-question {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+  border: 1px dashed var(--neutral-300);
+  border-radius: var(--radius);
+  margin-top: 10px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: 40px;
+}
+
+.save-draft {
+  background-color: var(--neutral-200);
+  color: var(--neutral-700);
+}
+
+.publish {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}

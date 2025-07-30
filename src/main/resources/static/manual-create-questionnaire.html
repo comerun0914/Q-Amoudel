@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建问卷 - 幼儿星</title>
+    <link rel="stylesheet" href="css/create-questionnaire.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="#">问卷管理</a>
+                <a href="#">数据统计</a>
+                <button class="btn-login">退出登录</button>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="create-container">
+            <h1>创建新问卷</h1>
+            <div class="form-group">
+                <label for="questionnaire-title">问卷标题</label>
+                <input type="text" id="questionnaire-title" placeholder="请输入问卷标题">
+            </div>
+            <div class="form-group">
+                <label for="questionnaire-description">问卷描述</label>
+                <textarea id="questionnaire-description" placeholder="请输入问卷描述"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="start-date">开始日期</label>
+                <input type="date" id="start-date">
+            </div>
+            <div class="form-group">
+                <label for="end-date">结束日期</label>
+                <input type="date" id="end-date">
+            </div>
+            <div class="form-group">
+                <label for="max-submissions">每人填写次数限制</label>
+                <input type="number" id="max-submissions" min="1" value="1">
+            </div>
+            <div class="form-actions"><button type="button" class="btn-create-questionnaire" onclick="window.location.href='questionnaire-editor.html'">创建问卷</button></div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+</body>
+</html>

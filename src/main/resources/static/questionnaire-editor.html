@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷编辑</title>
+    <link rel="stylesheet" href="questionnaire-editor.css">
+</head>
+<body>
+    <!-- 页眉 -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="#">问卷管理</a>
+                <a href="#">数据统计</a>
+                <button class="btn-login">退出登录</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>问卷编辑</h1>
+        <div class="question-section">
+            <div class="question-item">
+                <input type="text" class="question-content" placeholder="输入问题内容">
+                <select class="question-type">
+                    <option value="single">单选题</option>
+                    <option value="multiple">多选题</option>
+                    <option value="text">文本题</option>
+                </select>
+                <div class="options">
+                    <input type="text" class="option" placeholder="选项1">
+                    <button class="add-option">添加选项</button>
+                </div>
+                <button class="delete-question">删除问题</button>
+            </div>
+            <button class="add-question">添加问题</button>
+        </div>
+        <div class="form-actions">
+            <button class="save-draft">保存草稿</button>
+            <button class="publish">发布问卷</button>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+
+    <script src="js/questionnaire-editor.js"></script>
+</body>
+</html>
