@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shz.quick_qa_system.dao.UsersMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.shz.quick_qa_system.entity.Users">
+        <id column="id" property="id" />
+        <result column="username" property="username" />
+        <result column="password" property="password" />
+        <result column="phone" property="phone" />
+        <result column="avatar_url" property="avatarUrl" />
+        <result column="role" property="role" />
+        <result column="last_login_time" property="lastLoginTime" />
+        <result column="last_logout_time" property="lastLogoutTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, username, password, phone, avatar_url, role, last_login_time, last_logout_time
+    </sql>
+
+</mapper>
