@@ -4,13 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quick Q&A System - 首页</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/home.css">
+  <!-- 引入现代字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
   <header>
     <nav class="navbar">
-      <div class="logo">Quick Q&A System</div>
+      <div class="logo">幼儿星</div>
       <div class="nav-links">
         <a href="#">首页</a>
         <a href="#">帮助中心</a>
@@ -31,33 +34,25 @@
       <div class="feature-card">
         <div class="feature-icon">📝</div>
         <h3 class="feature-title">丰富题型</h3>
-        <p class="feature-desc">支持单选题、多选题、填空题、矩阵题等20+题型，满足各类调查需求</p>
+        <p class="feature-desc">支持单选题、多选题、填空题、矩阵题等20+题型，满足各类调查需求，让你的问卷更全面</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📊</div>
         <h3 class="feature-title">实时分析</h3>
-        <p class="feature-desc">自动汇总数据，生成可视化图表，支持导出Excel和PDF报告</p>
+        <p class="feature-desc">自动汇总数据，生成可视化图表，支持导出Excel和PDF报告，让数据分析更高效</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🔗</div>
         <h3 class="feature-title">多渠道分发</h3>
-        <p class="feature-desc">通过链接、二维码、邮件等方式分发问卷，支持微信、微博等社交平台分享</p>
+        <p class="feature-desc">通过链接、二维码、邮件等方式分发问卷，支持微信、微博等社交平台分享，触达更多用户</p>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="copyright">© 2025 Quick Q&A System. 保留所有权利</div>
+    <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
   </footer>
 
-  <script>
-    // 创建问卷按钮点击事件
-    document.getElementById('createBtn').addEventListener('click', function() {
-      // 这里可以添加创建问卷的逻辑
-      alert('即将跳转到问卷创建页面');
-      // window.location.href = '/create-questionnaire.html';
-    });
-  </script>
-  <script src="/js/home.js"></script>
+  <script src="/js/index.js"></script>
 </body>
 </html>
