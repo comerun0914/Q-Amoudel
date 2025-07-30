@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Q&A System - 首页</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/home.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <div class="logo">Quick Q&A System</div>
+      <div class="nav-links">
+        <a href="#">首页</a>
+        <a href="#">帮助中心</a>
+        <a href="#">关于我们</a>
+        <a href="/login.html" class="btn-login">登录</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero-section">
+      <h1 class="hero-title">轻松创建在线问卷和表单</h1>
+      <p class="hero-desc">无需编程知识，快速创建专业问卷、报名表单、满意度调查等，支持多种题型和数据分析</p>
+      <button class="btn-create" id="createBtn">+ 创建问卷</button>
+    </section>
+
+    <section class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3 class="feature-title">丰富题型</h3>
+        <p class="feature-desc">支持单选题、多选题、填空题、矩阵题等20+题型，满足各类调查需求</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3 class="feature-title">实时分析</h3>
+        <p class="feature-desc">自动汇总数据，生成可视化图表，支持导出Excel和PDF报告</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3 class="feature-title">多渠道分发</h3>
+        <p class="feature-desc">通过链接、二维码、邮件等方式分发问卷，支持微信、微博等社交平台分享</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="copyright">© 2025 Quick Q&A System. 保留所有权利</div>
+  </footer>
+
+  <script>
+    // 创建问卷按钮点击事件
+    document.getElementById('createBtn').addEventListener('click', function() {
+      // 这里可以添加创建问卷的逻辑
+      alert('即将跳转到问卷创建页面');
+      // window.location.href = '/create-questionnaire.html';
+    });
+  </script>
+  <script src="/js/home.js"></script>
+</body>
+</html>
