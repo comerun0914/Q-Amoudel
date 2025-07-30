@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>问卷编辑</title>
-    <link rel="stylesheet" href="questionnaire-editor.css">
+    <link rel="stylesheet" href="css/questionnaire-editor.css">
 </head>
 <body>
     <!-- 页眉 -->
@@ -21,26 +21,49 @@
     </header>
 
     <div class="container">
-        <h1>问卷编辑</h1>
-        <div class="question-section">
-            <div class="question-item">
-                <input type="text" class="question-content" placeholder="输入问题内容">
-                <select class="question-type">
-                    <option value="single">单选题</option>
-                    <option value="multiple">多选题</option>
-                    <option value="text">文本题</option>
-                </select>
-                <div class="options">
-                    <input type="text" class="option" placeholder="选项1">
-                    <button class="add-option">添加选项</button>
+        <!-- 添加侧边栏容器 -->
+        <div class="main-content">
+            <!-- 将侧边栏移动到main-content内部 -->
+            <div class="sidebar">
+                <div class="sidebar-title">问题类型</div>
+                <div class="question-format-selector">
+                    <button class="format-btn active" data-type="single">单选题</button>
+                    <button class="format-btn" data-type="multiple">多选题</button>
+                    <button class="format-btn" data-type="text">问答题</button>
+                    <button class="format-btn" data-type="rating">评分题</button>
+                    <button class="format-btn" data-type="date">矩阵题</button>
                 </div>
-                <button class="delete-question">删除问题</button>
             </div>
-            <button class="add-question">添加问题</button>
-        </div>
-        <div class="form-actions">
-            <button class="save-draft">保存草稿</button>
-            <button class="publish">发布问卷</button>
+
+            <h1>问卷编辑</h1>
+            <div class="question-section">
+                <!-- 左侧选择区域 -->
+                <div class="question-item">
+                    <!-- 右侧内容区域 -->
+                    <div class="question-content-container">
+                        <input type="text" class="question-content" placeholder="输入问题内容">
+                        <div class="options">
+                            <input type="text" class="option" placeholder="选项1">
+                            <button class="add-option">添加选项</button>
+                        </div>
+                    </div>
+                    <button class="delete-question">删除问题</button>
+                </div>
+                <button class="add-question">添加问题</button>
+            </div>
+            <!-- 将form-actions移到main-content外部 -->
+            <div class="form-actions">
+                <div class="main-content">
+                    <!-- 右侧操作按钮侧边栏 -->
+                    <!-- 确保.action-sidebar没有设置过大的宽度 -->
+                    <div class="action-sidebar">
+                        <div class="action-buttons">
+                            <button class="format-lbtn" id="save-draft">保存草稿</button>
+                            <button class="format-lbtn publish" id="publish-questionnaire">发布问卷</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

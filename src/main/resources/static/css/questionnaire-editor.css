@@ -21,7 +21,7 @@
 .container {
   max-width: 800px;
   margin: 40px auto;
-  padding: 0 20px;
+  padding: 0 20px; /* 恢复此行注释 */
 }
 
 h1 {
@@ -51,6 +51,8 @@ h1 {
   border-radius: 4px;
   margin-bottom: 15px;
   font-size: 1rem;
+  margin-right: 40px;
+  margin-top: 30px; /* 增加上边距使输入框进一步下移 */
 }
 
 .question-type {
@@ -89,11 +91,23 @@ h1 {
 
 .delete-question {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: transparent;
-  color: #ef4444;
-  padding: 5px;
+  top: 8px;
+  right: 8px;
+  background-color: #ef4444; /* 保持红色背景 */
+  color: white;
+  padding: 8px 16px; /* 与发布按钮相同的内边距 */
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  border: none;
+  transition: all 0.2s;
+  font-size: 1rem; /* 与发布按钮相同的字体大小 */
+}
+
+.delete-question:hover {
+  background-color: #dc2626; /* 悬停效果 */
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .add-question {
@@ -109,10 +123,15 @@ h1 {
 }
 
 .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 40px;
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+}
+
+.main-content {
+    padding-right: 220px; /* 为右侧按钮区域留出空间 */
 }
 
 .save-draft {
@@ -128,4 +147,267 @@ h1 {
 button:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+}
+
+/* Header and footer styles */
+header {
+  background-color: var(--white);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--neutral-700);
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.nav-links a:hover {
+  color: var(--primary);
+}
+
+.btn-login {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background-color: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.btn-login:hover {
+  background-color: var(--primary);
+  color: var(--white);
+}
+
+footer {
+  background-color: #000;
+  color: white;
+  padding: 20px 0;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* 侧边栏样式调整 */
+.sidebar {
+    /* 修改定位方式 */
+    position: absolute; /* 相对于main-content定位 */
+    left: 0; /* 左侧对齐 */
+    top: 50%; /* 垂直居中 */
+    transform: translateY(-50%); /* 垂直居中调整 */
+    /* 保持其他样式不变 */
+    width: 180px;
+    background-color: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    padding: 20px 15px;
+    z-index: 100;
+    max-height: calc(100% - 40px); /* 相对于main-content高度 */
+}
+
+.main-content {
+    position: relative; /* 提供定位上下文 */
+    padding-left: 200px; /* 为侧边栏留出空间 */
+    min-height: 600px; /* 确保有足够高度实现垂直居中 */
+}
+
+/* 页脚样式修复 */
+.footer {
+    margin-left: 220px; /* 与侧边栏新位置对齐 */
+    width: calc(100% - 220px); /* 覆盖剩余宽度 */
+    min-width: 0; /* 防止内容溢出 */
+    box-sizing: border-box; /* 确保padding不影响宽度计算 */
+}
+.sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 按钮组样式 */
+.question-format-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 调整按钮基础样式 - 减小尺寸 */
+.format-btn {
+    padding: 6px 12px; /* 进一步减小内边距 */
+    font-size: 12px; /* 减小字体大小 */
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin-bottom: 8px; /* 减小按钮间距 */
+    width: 70px; /* 减小宽度 */
+}
+/* 调整按钮基础样式 - 按照删除按钮风格 */
+.format-lbtn {
+    padding: 8px 16px; /* 与删除按钮相同的内边距 */
+    font-size: 1rem; /* 与删除按钮相同的字体大小 */
+    background-color: #f59e0b; /* 使用橙色作为基础按钮背景（区别于删除按钮的红色） */
+    color: white; /* 白色文字 */
+    border-radius: 4px; /* 与删除按钮相同的圆角 */
+    margin-bottom: 8px; /* 保持按钮间距 */
+    width: auto; /* 自动适应内容宽度 */
+    font-weight: 500; /* 与删除按钮相同的字体粗细 */
+    border: none; /* 无边框 */
+    transition: all 0.2s; /* 与删除按钮相同的过渡效果 */
+    cursor: pointer; /* 添加鼠标指针效果 */
+}
+
+/* 发布按钮样式 - 保持蓝色系但调整为删除按钮风格 */
+.format-lbtn.publish {
+    background-color: #3b82f6; /* 蓝色背景 */
+    color: white; /* 恢复白色文字 */
+}
+
+/* 添加悬停效果增强交互体验 */
+.format-lbtn:hover {
+    opacity: 0.9; /* 轻微透明效果 */
+    transform: translateY(-1px); /* 轻微上移 */
+}
+
+/* 发布按钮样式 */
+.format-btn.publish {
+    background-color: #4096ff;
+    color: black;
+    border-color: #4096ff;
+}
+
+/* 确保按钮容器不会被撑大 */
+.action-buttons {
+    width: fit-content;
+}
+
+/* 主按钮 hover 效果 */
+.format-btn.primary:hover {
+    background-color: #3584e4; /* 深一点的蓝色 */
+    border-color: #3584e4;
+}
+
+/* 普通按钮 hover 效果 */
+.format-btn:hover {
+    background-color: #e9e9e9;
+    border-color: #ccc;
+}
+
+.format-btn:hover {
+    border-color: #007bff;
+    background-color: #f0f7ff;
+}
+
+/* .format-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    font-weight: 500;
+} */
+
+/* 主内容区域偏移 */
+.main-content {
+    display: flex;
+    gap: 30px;
+    padding: 30px;
+    align-items: center; /* 垂直居中对齐所有子元素 */
+}
+
+.action-sidebar {
+    flex-shrink: 0; /* 不收缩 */
+    width: 180px; /* 与左侧侧边栏宽度一致 */
+}
+
+/* 移除之前的fixed定位样式 */
+.form-actions {
+    position: static;
+    transform: none;
+}
+
+/* 右侧操作按钮侧边栏样式 */
+.action-sidebar {
+    flex-shrink: 0;
+    width: 180px; /* 与左侧宽度一致 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直居中 */
+    align-items: center; /* 水平居中 */
+    padding: 20px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px 0 0 8px;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+}
+
+/* 按钮样式统一 */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 垂直间距 */
+    width: 100%;
+}
+
+.action-buttons .format-btn {
+    width: 100%; /* 按钮宽度一致 */
+    margin: 0; /* 清除外边距 */
+    min-width: 400px; /* 设置最小宽度 */
+    padding: 20px; /* 内容区域内边距 */
+    background-color: #fff; /* 白色背景 */
+    border-radius: 8px; /* 圆角边框 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* 轻微阴影 */
+}
+
+/* 按钮容器样式 */
+.action-buttons {
+    display: flex;
+    gap: 15px; /* 按钮间距 */
+    margin-top: 20px; /* 与上方内容间距 */
+    justify-content: flex-end; /* 右对齐 */
+}
+
+/* 问题项样式优化 */
+.question-item {
+    margin-bottom: 25px; /* 问题项之间间距 */
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0; /* 分隔线 */
+}
+
+.sidebar {
+    flex-shrink: 0; /* 固定侧边栏宽度 */
+    width: 180px; /* 确保固定宽度 */
+}
+
+.question-content-container {
+    flex-grow: 1; /* 内容区域自动填充剩余空间 */
+    min-width: 0; /* 防止内容溢出 */
 }
