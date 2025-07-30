@@ -1,4 +1,4 @@
-package com.example.quick_qa_system;
+package com.shz.quick_qa_system;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

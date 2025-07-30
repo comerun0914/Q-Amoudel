@@ -1,0 +1,113 @@
+# 应用基本信息配置
+spring:
+  application:
+    name: QuickQASystem  # 应用名称，建议使用kebab-case格式
+  profiles:
+    active: dev  # 默认激活的环境配置
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/q-asystem?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
+    username: comerun # 使用环境变量或默认值
+    password: shz@hyj1314
+    type: com.zaxxer.hikari.HikariDataSource  # 使用HikariCP连接池
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: HikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+  # Redis缓存配置
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 5000
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
+  # 消息队列配置（RabbitMQ示例）
+#  rabbitmq:
+#    host: ${RABBITMQ_HOST:localhost}
+#    port: ${RABBITMQ_PORT:5672}
+#    username: ${RABBITMQ_USERNAME:guest}
+#    password: ${RABBITMQ_PASSWORD:guest}
+#    virtual-host: /
+#    publisher-confirm-type: correlated  # 开启发布确认
+#    publisher-returns: true  # 开启发布返回
+#    template:
+#      mandatory: true  # 确保消息在无法路由时返回
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB  # 单个文件最大大小
+      max-request-size: 100MB  # 单次请求最大大小
+      file-size-threshold: 2MB  # 达到该大小后写入磁盘
+      location: ${java.io.tmpdir}  # 临时存储位置
+
+  # 安全配置
+  security:
+    user:
+      name: ${ADMIN_USERNAME:admin}
+      password: ${ADMIN_PASSWORD:admin123}
+      roles: ADMIN
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml  # Mapper XML文件位置
+  type-aliases-package: com.enterprise.entity  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true  # 开启驼峰命名转换
+    cache-enabled: true  # 开启二级缓存
+    lazy-loading-enabled: true  # 开启懒加载
+    aggressive-lazy-loading: false  # 禁用激进懒加载
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.enterprise: DEBUG  # 应用包日志级别
+    org.springframework: DEBUG  # Spring框架日志级别
+    org.mybatis: INFO  # MyBatis日志级别
+  file:
+    name: logs/${spring.application.name}.log  # 日志文件位置
+    max-size: 10MB  # 单个日志文件最大大小
+    max-history: 30  # 保留历史日志的天数
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"  # 控制台日志格式
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"  # 文件日志格式
+
+# 服务器配置
+server:
+  port: 7070 # 服务器端口
+  servlet:
+    context-path: /api  # 应用上下文路径
+    encoding:
+      charset: UTF-8
+      force: true
+  tomcat:
+    max-threads: 200  # 最大线程数
+    min-spare-threads: 20  # 最小空闲线程数
+    accept-count: 100  # 最大等待队列长度
+    connection-timeout: 20000  # 连接超时时间(ms)
+
+# 自定义配置
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-strong-secret-key}  # JWT密钥
+    expiration: 86400000  # 过期时间(ms)，默认24小时
+    header: Authorization  # JWT请求头名称
+  upload:
+    path: ${FILE_UPLOAD_PATH:./uploads/}  # 文件上传路径
+  cache:
+    default-expiration: 3600  # 默认缓存过期时间(秒)
