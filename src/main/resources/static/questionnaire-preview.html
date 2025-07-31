@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>问卷预览 - Quick Q&A System</title>
+  <!-- 引入现代字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- 引入图标字体 -->
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_4444444_abcdefg.css">
+  <link rel="stylesheet" href="css/questionnaire-preview.css">
+</head>
+<body>
+  <div class="preview-container">
+    <!-- 预览头部 -->
+    <header class="preview-header">
+      <div class="preview-title">
+        <h1>问卷预览</h1>
+        <p class="preview-subtitle">这是问卷的预览模式，仅供查看</p>
+      </div>
+      <div class="preview-actions">
+        <button class="btn-close" onclick="window.close()">
+          <i class="iconfont icon-close"></i>
+          关闭预览
+        </button>
+      </div>
+    </header>
+
+    <!-- 问卷内容区域 -->
+    <main class="questionnaire-content">
+      <!-- 问卷标题 -->
+      <div class="questionnaire-title">
+        <h2 id="questionnaireTitle">问卷标题</h2>
+        <p id="questionnaireDescription">问卷描述信息</p>
+      </div>
+
+      <!-- 问题列表 -->
+      <div class="questions-container" id="questionsContainer">
+        <!-- 问题将通过JavaScript动态生成 -->
+      </div>
+
+      <!-- 提交按钮 -->
+      <div class="submit-section">
+        <button class="btn-submit" disabled>
+          <i class="iconfont icon-submit"></i>
+          提交问卷
+        </button>
+        <p class="submit-note">预览模式下无法提交问卷</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/questionnaire-preview.js"></script>
+</body>
+</html> 

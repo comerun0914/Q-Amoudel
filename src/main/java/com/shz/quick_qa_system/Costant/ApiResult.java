@@ -7,12 +7,24 @@ public class ApiResult {
     private int code; // 状态码
     private String message; // 消息
     private Object data; // 返回数据
+    private int returnCode; // 响应编号
 
 
 
     // 成功响应静态方法
-    public static ApiResult success(Object data) {
+    public static ApiResult successAdmin(Object data) {
         ApiResult result = new ApiResult();
+        result.setReturnCode(1);
+        result.setCode(200);
+        result.setMessage("成功");
+        result.setData(data);
+        return result;
+    }
+
+    // 成功响应静态方法
+    public static ApiResult successUser(Object data) {
+        ApiResult result = new ApiResult();
+        result.setReturnCode(0);
         result.setCode(200);
         result.setMessage("成功");
         result.setData(data);

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择问卷 - 幼儿星</title>
+    <link rel="stylesheet" href="css/ask-user.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="#" class="active">问卷填写</a>
+                <a href="#">我的记录</a>
+                <button class="btn-login">退出登录</button>
+            </div>
+        </nav>
+    </header>
+    <main>
+        <div class="ask-container">
+            <h1>选择要填写的问卷</h1>
+            
+            <!-- 搜索和筛选区域 -->
+            <div class="search-filter-section">
+                <div class="search-box">
+                    <input type="text" id="search-questionnaire" placeholder="搜索问卷标题或描述...">
+                    <button class="search-btn">搜索</button>
+                </div>
+                <div class="filter-options">
+                    <select id="category-filter">
+                        <option value="">所有分类</option>
+                        <option value="education">教育类</option>
+                        <option value="health">健康类</option>
+                        <option value="behavior">行为类</option>
+                        <option value="family">家庭类</option>
+                    </select>
+                    <select id="status-filter">
+                        <option value="">所有状态</option>
+                        <option value="active">进行中</option>
+                        <option value="upcoming">即将开始</option>
+                        <option value="ending">即将结束</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 问卷列表 -->
+            <div class="questionnaire-list" id="questionnaire-list">
+                <!-- 问卷卡片将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 分页控件 -->
+            <div class="pagination">
+                <button class="page-btn" id="prev-page">上一页</button>
+                <div class="page-numbers">
+                    <span class="page-number active">1</span>
+                    <span class="page-number">2</span>
+                    <span class="page-number">3</span>
+                </div>
+                <button class="page-btn" id="next-page">下一页</button>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+
+    <script src="js/ask-user.js"></script>
+</body>
+</html> 

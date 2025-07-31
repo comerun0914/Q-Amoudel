@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>问卷编辑</title>
     <link rel="stylesheet" href="css/questionnaire-editor.css">
+    <!-- 添加图标字体支持 -->
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
 </head>
 <body>
     <!-- 页眉 -->
@@ -21,74 +24,166 @@
     </header>
 
     <div class="container">
-        <!-- 添加侧边栏切换按钮 -->
-        <button id="toggle-sidebar" class="sidebar-toggle-btn">显示/隐藏问题类型</button>
-            <!-- 将侧边栏移动到main-content内部 -->
+        <div class="main-content">
+            <!-- 优化后的侧边栏 -->
             <div class="sidebar">
-                <div class="sidebar-title">问题类型</div>
-                <div class="question-format-selector">
-                    <button class="format-btn" data-type="single">单选题</button>
-                    <button class="format-btn" data-type="multiple">多选题</button>
-                    <button class="format-btn" data-type="text">问答题</button>
-                    <button class="format-btn" data-type="rating">评分题</button>
-                    <button class="format-btn" data-type="date">矩阵题</button>
+                <div class="sidebar-header">
+                    <h3>问题类型</h3>
+                    <span class="sidebar-subtitle">选择问题类型添加到问卷中</span>
+                </div>
+                
+                <!-- 基础题型 -->
+                <div class="question-category">
+                    <div class="category-title">
+                        <i class="iconfont icon-basic"></i>
+                        <span>基础题型</span>
+                    </div>
+                    <div class="question-format-selector">
+                        <button class="format-btn" data-type="single">
+                            <i class="iconfont icon-radio"></i>
+                            <span>单选题</span>
+                        </button>
+                        <button class="format-btn" data-type="multiple">
+                            <i class="iconfont icon-checkbox"></i>
+                            <span>多选题</span>
+                        </button>
+                        <button class="format-btn" data-type="text">
+                            <i class="iconfont icon-text"></i>
+                            <span>问答题</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 高级题型 -->
+                <div class="question-category">
+                    <div class="category-title">
+                        <i class="iconfont icon-advanced"></i>
+                        <span>高级题型</span>
+                    </div>
+                    <div class="question-format-selector">
+                        <button class="format-btn" data-type="rating">
+                            <i class="iconfont icon-star"></i>
+                            <span>评分题</span>
+                        </button>
+                        <button class="format-btn" data-type="matrix">
+                            <i class="iconfont icon-table"></i>
+                            <span>矩阵题</span>
+                        </button>
+                        <!-- <button class="format-btn" data-type="date">
+                            <i class="iconfont icon-calendar"></i>
+                            <span>日期题</span>
+                        </button>
+                        <button class="format-btn" data-type="time">
+                            <i class="iconfont icon-clock"></i>
+                            <span>时间题</span>
+                        </button> -->
+                    </div>
+                </div>
+
+                <!-- 特殊题型 -->
+                <div class="question-category">
+                    <div class="category-title">
+                        <i class="iconfont icon-special"></i>
+                        <span>特殊类型</span>
+                    </div>
+                    <div class="question-format-selector">
+                        <button class="format-btn" data-type="file">
+                            <i class="iconfont icon-upload"></i>
+                            <span>文件上传</span>
+                        </button>
+                        <button class="format-btn" data-type="location">
+                            <i class="iconfont icon-location"></i>
+                            <span>定位获取</span>
+                        </button>
+                        <button class="format-btn" data-type="signature">
+                            <i class="iconfont icon-signature"></i>
+                            <span>签名题</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 功能卡片 -->
+                <div class="question-category">
+                    <div class="category-title">
+                        <i class="iconfont icon-function"></i>
+                        <span>功能卡片</span>
+                    </div>
+                    <div class="question-format-selector">
+                        <button class="format-btn" data-type="user-info">
+                            <i class="iconfont icon-user"></i>
+                            <span>填写人信息</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-
-            <div class="questionnaire-info">
-                <div class="form-group">
-                    <label for="questionnaire-title">问卷标题</label>
-                    <div class="text-display" id="questionnaire-title" placeholder="请输入问卷标题">幼儿教育满意度调查</div>
-                </div>
-                <div class="form-group">
-                    <label for="questionnaire-description">问卷描述</label>
-                    <div class="text-display" id="questionnaire-description-display">本问卷旨在了解家长对幼儿园教育服务的满意度，您的反馈将帮助我们改进教育质量。感谢您的参与！</div>
-                </div>
-                <div class="form-group date-group">
-                    <div>
-                        <label for="start-date">开始日期</label>
-                        <div class="text-display" id="start-date">2023-11-15</div>
+            <!-- 主要内容区域 -->
+            <div class="main-content-area">
+                <div class="questionnaire-info">
+                    <div class="form-group">
+                        <label for="questionnaire-title">问卷标题</label>
+                        <div class="text-display" id="questionnaire-title" placeholder="请输入问卷标题">幼儿教育满意度调查</div>
                     </div>
-                    <div>
-                        <label for="end-date">结束日期</label>
-                        <div class="text-display" id="end-date">2023-12-15</div>
+                    <div class="form-group">
+                        <label for="questionnaire-description">问卷描述</label>
+                        <div class="text-display" id="questionnaire-description-display">本问卷旨在了解家长对幼儿园教育服务的满意度，您的反馈将帮助我们改进教育质量。感谢您的参与！</div>
+                    </div>
+                    <div class="form-group date-group">
+                        <div>
+                            <label for="start-date">开始日期</label>
+                            <div class="text-display" id="start-date">2023-11-15</div>
+                        </div>
+                        <div>
+                            <label for="end-date">结束日期</label>
+                            <div class="text-display" id="end-date">2023-12-15</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="creator-name">创建人姓名</label>
+                        <div class="text-display" id="creator-name-display">张三</div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="creator-name">创建人姓名</label>
-                    <div class="text-display" id="creator-name-display">张三</div>
+                
+                <div class="editor-header">
+                    <h1>问卷编辑</h1>
+                    <div class="editor-stats">
+                        <span class="stat-item">
+                            <i class="iconfont icon-question"></i>
+                            <span id="question-count">0</span> 个问题
+                        </span>
+                        <span class="stat-item">
+                            <i class="iconfont icon-time"></i>
+                            <span id="estimated-time">约 5 分钟</span>
+                        </span>
+                    </div>
                 </div>
-            </div>
-            <h1>问卷编辑</h1>
-            <!-- 添加问卷基本信息区域 -->
-            <div class="question-section">
-                <button class="delete-question">删除问题</button>
-                <!-- 左侧选择区域 -->
-                <div class="question-item">
-                    <!-- 右侧内容区域 -->
-                    <div class="question-content-container">
-                        <input type="text" class="question-content" placeholder="输入问题内容">
-                        <div class="options">
-                            <input type="text" class="option" placeholder="选项1">
-                            <button class="add-option">添加选项</button>
+                
+                <!-- 问题区域 -->
+                <div class="question-section" id="question-container">
+                    <!-- 问题将通过侧边栏按钮动态添加 -->
+                </div>
+                
+                <!-- 操作按钮区域 -->
+                <div class="form-actions">
+                    <div class="action-sidebar">
+                        <div class="action-buttons">
+                            <button class="format-lbtn" id="save-draft">
+                                <i class="iconfont icon-save"></i>
+                                保存草稿
+                            </button>
+                            <button class="format-lbtn preview" id="preview-questionnaire">
+                                <i class="iconfont icon-eye"></i>
+                                预览问卷
+                            </button>
+                            <button class="format-lbtn publish" id="publish-questionnaire">
+                                <i class="iconfont icon-publish"></i>
+                                发布问卷
+                            </button>
                         </div>
                     </div>
                 </div>
-                <button class="add-question">添加问题</button>
             </div>
-            <!-- 将form-actions移到main-content外部 -->
-            <div class="form-actions">
-                <!-- 移除嵌套的.main-content容器 -->
-                <!-- 右侧操作按钮侧边栏 -->
-                <!-- 确保.action-sidebar没有设置过大的宽度 -->
-                <div class="action-sidebar">
-                    <div class="action-buttons">
-                        <button class="format-lbtn" id="save-draft">保存草稿</button>
-                        <button class="format-lbtn publish" id="publish-questionnaire">发布问卷</button>
-                    </div>
-                </div>
-            </div>
+        </div>
     </div>
 
     <!-- 页脚 -->

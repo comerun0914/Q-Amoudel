@@ -5,13 +5,19 @@
   --secondary: #10b981;
   --neutral-100: #f3f4f6;
   --neutral-200: #e5e7eb;
+  --neutral-300: #d1d5db;
+  --neutral-400: #9ca3af;
+  --neutral-500: #6b7280;
+  --neutral-600: #4b5563;
   --neutral-700: #374151;
   --neutral-800: #1f2937;
   --neutral-900: #111827;
   --white: #ffffff;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --radius: 8px;
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
   --transition: all 0.3s ease;
 }
 
@@ -22,19 +28,22 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  line-height: 1.5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
   color: var(--neutral-800);
-  background-color: #f9fafb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
 }
 
 /* 导航栏样式 */
 header {
-  background-color: var(--white);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .navbar {
@@ -48,9 +57,10 @@ header {
 }
 
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--primary);
+  text-decoration: none;
 }
 
 .nav-links {
@@ -64,70 +74,93 @@ header {
   color: var(--neutral-700);
   font-weight: 500;
   transition: var(--transition);
+  position: relative;
 }
 
 .nav-links a:hover {
   color: var(--primary);
 }
 
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: var(--transition);
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
+
 .btn-login {
-  padding: 8px 16px;
-  border-radius: var(--radius);
-  background-color: transparent;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  color: var(--white);
+  font-weight: 600;
   transition: var(--transition);
   cursor: pointer;
+  box-shadow: var(--shadow);
 }
 
 .btn-login:hover {
-  background-color: var(--primary);
-  color: var(--white);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
 /* 主内容区样式 */
 main {
-  max-width: 800px;
+  max-width: 900px;
   margin: 40px auto;
   padding: 0 20px;
 }
 
 .create-container {
-  background-color: var(--white);
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 30px;
+  box-shadow: var(--shadow-lg);
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .create-container h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   color: var(--neutral-800);
   margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid var(--neutral-200);
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--neutral-200);
+  text-align: center;
+  font-weight: 700;
 }
 
 .form-group {
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-color);
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: var(--neutral-700);
+  font-size: 0.95rem;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: var(--transition);
+  background-color: var(--white);
 }
 
 .form-group input[type="date"],
@@ -139,42 +172,117 @@ main {
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-group textarea {
-  min-height: 100px;
+  min-height: 120px;
   resize: vertical;
+  font-family: inherit;
 }
 
 .form-actions {
-    text-align: right;
-    margin-top: 20px;
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid var(--neutral-200);
 }
 
 .btn-create-questionnaire {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--white);
+  border: none;
+  padding: 15px 30px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+  min-width: 200px;
 }
 
 .btn-create-questionnaire:hover {
-    background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
 /* 页脚样式 */
 footer {
-    background-color: #000;
-    color: white;
-    padding: 20px 0;
-    text-align: center;
+  text-align: center;
+  padding: 0;
+  color: var(--white);
+  margin-top: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+}
+
+footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: rgba(0, 0, 0, 0.9);
 }
 
 .copyright {
-    color: white;
+  color: var(--white);
+  font-size: 14px;
+  padding: 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 15px;
+  }
+  
+  .nav-links {
+    gap: 20px;
+  }
+  
+  main {
+    margin: 20px auto;
+    padding: 0 15px;
+  }
+  
+  .create-container {
+    padding: 30px 20px;
+  }
+  
+  .create-container h1 {
+    font-size: 1.75rem;
+  }
+  
+  .form-group input[type="date"],
+  .form-group input[type="number"] {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  .nav-links {
+    gap: 15px;
+  }
+  
+  .create-container {
+    padding: 20px 15px;
+  }
+  
+  .btn-create-questionnaire {
+    width: 100%;
+  }
 }

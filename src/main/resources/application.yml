@@ -65,7 +65,7 @@ spring:
 # MyBatis配置
 mybatis:
   mapper-locations: classpath:mapper/*.xml  # Mapper XML文件位置
-  type-aliases-package: com.enterprise.entity  # 实体类包路径
+  type-aliases-package: com.shz.quick_qa_system.entity  # 实体类包路径
   configuration:
     map-underscore-to-camel-case: true  # 开启驼峰命名转换
     cache-enabled: true  # 开启二级缓存

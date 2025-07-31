@@ -19,4 +19,8 @@
         id, username, password, phone, avatar_url, role, last_login_time, last_logout_time
     </sql>
 
+    <select id="getUserByuserName" parameterType="string" resultType="com.shz.quick_qa_system.entity.Users">
+        select * from users where username = #{userName}
+    </select>
+
 </mapper>
