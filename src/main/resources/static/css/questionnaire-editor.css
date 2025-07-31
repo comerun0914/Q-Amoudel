@@ -1,155 +1,197 @@
 :root {
-  --primary: #3b82f6;
-  --primary-light: #60a5fa;
-  --primary-dark: #2563eb;
-  --neutral-100: #f3f4f6;
-  --neutral-200: #e5e7eb;
-  --neutral-700: #374151;
-  --neutral-800: #1f2937;
-  --white: #ffffff;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --radius: 8px;
+  --primary: #4096ff; /* 调整为更明亮的蓝色 */
+  --primary-light: #73b4ff; /* 浅蓝色 */
+  --primary-dark: #0e80ff; /* 深蓝色 */
+  --secondary: #f59e0b; /* 辅助色-橙色 */
+  --neutral-100: #f7f8fa; /* 更浅的背景色 */
+  --neutral-200: #e5e6eb; /* 边框色 */
+  --neutral-300: #c9cdD4; /* 浅灰色 */
+  --neutral-700: #374151; /* 文本颜色 */
+  --neutral-800: #1d2129; /* 标题颜色 */
+  --white: #ffffff; /* 白色 */
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* 更柔和的阴影 */
+  --radius: 8px; /* 圆角 */
+  --transition: all 0.3s ease; /* 过渡效果 */
 }
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; /* 更安全的字体回退 */
 }
 
 .container {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 0 20px; /* 恢复此行注释 */
+  max-width: 900px; /* 增加最大宽度 */
+  margin: 30px auto; /* 调整外边距 */
+  padding: 0 20px; 
 }
 
 h1 {
-  font-size: 1.8rem;
+  font-size: 2rem; /* 增加标题大小 */
   color: var(--neutral-800);
-  margin-bottom: 30px;
-  padding-bottom: 15px;
+  margin-bottom: 30px; 
+  padding-bottom: 15px; 
+  border-bottom: 2px solid var(--primary); /* 使用主色调作为分割线 */
+  font-weight: 600; /* 加粗标题 */
+}
+
+/* 问卷信息区域样式调整 - 确保在页面最上方 */
+/* 确保问卷信息区域在标题上方 */
+.questionnaire-info {
+  background-color: var(--white);
+  border-radius: var(--radius) var(--radius) 0 0; /* 顶部圆角 */
+  padding: 25px;
+  margin-bottom: 0; /* 移除底部间距 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* 轻微阴影 */
+  border: 1px solid var(--neutral-200);
+  border-bottom: none; /* 移除底部边框 */
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+/* 调整主内容区域布局 */
+.main-content {
+  display: flex;
+  padding: 0 20px;
+  position: relative;
+  margin-left: 0;
+}
+
+/* 侧边栏切换按钮样式 */
+.sidebar-toggle-btn {
+    position: fixed;
+    left: 0;
+    top: 120px;
+    z-index: 1000; /* 提高层级确保可见 */
+    padding: 10px 15px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* 添加阴影增加可见性 */
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* 确保容器有足够的左侧边距，避免侧边栏显示时遮挡内容 */
+.container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px 0 calc(20px + 200px); /* 为侧边栏预留空间 */
+}
+
+/* 侧边栏样式 */
+.sidebar {
+    position: fixed;
+    left: -200px;
+    top: 120px;
+    width: 200px;
+    background-color: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 15px;
+    z-index: 900; /* 确保侧边栏在其他内容之上 */
+    border: 2px solid var(--neutral-200);
+    transition: left 0.3s ease, top 0.3s ease; /* 添加top属性的过渡效果 */
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+/* 侧边栏可见样式 */
+.sidebar.visible {
+    left: 0;
+}
+
+/* 下面是被注释掉的旧代码，已清理 */
+/*
+.sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: none;
+    width: 180px;
+    background-color: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px 15px;
+    z-index: 100;
+    max-height: none;
+    border: 1px solid var(--neutral-200);
+} 
+*/
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--neutral-800);
+  text-align: center;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--neutral-200);
 }
 
-.question-section {
-  margin-bottom: 30px;
-}
-
-.question-item {
-  background-color: var(--neutral-100);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 15px;
-  position: relative;
-}
-
-.question-content {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--neutral-200);
-  border-radius: 4px;
-  margin-bottom: 15px;
-  font-size: 1rem;
-  margin-right: 40px;
-  margin-top: 30px; /* 增加上边距使输入框进一步下移 */
-}
-
-.question-type {
-  padding: 8px 12px;
-  border: 1px solid var(--neutral-200);
-  border-radius: 4px;
-  margin-bottom: 15px;
-  background-color: var(--white);
-}
-
-.options {
-  margin-bottom: 15px;
-}
-
-.option {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--neutral-200);
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.add-option, .delete-question, .add-question, .save-draft, .publish {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  border: none;
-  transition: all 0.2s;
-}
-
-.add-option {
-  background-color: var(--neutral-100);
-  color: var(--neutral-700);
-}
-
-.delete-question {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background-color: #ef4444; /* 保持红色背景 */
-  color: white;
-  padding: 8px 16px; /* 与发布按钮相同的内边距 */
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  border: none;
-  transition: all 0.2s;
-  font-size: 1rem; /* 与发布按钮相同的字体大小 */
-}
-
-.delete-question:hover {
-  background-color: #dc2626; /* 悬停效果 */
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.add-question {
+.question-format-selector {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: var(--neutral-100);
+}
+
+.format-btn {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  background-color: var(--white);
   color: var(--neutral-700);
-  border: 1px dashed var(--neutral-300);
+  border: 1px solid var(--neutral-200);
   border-radius: var(--radius);
-  margin-top: 10px;
+  margin-bottom: 8px;
+  width: 100%;
+  transition: var(--transition);
 }
 
-.form-actions {
-    position: fixed;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 100;
+.format-btn:hover {
+  border-color: var(--primary);
+  background-color: #f0f7ff;
+  color: var(--primary);
 }
 
-.main-content {
-    padding-right: 220px; /* 为右侧按钮区域留出空间 */
-}
-
-.save-draft {
-  background-color: var(--neutral-200);
-  color: var(--neutral-700);
-}
-
-.publish {
+.format-btn.active {
   background-color: var(--primary);
   color: var(--white);
+  border-color: var(--primary);
+  font-weight: 500;
 }
 
-button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+/* 右侧操作区样式 */
+.form-actions {
+  position: static;
+  transform: none;
+  margin-top: 30px;
 }
 
-/* Header and footer styles */
+.action-sidebar {
+  width: 100%;
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+/* 标题和页脚样式 */
 header {
   background-color: var(--white);
   box-shadow: var(--shadow);
@@ -215,199 +257,180 @@ footer {
   margin-top: 40px;
 }
 
-/* 侧边栏样式调整 */
-.sidebar {
-    /* 修改定位方式 */
-    position: absolute; /* 相对于main-content定位 */
-    left: 0; /* 左侧对齐 */
-    top: 50%; /* 垂直居中 */
-    transform: translateY(-50%); /* 垂直居中调整 */
-    /* 保持其他样式不变 */
-    width: 180px;
-    background-color: #f8f9fa;
-    border-radius: 0 8px 8px 0;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-    padding: 20px 15px;
-    z-index: 100;
-    max-height: calc(100% - 40px); /* 相对于main-content高度 */
-}
-
-.main-content {
-    position: relative; /* 提供定位上下文 */
-    padding-left: 200px; /* 为侧边栏留出空间 */
-    min-height: 600px; /* 确保有足够高度实现垂直居中 */
-}
-
-/* 页脚样式修复 */
-.footer {
-    margin-left: 220px; /* 与侧边栏新位置对齐 */
-    width: calc(100% - 220px); /* 覆盖剩余宽度 */
-    min-width: 0; /* 防止内容溢出 */
-    box-sizing: border-box; /* 确保padding不影响宽度计算 */
-}
-.sidebar-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #333;
-    text-align: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-/* 按钮组样式 */
-.question-format-selector {
-    display: flex;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .main-content {
     flex-direction: column;
-    gap: 10px;
-}
-
-/* 调整按钮基础样式 - 减小尺寸 */
-.format-btn {
-    padding: 6px 12px; /* 进一步减小内边距 */
-    font-size: 12px; /* 减小字体大小 */
-    background-color: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    margin-bottom: 8px; /* 减小按钮间距 */
-    width: 70px; /* 减小宽度 */
-}
-/* 调整按钮基础样式 - 按照删除按钮风格 */
-.format-lbtn {
-    padding: 8px 16px; /* 与删除按钮相同的内边距 */
-    font-size: 1rem; /* 与删除按钮相同的字体大小 */
-    background-color: #f59e0b; /* 使用橙色作为基础按钮背景（区别于删除按钮的红色） */
-    color: white; /* 白色文字 */
-    border-radius: 4px; /* 与删除按钮相同的圆角 */
-    margin-bottom: 8px; /* 保持按钮间距 */
-    width: auto; /* 自动适应内容宽度 */
-    font-weight: 500; /* 与删除按钮相同的字体粗细 */
-    border: none; /* 无边框 */
-    transition: all 0.2s; /* 与删除按钮相同的过渡效果 */
-    cursor: pointer; /* 添加鼠标指针效果 */
-}
-
-/* 发布按钮样式 - 保持蓝色系但调整为删除按钮风格 */
-.format-lbtn.publish {
-    background-color: #3b82f6; /* 蓝色背景 */
-    color: white; /* 恢复白色文字 */
-}
-
-/* 添加悬停效果增强交互体验 */
-.format-lbtn:hover {
-    opacity: 0.9; /* 轻微透明效果 */
-    transform: translateY(-1px); /* 轻微上移 */
-}
-
-/* 发布按钮样式 */
-.format-btn.publish {
-    background-color: #4096ff;
-    color: black;
-    border-color: #4096ff;
-}
-
-/* 确保按钮容器不会被撑大 */
-.action-buttons {
-    width: fit-content;
-}
-
-/* 主按钮 hover 效果 */
-.format-btn.primary:hover {
-    background-color: #3584e4; /* 深一点的蓝色 */
-    border-color: #3584e4;
-}
-
-/* 普通按钮 hover 效果 */
-.format-btn:hover {
-    background-color: #e9e9e9;
-    border-color: #ccc;
-}
-
-.format-btn:hover {
-    border-color: #007bff;
-    background-color: #f0f7ff;
-}
-
-/* .format-btn.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-    font-weight: 500;
-} */
-
-/* 主内容区域偏移 */
-.main-content {
-    display: flex;
-    gap: 30px;
-    padding: 30px;
-    align-items: center; /* 垂直居中对齐所有子元素 */
-}
-
-.action-sidebar {
-    flex-shrink: 0; /* 不收缩 */
-    width: 180px; /* 与左侧侧边栏宽度一致 */
-}
-
-/* 移除之前的fixed定位样式 */
-.form-actions {
+    padding-left: 0;
+  }
+  
+  .sidebar {
     position: static;
-    transform: none;
-}
-
-/* 右侧操作按钮侧边栏样式 */
-.action-sidebar {
-    flex-shrink: 0;
-    width: 180px; /* 与左侧宽度一致 */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* 垂直居中 */
-    align-items: center; /* 水平居中 */
-    padding: 20px 15px;
-    background-color: #f8f9fa;
-    border-radius: 8px 0 0 8px;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.05);
-}
-
-/* 按钮样式统一 */
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* 垂直间距 */
     width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .date-group {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .format-btn, .save-draft, .publish {
+    width: 100%;
+  }
 }
 
-.action-buttons .format-btn {
-    width: 100%; /* 按钮宽度一致 */
-    margin: 0; /* 清除外边距 */
-    min-width: 400px; /* 设置最小宽度 */
-    padding: 20px; /* 内容区域内边距 */
-    background-color: #fff; /* 白色背景 */
-    border-radius: 8px; /* 圆角边框 */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* 轻微阴影 */
+/* 问题区域样式 */
+.question-section {
+  background-color: var(--white);
+  border-radius: 0 0 var(--radius) var(--radius);
+  padding: 25px;
+  margin-top: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--neutral-200);
+  border-top: none;
 }
 
-/* 按钮容器样式 */
-.action-buttons {
-    display: flex;
-    gap: 15px; /* 按钮间距 */
-    margin-top: 20px; /* 与上方内容间距 */
-    justify-content: flex-end; /* 右对齐 */
-}
-
-/* 问题项样式优化 */
 .question-item {
-    margin-bottom: 25px; /* 问题项之间间距 */
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f0f0f0; /* 分隔线 */
-}
-
-.sidebar {
-    flex-shrink: 0; /* 固定侧边栏宽度 */
-    width: 180px; /* 确保固定宽度 */
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--neutral-200);
 }
 
 .question-content-container {
-    flex-grow: 1; /* 内容区域自动填充剩余空间 */
-    min-width: 0; /* 防止内容溢出 */
+  margin-left: 20px;
+}
+
+.question-content {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  margin-bottom: 15px;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.question-content:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.1);
+}
+
+.options {
+  margin-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.option:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.1);
+}
+
+.add-option {
+  align-self: flex-start;
+  padding: 8px 16px;
+  background-color: var(--white);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.add-option:hover {
+  background-color: #f0f7ff;
+}
+
+.add-question {
+  width: 100%;
+  padding: 12px;
+  background-color: #f0f7ff;
+  color: var(--primary);
+  border: 1px dashed var(--primary);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 10px;
+}
+
+.add-question:hover {
+  background-color: #e6f0ff;
+}
+
+.delete-question {
+  padding: 6px 12px;
+  background-color: #fff2f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-bottom: 10px;
+}
+
+.delete-question:hover {
+  background-color: #ffebe9;
+}
+
+.text-display {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--neutral-100);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  margin-top: 8px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* 统一按钮样式 */
+.format-lbtn {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.save-draft {
+  background-color: var(--white);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.save-draft:hover {
+  background-color: #f0f7ff;
+}
+
+.publish {
+  background-color: var(--primary);
+  color: var(--white);
+  border: 1px solid var(--primary);
+}
+
+.publish:hover {
+  background-color: var(--primary-dark);
 }
