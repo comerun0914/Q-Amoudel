@@ -14,7 +14,15 @@
                 <a href="index.html">首页</a>
                 <a href="#">问卷管理</a>
                 <a href="#">数据统计</a>
-                <button class="btn-login">退出登录</button>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeXg9IjE2IiBjeT0iMTYiIHI9IjE2IiBmaWxsPSIjNjY2RUZBIi8+CjxwYXRoIGQ9Ik0xNiA4QzE4LjIwOTEgOCAyMCA5Ljc5MDg2IDIwIDEyQzIwIDE0LjIwOTEgMTguMjA5MSAxNiAxNiAxNkMxMy43OTA5IDE2IDEyIDE0LjIwOTEgMTIgMTJDMTIgOS43OTA4NiAxMy43OTA5IDggMTYgOFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNCAyNEMyNCAyMC42ODYzIDIwLjQxNDIgMTggMTYgMThDMTEuNTg1OCAxOCA4IDIwLjY4NjMgOCAyNCIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
+                <a href="login.html" class="btn-login" id="loginBtn">登录</a>
             </div>
         </nav>
     </header>
@@ -41,12 +49,15 @@
                 <label for="max-submissions">每人填写次数限制</label>
                 <input type="number" id="max-submissions" min="1" value="1">
             </div>
-            <div class="form-actions"><button type="button" class="btn-create-questionnaire" onclick="window.location.href='questionnaire-editor.html'">创建问卷</button></div>
+            <div class="form-actions"><button type="button" class="btn-create-questionnaire">创建问卷</button></div>
             </div>
         </div>
     </main>
     <footer>
         <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
     </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/manual-create-questionnaire.js"></script>
 </body>
 </html>

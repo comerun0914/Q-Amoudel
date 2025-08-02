@@ -18,7 +18,14 @@
                 <a href="index.html">首页</a>
                 <a href="#">问卷管理</a>
                 <a href="#">数据统计</a>
-                <button class="btn-login">退出登录</button>
+                <div class="user-info" id="userInfo">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
@@ -191,6 +198,7 @@
         <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
     </footer>
 
+    <script src="js/config.js"></script>
     <script src="js/questionnaire-editor.js"></script>
 </body>
 </html>

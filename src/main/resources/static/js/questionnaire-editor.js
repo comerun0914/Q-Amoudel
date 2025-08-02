@@ -1,5 +1,9 @@
+// 使用全局配置
 // 问卷编辑器JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    // 检查用户登录状态
+    checkUserLoginStatus();
+    
     let questionCount = 0;
     
     // 获取DOM元素
@@ -1566,7 +1570,7 @@ function updateQuestionNumbers() {
                 
                 // 将数据编码并添加到URL参数
                 const encodedData = encodeURIComponent(JSON.stringify(questionnaireData));
-                const previewUrl = `./questionnaire-preview.html?data=${encodedData}`;
+                const previewUrl = `${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?data=${encodedData}`;
                 
                 // 在新标签页中打开预览
                 window.open(previewUrl, '_blank');
@@ -1648,4 +1652,18 @@ function extractQuestionData(element, questionNumber) {
     }
     
     return questionData;
+}
+
+/**
+ * 检查用户登录状态
+ */
+function checkUserLoginStatus() {
+    // 使用工具函数进行身份校验，要求管理员权限
+    const userInfo = UTILS.checkAuth(1);
+    if (userInfo) {
+        // 显示用户信息
+        UTILS.displayUserInfo(userInfo);
+        // 绑定用户下拉菜单事件
+        UTILS.bindUserDropdown();
+    }
 }

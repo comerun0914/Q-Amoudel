@@ -68,6 +68,6 @@ public class CodeGeneration {
     }
 
     public static void main(String[] args) {
-        Generation("q-asystem","login_history","users");
+        Generation("q-asystem","question_create");
     }
 }

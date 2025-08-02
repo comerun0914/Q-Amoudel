@@ -85,6 +85,92 @@ header {
   color: var(--white);
 }
 
+/* 用户信息样式 */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  position: relative;
+}
+
+.user-info:hover {
+  background-color: var(--neutral-100);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--neutral-200);
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--neutral-700);
+  font-size: 14px;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 150px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: var(--transition);
+  z-index: 1000;
+}
+
+.user-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  color: var(--neutral-700);
+  text-decoration: none;
+  font-size: 14px;
+  transition: var(--transition);
+  border-bottom: 1px solid var(--neutral-100);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: var(--neutral-100);
+  color: var(--primary);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .user-info {
+    padding: 6px 8px;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .user-dropdown {
+    min-width: 120px;
+  }
+}
+
 /* 主内容区样式 */
 main {
   max-width: 1200px;

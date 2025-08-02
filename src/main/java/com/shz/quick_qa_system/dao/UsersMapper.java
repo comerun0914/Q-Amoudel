@@ -14,5 +14,8 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface UsersMapper extends BaseMapper<Users> {
+    // 获取信息
     public Users getUserByuserName(String userName);
+
+    public Users getUserByuserId(Integer userId);
 }

@@ -3,62 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>选择问卷 - 幼儿星</title>
+    <title>填写问卷 - 幼儿星</title>
     <link rel="stylesheet" href="css/ask-user.css">
+    <!-- 引入二维码扫描库 -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
     <header>
         <nav class="navbar">
             <div class="logo">幼儿星</div>
             <div class="nav-links">
-                <a href="index.html">首页</a>
+                <a href="index-user.html">用户中心</a>
                 <a href="#" class="active">问卷填写</a>
-                <a href="#">我的记录</a>
-                <button class="btn-login">退出登录</button>
+                <a href="#" id="historyBtn">我的记录</a>
+                <div class="user-info" id="userInfo">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
     <main>
         <div class="ask-container">
-            <h1>选择要填写的问卷</h1>
+            <h1>填写问卷</h1>
             
-            <!-- 搜索和筛选区域 -->
-            <div class="search-filter-section">
-                <div class="search-box">
-                    <input type="text" id="search-questionnaire" placeholder="搜索问卷标题或描述...">
-                    <button class="search-btn">搜索</button>
+            <!-- 问卷输入方式选择 -->
+            <div class="input-methods">
+                <div class="method-tabs">
+                    <button class="method-tab active" data-method="link">链接输入</button>
+                    <button class="method-tab" data-method="code">问卷代码</button>
+                    <button class="method-tab" data-method="qr">二维码扫描</button>
                 </div>
-                <div class="filter-options">
-                    <select id="category-filter">
-                        <option value="">所有分类</option>
-                        <option value="education">教育类</option>
-                        <option value="health">健康类</option>
-                        <option value="behavior">行为类</option>
-                        <option value="family">家庭类</option>
-                    </select>
-                    <select id="status-filter">
-                        <option value="">所有状态</option>
-                        <option value="active">进行中</option>
-                        <option value="upcoming">即将开始</option>
-                        <option value="ending">即将结束</option>
-                    </select>
+                
+                <!-- 链接输入方式 -->
+                <div class="method-content active" id="link-method">
+                    <div class="input-section">
+                        <label for="questionnaire-link">问卷链接</label>
+                        <div class="input-group">
+                            <input type="url" id="questionnaire-link" placeholder="请输入问卷链接，例如：https://example.com/questionnaire/123">
+                            <button class="btn-primary" id="submit-link">开始填写</button>
+                        </div>
+                        <p class="input-hint">请从问卷发布者处获取完整的问卷链接</p>
+                    </div>
+                </div>
+                
+                <!-- 问卷代码输入方式 -->
+                <div class="method-content" id="code-method">
+                    <div class="input-section">
+                        <label for="questionnaire-code">问卷代码</label>
+                        <div class="input-group">
+                            <input type="text" id="questionnaire-code" placeholder="请输入6位问卷代码，例如：ABC123">
+                            <button class="btn-primary" id="submit-code">开始填写</button>
+                        </div>
+                        <p class="input-hint">问卷代码通常为6位字母数字组合</p>
+                    </div>
+                </div>
+                
+                <!-- 二维码扫描方式 -->
+                <div class="method-content" id="qr-method">
+                    <div class="qr-section">
+                        <div class="qr-container">
+                            <div id="qr-reader"></div>
+                            <div class="qr-overlay" id="qr-overlay">
+                                <div class="qr-placeholder">
+                                    <div class="qr-icon">📱</div>
+                                    <p>点击开始扫描二维码</p>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="start-scan">开始扫描</button>
+                        <button class="btn-secondary" id="stop-scan" style="display: none;">停止扫描</button>
+                        <p class="input-hint">将二维码对准摄像头进行扫描</p>
+                    </div>
                 </div>
             </div>
-
-            <!-- 问卷列表 -->
-            <div class="questionnaire-list" id="questionnaire-list">
-                <!-- 问卷卡片将通过JavaScript动态生成 -->
-            </div>
-
-            <!-- 分页控件 -->
-            <div class="pagination">
-                <button class="page-btn" id="prev-page">上一页</button>
-                <div class="page-numbers">
-                    <span class="page-number active">1</span>
-                    <span class="page-number">2</span>
-                    <span class="page-number">3</span>
+            
+            <!-- 最近填写的问卷 -->
+            <div class="recent-section">
+                <h2>最近填写的问卷</h2>
+                <div class="recent-list" id="recent-list">
+                    <!-- 最近填写的问卷将通过JavaScript动态生成 -->
                 </div>
-                <button class="page-btn" id="next-page">下一页</button>
+            </div>
+            
+            <!-- 历史记录按钮 -->
+            <div class="history-section">
+                <button class="btn-secondary" id="view-all-history">查看所有历史记录</button>
+            </div>
+        </div>
+        
+        <!-- 历史记录模态框 -->
+        <div class="modal" id="history-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>我的填写历史</h2>
+                    <button class="modal-close" id="close-history-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="history-filters">
+                        <input type="text" id="history-search" placeholder="搜索问卷标题...">
+                        <select id="history-status-filter">
+                            <option value="">所有状态</option>
+                            <option value="completed">已完成</option>
+                            <option value="in-progress">进行中</option>
+                            <option value="expired">已过期</option>
+                        </select>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <!-- 历史记录将通过JavaScript动态生成 -->
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -66,6 +124,7 @@
         <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
     </footer>
 
+    <script src="js/config.js"></script>
     <script src="js/ask-user.js"></script>
 </body>
 </html> 

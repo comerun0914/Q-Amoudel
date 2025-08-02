@@ -18,4 +18,18 @@ public interface UsersService extends IService<Users> {
      * @return
      */
     public Users getUserByuserName(String userName);
+
+    /**
+     * 使用Id获取信息
+     * @param userId
+     * @return
+     */
+    public Users getUserByuserId(Integer userId);
+
+    /**
+     * 退出登录
+     * @param user
+     * @return
+     */
+    public String logout(Users user);
 }

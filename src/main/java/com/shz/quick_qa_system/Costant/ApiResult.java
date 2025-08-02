@@ -8,12 +8,15 @@ public class ApiResult {
     private String message; // 消息
     private Object data; // 返回数据
     private int returnCode; // 响应编号
+    private String userToken; // Token
 
 
 
     // 成功响应静态方法
     public static ApiResult successAdmin(Object data) {
         ApiResult result = new ApiResult();
+        // 创建token
+
         result.setReturnCode(1);
         result.setCode(200);
         result.setMessage("成功");
@@ -25,6 +28,15 @@ public class ApiResult {
     public static ApiResult successUser(Object data) {
         ApiResult result = new ApiResult();
         result.setReturnCode(0);
+        result.setCode(200);
+        result.setMessage("成功");
+        result.setData(data);
+        return result;
+    }
+
+    // 通用成功响应静态方法
+    public static ApiResult success(Object data) {
+        ApiResult result = new ApiResult();
         result.setCode(200);
         result.setMessage("成功");
         result.setData(data);

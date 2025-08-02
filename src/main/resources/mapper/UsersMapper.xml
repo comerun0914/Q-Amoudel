@@ -22,5 +22,9 @@
     <select id="getUserByuserName" parameterType="string" resultType="com.shz.quick_qa_system.entity.Users">
         select * from users where username = #{userName}
     </select>
+    <select id="getUserByuserId" resultType="com.shz.quick_qa_system.entity.Users"
+            parameterType="java.lang.Integer">
+        select * from users where id = #{userId}
+    </select>
 
 </mapper>

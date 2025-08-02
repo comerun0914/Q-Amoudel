@@ -1,3 +1,4 @@
+// 使用全局配置
 // 用户端页面功能
 document.addEventListener('DOMContentLoaded', function() {
     // 检查用户登录状态
@@ -11,27 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
  * 检查用户登录状态
  */
 function checkUserLoginStatus() {
-    const userInfo = localStorage.getItem('userInfo');
-    if (!userInfo) {
-        // 如果未登录，跳转到登录页面
-        window.location.href = './login.html';
-        return;
-    }
-    
-    try {
-        const user = JSON.parse(userInfo);
-        if (!user || !user.username) {
-            // 用户信息无效，跳转到登录页面
-            window.location.href = './login.html';
-            return;
-        }
-        
-        // 显示用户信息（可选）
-        console.log('当前用户:', user.username);
-        
-    } catch (error) {
-        console.error('解析用户信息失败:', error);
-        window.location.href = './login.html';
+    // 使用工具函数进行身份校验，要求普通用户权限
+    const userInfo = UTILS.checkAuth(0);
+    if (userInfo) {
+        // 显示用户信息
+        UTILS.displayUserInfo(userInfo);
     }
 }
 
@@ -39,29 +24,13 @@ function checkUserLoginStatus() {
  * 绑定事件监听器
  */
 function bindEventListeners() {
-    // 退出登录按钮
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    // 绑定用户下拉菜单事件
+    UTILS.bindUserDropdown();
     
     // 填写问卷按钮
     const fillQuestionnaireBtn = document.getElementById('fillQuestionnaireBtn');
     if (fillQuestionnaireBtn) {
         fillQuestionnaireBtn.addEventListener('click', handleFillQuestionnaire);
-    }
-}
-
-/**
- * 处理退出登录
- */
-function handleLogout() {
-    if (confirm('确定要退出登录吗？')) {
-        // 清除本地存储的用户信息
-        localStorage.removeItem('userInfo');
-        
-        // 跳转到登录页面
-        window.location.href = './login.html';
     }
 }
 
@@ -77,5 +46,5 @@ function handleFillQuestionnaire() {
     // window.location.href = './questionnaire-fill.html';
     
     // 目前暂时跳转到问卷编辑器页面
-    window.location.href = './ask-user.html';
+    window.location.href = CONFIG.ROUTES.ASK_USER;
 } 

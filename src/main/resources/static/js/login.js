@@ -1,8 +1,4 @@
-// 后台服务配置常量
-const BACKEND_BASE_URL = 'http://localhost:7070';
-const API_ENDPOINTS = {
-  LOGIN: `${BACKEND_BASE_URL}/api/users/login`
-};
+// 使用全局配置
 
 /**
  * 处理表单提交事件
@@ -20,7 +16,7 @@ function handleSubmit(e) {
   }
 
   // 发送登录请求到后端
-  fetch(`${BACKEND_BASE_URL}/api/users/login`, {
+  fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.LOGIN), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -52,7 +48,7 @@ function handleSubmit(e) {
     
     // 保存用户信息到localStorage（可选）
     if (data.data) {
-      localStorage.setItem('userInfo', JSON.stringify(data.data));
+      UTILS.setStorage(CONFIG.STORAGE_KEYS.USER_INFO, data.data);
       console.log('保存的用户信息:', data.data);
     }
     
@@ -94,24 +90,24 @@ function handleSubmit(e) {
         case 1:
           // 问卷管理员 - 跳转到管理员首页
           console.log('跳转到管理员首页');
-          window.location.href = './index.html';
+          window.location.href = CONFIG.ROUTES.INDEX;
           break;
         case 0:
           // 普通用户 - 跳转到用户中心页面
           console.log('跳转到用户中心页面');
-          window.location.href = './index-user.html';
+          window.location.href = CONFIG.ROUTES.INDEX_USER;
           break;
         default:
           // 默认跳转到用户中心页面
           console.warn('未知用户角色:', roleNum, '默认跳转到用户中心页面');
-          window.location.href = './index-user.html';
+          window.location.href = CONFIG.ROUTES.INDEX_USER;
           break;
       }
     } else {
       // 如果没有角色信息，默认跳转到用户中心页面
       console.warn('未获取到用户角色信息，默认跳转到用户中心页面');
       console.log('可用的数据字段:', Object.keys(data.data || {}));
-      window.location.href = './index-user.html';
+      window.location.href = CONFIG.ROUTES.INDEX_USER;
     }
     
     return data;

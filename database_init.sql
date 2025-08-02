@@ -41,4 +41,22 @@ INSERT INTO `users` (`username`, `password`, `phone`, `role`) VALUES
 -- 插入测试登录历史
 INSERT INTO `login_history` (`user_id`, `login_time`, `ip_address`, `user_agent`, `login_status`) VALUES
 (1, NOW(), '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 1),
-(2, NOW(), '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 1); 
+(2, NOW(), '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 1);
+
+-- 问卷表
+CREATE TABLE IF NOT EXISTS `question_create` (
+                                               `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '问卷ID',
+    `title` varchar(255) NOT NULL COMMENT '问卷标题',
+    `description` text COMMENT '问卷描述',
+    `start_date` date NOT NULL COMMENT '开始日期',
+    `end_date` date NOT NULL COMMENT '结束日期',
+    `submission_limit` int(3) DEFAULT 1 COMMENT '每人填写次数限制',
+    `status` tinyint(1) DEFAULT 1 COMMENT '问卷状态：0=禁用，1=启用',
+    `creator_id` int(11) NOT NULL COMMENT '创建者用户ID',
+    `created_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_creator_id` (`creator_id`),
+    KEY `idx_status` (`status`),
+    KEY `idx_date_range` (`start_date`, `end_date`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='创建问卷表';
