@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logout功能测试页面</h1>
+    
+    <div class="test-section">
+        <h3>1. 检查用户信息</h3>
+        <button onclick="checkUserInfo()">检查当前用户信息</button>
+        <div id="userInfoResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 测试API URL生成</h3>
+        <button onclick="testApiUrl()">测试API URL生成</button>
+        <div id="apiUrlResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 测试Logout请求</h3>
+        <button onclick="testLogout()">测试Logout请求</button>
+        <div id="logoutResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 模拟登录</h3>
+        <button onclick="simulateLogin()">模拟登录用户</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. 清除存储</h3>
+        <button onclick="clearStorage()">清除所有存储</button>
+        <div id="clearResult" class="result"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        function checkUserInfo() {
+            const userInfo = UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
+            const result = document.getElementById('userInfoResult');
+            if (userInfo) {
+                result.className = 'result success';
+                result.textContent = '用户信息存在:\n' + JSON.stringify(userInfo, null, 2);
+            } else {
+                result.className = 'result error';
+                result.textContent = '没有找到用户信息';
+            }
+        }
+        
+        function testApiUrl() {
+            const apiUrl = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.LOGOUT);
+            const result = document.getElementById('apiUrlResult');
+            result.className = 'result';
+            result.textContent = '生成的API URL:\n' + apiUrl;
+        }
+        
+        function testLogout() {
+            const result = document.getElementById('logoutResult');
+            result.className = 'result';
+            result.textContent = '正在发送logout请求...';
+            
+            const apiUrl = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.LOGOUT);
+            console.log('发送请求到:', apiUrl);
+            
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应数据:', data);
+                if (data.code === 200) {
+                    result.className = 'result success';
+                    result.textContent = 'Logout成功:\n' + JSON.stringify(data, null, 2);
+                    // 清除存储
+                    UTILS.clearStorage();
+                } else {
+                    result.className = 'result error';
+                    result.textContent = 'Logout失败:\n' + JSON.stringify(data, null, 2);
+                }
+            })
+            .catch(error => {
+                console.error('请求失败:', error);
+                result.className = 'result error';
+                result.textContent = '请求失败:\n' + error.message;
+            });
+        }
+        
+        function simulateLogin() {
+            const mockUser = {
+                id: 1,
+                username: 'testuser',
+                role: 0,
+                avatar: null
+            };
+            UTILS.setStorage(CONFIG.STORAGE_KEYS.USER_INFO, mockUser);
+            const result = document.getElementById('loginResult');
+            result.className = 'result success';
+            result.textContent = '模拟登录成功:\n' + JSON.stringify(mockUser, null, 2);
+        }
+        
+        function clearStorage() {
+            UTILS.clearStorage();
+            const result = document.getElementById('clearResult');
+            result.className = 'result success';
+            result.textContent = '存储已清除';
+        }
+        
+        // 页面加载时检查用户信息
+        window.onload = function() {
+            checkUserInfo();
+        };
+    </script>
+</body>
+</html> 

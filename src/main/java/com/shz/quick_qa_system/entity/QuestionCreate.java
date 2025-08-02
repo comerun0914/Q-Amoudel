@@ -1,25 +1,35 @@
-package com.shz.quick_qa_system.dto;
+package com.shz.quick_qa_system.entity;
 
-import com.shz.quick_qa_system.entity.QuestionCreate;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
- * ClassName: QuestionCreate
- * Package: com.shz.quick_qa_system.dto
- * Description:
+ * <p>
+ * 创建问卷表
+ * </p>
  *
- * @Author comerun
- * @Create 2025/8/2 14:51
+ * @author comerun
+ * @since 2025-08-02
  */
-
-@Setter
 @Getter
-public class QuestionCreateDto {
+@Setter
+@Accessors(chain = true)
+@TableName("question_create")
+public class QuestionCreate implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 问卷ID
+     */
+    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
     /**
@@ -66,4 +76,6 @@ public class QuestionCreateDto {
      * 更新时间
      */
     private LocalDateTime updatedTime;
+
+
 }

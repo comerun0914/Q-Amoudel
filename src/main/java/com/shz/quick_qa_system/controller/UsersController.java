@@ -6,6 +6,7 @@ import com.shz.quick_qa_system.dto.UserDto;
 import com.shz.quick_qa_system.entity.Users;
 import com.shz.quick_qa_system.service.UsersService;
 import com.shz.quick_qa_system.service.impl.UsersServiceImpl;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -62,17 +63,16 @@ public class UsersController {
 
     // 退出登录
     @PostMapping("/logout")
-    public ApiResult logout(String userid) {
-        logger.info("收到退出登录请求，用户ID: {}", userid);
+    public ApiResult logout(@RequestParam("userId") String userId) {
+        logger.info("收到退出登录请求，用户ID: {}", userId);
         
         try {
-            if (userid == null || userid.trim().isEmpty()) {
+            if (userId == null || userId.trim().isEmpty()) {
                 logger.warn("用户ID为空");
                 return ApiResult.error("用户ID不能为空");
             }
-            
-            Integer userId = Integer.valueOf(userid);
-            Users user = usersServiceImpl.getUserByuserId(userId);
+
+            Users user = usersServiceImpl.getUserByuserId(Integer.valueOf(userId));
             
             if (user == null) {
                 logger.warn("未找到用户，用户ID: {}", userId);
@@ -84,10 +84,10 @@ public class UsersController {
             return ApiResult.success(result);
             
         } catch (NumberFormatException e) {
-            logger.error("用户ID格式错误: {}", userid, e);
+            logger.error("用户ID格式错误: {}", userId, e);
             return ApiResult.error("用户ID格式错误");
         } catch (Exception e) {
-            logger.error("退出登录时发生错误，用户ID: {}", userid, e);
+            logger.error("退出登录时发生错误，用户ID: {}", userId, e);
             return ApiResult.error("退出登录失败");
         }
     }

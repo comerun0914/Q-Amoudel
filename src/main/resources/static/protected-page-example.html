@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>受保护页面示例 - 幼儿星</title>
+    <link rel="stylesheet" href="css/create-questionnaire.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="#">问卷管理</a>
+                <a href="#">数据统计</a>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
+                <a href="login.html" class="btn-login" id="loginBtn">登录</a>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <div class="create-container">
+            <h1>受保护页面示例</h1>
+            <p>这个页面需要登录才能访问。如果您看到这个内容，说明您已经成功登录。</p>
+            <div class="form-actions">
+                <button type="button" class="btn-create-questionnaire" onclick="window.location.href='index.html'">返回首页</button>
+            </div>
+        </div>
+    </main>
+    
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script>
+        // 页面加载完成后进行保护
+        document.addEventListener('DOMContentLoaded', function() {
+            // 使用页面保护函数 - 自动校验登录状态并初始化用户信息
+            if (!UTILS.protectPage()) {
+                return; // 如果未登录，停止执行后续代码
+            }
+            
+            // 启动自动校验（每5秒检查一次）
+            UTILS.startAutoAuthCheck();
+            
+            // 这里可以添加页面特定的逻辑
+            console.log('页面保护通过，用户已登录');
+        });
+    </script>
+</body>
+</html> 

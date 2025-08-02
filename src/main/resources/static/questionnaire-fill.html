@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>填写问卷 - 幼儿星</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/questionnaire-fill.css">
+</head>
+<body>
+    <div class="fill-container">
+        <!-- 填写头部 -->
+        <header class="fill-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <button class="btn-back" id="btnBack">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        返回
+                    </button>
+                    <div class="progress-info">
+                        <span class="progress-text">进度: <span id="progressText">0/0</span></span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="btn-save" id="btnSave">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17,21 17,13 7,13 7,21"/>
+                            <polyline points="7,3 7,8 15,8"/>
+                        </svg>
+                        保存草稿
+                    </button>
+                    <div class="timer" id="timer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                        <span id="timerText">00:00</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 问卷内容区域 -->
+        <main class="questionnaire-content">
+            <!-- 问卷标题 -->
+            <div class="questionnaire-title">
+                <h1 id="questionnaireTitle">问卷标题</h1>
+                <p id="questionnaireDescription">问卷描述信息</p>
+                <div class="questionnaire-meta">
+                    <span class="meta-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        开始时间: <span id="startTime">2025-01-15 14:30</span>
+                    </span>
+                    <span class="meta-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                        预计用时: <span id="estimatedTime">15分钟</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 问题列表 -->
+            <div class="questions-container" id="questionsContainer">
+                <!-- 问题将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 导航按钮 -->
+            <div class="navigation-buttons">
+                <button class="btn-nav btn-prev" id="btnPrev" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    上一题
+                </button>
+                <button class="btn-nav btn-next" id="btnNext">
+                    下一题
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 提交区域 -->
+            <div class="submit-section" id="submitSection" style="display: none;">
+                <div class="submit-content">
+                    <h3>问卷填写完成</h3>
+                    <p>请检查您的答案，确认无误后点击提交按钮</p>
+                    <div class="answer-summary" id="answerSummary">
+                        <!-- 答案摘要将通过JavaScript动态生成 -->
+                    </div>
+                    <div class="submit-actions">
+                        <button class="btn-secondary" id="btnReview">重新检查</button>
+                        <button class="btn-primary" id="btnSubmit">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                            </svg>
+                            提交问卷
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 保存成功提示 -->
+    <div class="toast" id="saveToast">
+        <div class="toast-content">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22,4 12,14.01 9,11.01"/>
+            </svg>
+            <span>草稿已保存</span>
+        </div>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmTitle">确认操作</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">确定要执行此操作吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btnCancel">取消</button>
+                <button class="btn-primary" id="btnConfirm">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/questionnaire-fill.js"></script>
+</body>
+</html> 
