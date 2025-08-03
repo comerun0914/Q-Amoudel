@@ -13,7 +13,7 @@ const CONFIG = {
         
         // 问卷相关
         QUESTIONNAIRE_LIST: '/api/questionCreate/list',
-        QUESTIONNAIRE_DETAIL: '/api/questionCreate/detail',
+        QUESTIONNAIRE_GETINFOBYID: '/api/questionCreate/getInfoById',
         QUESTIONNAIRE_CREATE: '/api/questionCreate/create',
         QUESTIONNAIRE_UPDATE: '/api/questionCreate/update',
         QUESTIONNAIRE_DELETE: '/api/questionCreate/delete',

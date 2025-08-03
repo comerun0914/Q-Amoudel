@@ -16,7 +16,7 @@ public interface QuestionCreateService extends IService<QuestionCreate> {
     /**
      * 创建问卷单据
      * @param questionCreate
-     * @return
+     * @return 创建的问卷对象，失败返回null
      */
-    public Boolean CreateQuestion(QuestionCreate questionCreate);
+    public QuestionCreate CreateQuestion(QuestionCreate questionCreate);
 }

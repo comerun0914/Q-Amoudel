@@ -81,7 +81,7 @@ public class UsersController {
             
             String result = usersServiceImpl.logout(user);
             logger.info("用户 {} 退出登录成功", user.getUsername());
-            return ApiResult.success(result);
+            return ApiResult.success(new Object[]{result});
             
         } catch (NumberFormatException e) {
             logger.error("用户ID格式错误: {}", userId, e);

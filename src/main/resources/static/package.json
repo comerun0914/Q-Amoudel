@@ -2,7 +2,7 @@
     "name": "quick-qa-frontend",
     "version": "1.0.0",
     "scripts": {
-        "start": "serve"
+        "start": "serve --config serve.json"
     },
     "dependencies": {
         "serve": "^14.2.1"

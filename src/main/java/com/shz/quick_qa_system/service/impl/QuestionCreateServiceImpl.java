@@ -26,7 +26,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
 
     @Override
-    public Boolean CreateQuestion(QuestionCreate questionCreate) {
+    public QuestionCreate CreateQuestion(QuestionCreate questionCreate) {
         // 设置表单ID
         Integer formId = CodeGenerator.generateFormId();
         while (questionCreateMapper.exists(new QueryWrapper<QuestionCreate>().eq("id", formId))){
@@ -37,6 +37,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         // 更新时间
         questionCreate.setCreatedTime(LocalDateTime.now());
         questionCreate.setUpdatedTime(LocalDateTime.now());
-        return save(questionCreate);
+        boolean result = save(questionCreate);
+        
+        if (result) {
+            // 返回创建的问卷信息
+            return questionCreate;
+        }
+        return null;
     }
 }
