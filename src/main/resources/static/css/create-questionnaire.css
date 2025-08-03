@@ -96,6 +96,39 @@ header {
   width: 100%;
 }
 
+/* 导航按钮样式 */
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--neutral-700);
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  padding: 0;
+  font-family: inherit;
+}
+
+.nav-btn:hover {
+  color: var(--primary);
+}
+
+.nav-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: var(--transition);
+}
+
+.nav-btn:hover::after {
+  width: 100%;
+}
+
 .btn-login {
   padding: 10px 20px;
   background: var(--primary);

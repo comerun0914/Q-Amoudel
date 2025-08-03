@@ -300,27 +300,193 @@ body {
   min-width: 0;
 }
 
-/* 问卷信息样式 */
-.questionnaire-info {
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+/* 问卷信息区域样式 */
+.questionnaire-info-section {
+  background: var(--white);
   border-radius: var(--radius);
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 30px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--neutral-200);
+  overflow: hidden;
+}
+
+.section-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px 30px;
+  border-bottom: 1px solid var(--neutral-200);
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-header h2 i {
+  font-size: 1.3rem;
+}
+
+.section-description {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.questionnaire-info-form {
+  padding: 30px;
+}
+
+.form-row {
+  margin-bottom: 25px;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
   font-weight: 600;
   color: var(--neutral-700);
   font-size: 0.95rem;
+}
+
+.form-group label i {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.input-hint {
+  font-size: 0.85rem;
+  color: var(--neutral-500);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* 标题输入框样式 */
+.title-group .title-input {
+  width: 100%;
+  padding: 15px 18px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.title-group .title-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.title-group .title-input::placeholder {
+  color: var(--neutral-400);
+  font-weight: 400;
+}
+
+/* 描述输入框样式 */
+.description-group .description-input {
+  width: 100%;
+  padding: 15px 18px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 120px;
+  transition: var(--transition);
+  background: var(--white);
+  font-family: inherit;
+}
+
+.description-group .description-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.description-group .description-input::placeholder {
+  color: var(--neutral-400);
+}
+
+/* 日期行样式 */
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.date-group .date-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.date-group .date-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 限制输入框样式 */
+.limit-group .limit-input {
+  width: 120px;
+  padding: 12px 15px;
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  background: var(--white);
+}
+
+.limit-group .limit-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .date-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .section-header {
+    padding: 20px 25px;
+  }
+  
+  .questionnaire-info-form {
+    padding: 25px;
+  }
+  
+  .title-group .title-input {
+    font-size: 1rem;
+    padding: 12px 15px;
+  }
+  
+  .description-group .description-input {
+    min-height: 100px;
+    padding: 12px 15px;
+  }
 }
 
 .text-display {
@@ -1348,6 +1514,11 @@ footer::before {
 .icon-pen::before { content: "\e618"; }
 .icon-refresh::before { content: "\e619"; }
 .icon-move::before { content: "\e61a"; }
+.icon-edit::before { content: "\e61b"; }
+.icon-title::before { content: "\e61c"; }
+.icon-description::before { content: "\e61d"; }
+.icon-limit::before { content: "\e61e"; }
+.icon-questions::before { content: "\e61f"; }
 
 /* 通知动画 */
 @keyframes slideIn {

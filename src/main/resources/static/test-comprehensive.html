@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>综合功能测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        .info { border-left-color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <h1>综合功能测试</h1>
+    
+    <div class="test-section">
+        <h3>后端连接测试</h3>
+        <button onclick="testBackendConnection()">测试后端连接</button>
+        <div id="connection-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>问卷创建测试</h3>
+        <button onclick="testCreateQuestionnaire()">测试创建问卷</button>
+        <div id="create-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>问卷更新测试</h3>
+        <button onclick="testUpdateQuestionnaire()">测试更新问卷</button>
+        <div id="update-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>问卷列表测试</h3>
+        <button onclick="testGetQuestionnaireList()">测试获取问卷列表</button>
+        <div id="list-result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        async function testBackendConnection() {
+            try {
+                showResult('connection-result', '正在测试后端连接...', true);
+                
+                const response = await fetch('http://localhost:7070/api/questionCreate/list?page=1&size=1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult('connection-result', `✅ 连接成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                } else {
+                    showResult('connection-result', `❌ 连接失败: HTTP ${response.status}`, false);
+                }
+            } catch (error) {
+                showResult('connection-result', `❌ 连接错误: ${error.message}`, false);
+            }
+        }
+
+        async function testCreateQuestionnaire() {
+            try {
+                showResult('create-result', '正在测试创建问卷...', true);
+                
+                const testData = {
+                    title: "综合测试问卷",
+                    description: "这是一个综合测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "测试单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "选项2", sortNum: 2, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "测试多选题",
+                            questionType: 2,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项A", sortNum: 1 },
+                                { optionContent: "选项B", sortNum: 2 },
+                                { optionContent: "选项C", sortNum: 3 }
+                            ]
+                        },
+                        {
+                            content: "测试填空题",
+                            questionType: 3,
+                            sortNum: 3,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送创建数据:', testData);
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('创建响应:', result);
+                    if (result.code === 200) {
+                        showResult('create-result', `✅ 创建成功！\n问卷ID: ${result.data.id}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('create-result', `❌ 创建失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('create-result', `❌ 创建失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('创建问卷错误:', error);
+                showResult('create-result', `❌ 创建错误: ${error.message}`, false);
+            }
+        }
+
+        async function testUpdateQuestionnaire() {
+            try {
+                showResult('update-result', '正在测试更新问卷...', true);
+                
+                const testData = {
+                    id: 45067318, // 使用刚才创建的问卷ID
+                    title: "更新后的综合测试问卷",
+                    description: "这是更新后的综合测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 200,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "更新后的单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "新选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "新选项2", sortNum: 2, isDefault: 0 },
+                                { optionContent: "新选项3", sortNum: 3, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "更新后的填空题",
+                            questionType: 3,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送更新数据:', testData);
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('更新响应:', result);
+                    if (result.code === 200) {
+                        showResult('update-result', `✅ 更新成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('update-result', `❌ 更新失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('update-result', `❌ 更新失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('更新问卷错误:', error);
+                showResult('update-result', `❌ 更新错误: ${error.message}`, false);
+            }
+        }
+
+        async function testGetQuestionnaireList() {
+            try {
+                showResult('list-result', '正在测试获取问卷列表...', true);
+                
+                const response = await fetch('http://localhost:7070/api/questionCreate/list?page=1&size=5', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('列表响应:', result);
+                    if (result.code === 200) {
+                        showResult('list-result', `✅ 获取列表成功！\n总数: ${result.data.total}\n当前页: ${result.data.current}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('list-result', `❌ 获取列表失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('list-result', `❌ 获取列表失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('获取列表错误:', error);
+                showResult('list-result', `❌ 获取列表错误: ${error.message}`, false);
+            }
+        }
+
+        // 页面加载时自动测试连接
+        window.onload = function() {
+            testBackendConnection();
+        };
+    </script>
+</body>
+</html> 

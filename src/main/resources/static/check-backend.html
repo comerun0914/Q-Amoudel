@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后端连接检查</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>后端连接检查</h1>
+    
+    <div id="status" class="status info">
+        正在检查后端连接...
+    </div>
+    
+    <button onclick="checkBackend()">重新检查</button>
+    <button onclick="clearLog()">清除日志</button>
+    
+    <h3>检查日志：</h3>
+    <div id="log" class="log"></div>
+
+    <script>
+        const BACKEND_URLS = [
+            'http://localhost:7070',
+            'http://localhost:7070/api',
+            'http://localhost:7070/api/questionCreate/list'
+        ];
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        async function checkBackend() {
+            updateStatus('正在检查后端连接...', 'info');
+            log('开始检查后端连接...');
+            
+            for (let i = 0; i < BACKEND_URLS.length; i++) {
+                const url = BACKEND_URLS[i];
+                log(`检查URL: ${url}`);
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    log(`响应状态: ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const data = await response.text();
+                        log(`响应内容: ${data.substring(0, 200)}...`);
+                        updateStatus(`✅ 后端连接成功！可用URL: ${url}`, 'success');
+                        return;
+                    } else {
+                        log(`HTTP错误: ${response.status}`);
+                    }
+                } catch (error) {
+                    log(`连接失败: ${error.message}`);
+                }
+            }
+            
+            updateStatus('❌ 所有后端URL都无法连接', 'error');
+            log('所有URL检查完成，均无法连接');
+        }
+        
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkBackend();
+        };
+    </script>
+</body>
+</html> 

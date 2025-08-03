@@ -35,6 +35,12 @@ function bindFormEvents() {
         createBtn.addEventListener('click', handleCreateQuestionnaire);
     }
     
+    // 绑定问卷管理按钮
+    const questionnaireManagementBtn = document.getElementById('questionnaireManagementBtn');
+    if (questionnaireManagementBtn) {
+        questionnaireManagementBtn.addEventListener('click', handleQuestionnaireManagement);
+    }
+    
     // 绑定日期验证
     const startDateInput = document.getElementById('start-date');
     const endDateInput = document.getElementById('end-date');
@@ -115,15 +121,14 @@ function handleCreateQuestionnaire() {
  * 获取表单数据
  */
 function getFormData() {
+    const userInfo = UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
     return {
         title: document.getElementById('questionnaire-title').value.trim(),
         description: document.getElementById('questionnaire-description').value.trim(),
         startDate: document.getElementById('start-date').value,
         endDate: document.getElementById('end-date').value,
         submissionLimit: parseInt(document.getElementById('max-submissions').value) || 1,
-        creatorId: UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO).id,
-        createdTime: new Date().toISOString(),
-        updatedTime: null
+        creatorId: userInfo ? userInfo.id : null
     };
 }
 
@@ -182,34 +187,35 @@ function submitQuestionnaireToBackend(formData) {
     
     // 构建提交数据
     const submitData = {
-        id: null,
         title: formData.title,
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
         submissionLimit: formData.submissionLimit,
-        status: 1, // 默认启用状态
-        creatorId: formData.creatorId,
-        createdTime: formData.createdTime,
-        updatedTime: formData.updatedTime
+        status: true, // 默认启用状态
+        creatorId: formData.creatorId
     };
     
     // 发送请求到后端
-    fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE), {
+    console.log('发送数据:', submitData);
+    console.log('请求URL:', UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false));
+    
+    fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false), {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_TOKEN)}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(submitData)
     })
     .then(response => {
+        console.log('响应状态:', response.status);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
     .then(data => {
+        console.log('响应数据:', data);
         hideLoadingState();
         
         if (data.code === 200) {
@@ -236,6 +242,7 @@ function submitQuestionnaireToBackend(formData) {
     .catch(error => {
         hideLoadingState();
         console.error('创建问卷失败:', error);
+        console.error('错误详情:', error.message);
         UTILS.showToast('网络错误，请检查网络连接后重试', 'error');
     });
 }
@@ -374,4 +381,12 @@ function bindAutoSave() {
             input.addEventListener('change', autoSaveDraft);
         }
     });
+}
+
+/**
+ * 处理问卷管理按钮点击
+ */
+function handleQuestionnaireManagement() {
+    // 跳转到问卷管理页面
+    window.location.href = 'questionnaire-management.html';
 }

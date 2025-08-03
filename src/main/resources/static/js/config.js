@@ -1,7 +1,7 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://localhost:7070',
+    BACKEND_BASE_URL: 'http://localhost:7070/api',
     
     // API端点配置
     API_ENDPOINTS: {
@@ -12,15 +12,23 @@ const CONFIG = {
         USER_PROFILE: '/api/users/profile',
         
         // 问卷相关
-        QUESTIONNAIRE_LIST: '/api/questionCreate/list',
-        QUESTIONNAIRE_DETAIL: '/api/questionCreate/detail',
-        QUESTIONNAIRE_CREATE: '/api/questionCreate/create',
-        QUESTIONNAIRE_UPDATE: '/api/questionCreate/update',
-        QUESTIONNAIRE_DELETE: '/api/questionCreate/delete',
-        QUESTIONNAIRE_FILL: '/api/questionCreate/fill',
-        QUESTIONNAIRE_SUBMIT: '/api/questionCreate/submit',
-        QUESTIONNAIRE_RESULT: '/api/questionCreate/result',
-        QUESTIONNAIRE_RESULTS: '/api/questionCreate/results',
+        QUESTIONNAIRE_LIST: '/questionCreate/list',
+        QUESTIONNAIRE_DETAIL: '/questionCreate/detail',
+        QUESTIONNAIRE_GETINFOBYID: '/questionCreate/detail',
+        QUESTIONNAIRE_QUESTIONS: '/questionCreate/questions',
+        QUESTIONNAIRE_CREATE: '/questionCreate/create',
+        QUESTIONNAIRE_UPDATE: '/questionCreate/update',
+        QUESTIONNAIRE_DELETE: '/questionCreate/delete',
+        QUESTIONNAIRE_BATCH_DELETE: '/questionCreate/batchDelete',
+        QUESTIONNAIRE_TOGGLE_STATUS: '/questionCreate/toggleStatus',
+        QUESTIONNAIRE_BATCH_TOGGLE_STATUS: '/questionCreate/batchToggleStatus',
+        QUESTIONNAIRE_COPY: '/questionCreate/copy',
+        QUESTIONNAIRE_IMPORT: '/questionCreate/import',
+        QUESTIONNAIRE_STATISTICS: '/questionCreate/statistics',
+        QUESTIONNAIRE_FILL: '/questionCreate/fill',
+        QUESTIONNAIRE_SUBMIT: '/questionCreate/submit',
+        QUESTIONNAIRE_RESULT: '/questionCreate/result',
+        QUESTIONNAIRE_RESULTS: '/questionCreate/results',
         
         // 登录历史
         LOGIN_HISTORY: '/api/login-history',
@@ -38,6 +46,7 @@ const CONFIG = {
         QUESTIONNAIRE_FILL: 'questionnaire-fill.html',
         QUESTIONNAIRE_RESULT: 'questionnaire-result.html',
         QUESTIONNAIRE_PREVIEW: 'questionnaire-preview.html',
+        QUESTIONNAIRE_TEST: 'questionnaire-test.html',
         ASK_USER: 'ask-user.html',
         CREATE_QUESTIONNAIRE: 'create-questionnaire.html',
         MANUAL_CREATE: 'manual-create-questionnaire.html'
@@ -86,7 +95,8 @@ const CONFIG = {
         USER_TOKEN: 'user_token',
         USER_INFO: 'user_info',
         QUESTIONNAIRE_DRAFT: 'questionnaire_draft',
-        FILL_PROGRESS: 'fill_progress'
+        FILL_PROGRESS: 'fill_progress',
+        CURRENT_QUESTIONNAIRE_ID: 'current_questionnaire_id'
     },
     
     // 默认配置
@@ -101,12 +111,12 @@ const CONFIG = {
 // 工具函数
 const UTILS = {
     // 获取完整的API URL，自动添加userid参数
-    getApiUrl: function(endpoint) {
+    getApiUrl: function(endpoint, addUserId = true) {
         const userInfo = this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
         let url = CONFIG.BACKEND_BASE_URL + endpoint;
         
-        // 如果用户已登录，在URL中添加userid参数
-        if (userInfo && userInfo.id) {
+        // 如果用户已登录且需要添加userId参数，在URL中添加userid参数
+        if (addUserId && userInfo && userInfo.id) {
             const separator = endpoint.includes('?') ? '&' : '?';
             url += separator + 'userId=' + userInfo.id;
         }

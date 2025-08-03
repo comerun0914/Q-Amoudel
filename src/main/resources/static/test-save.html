@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试问卷保存</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>问卷保存功能测试</h1>
+    
+    <div class="test-section">
+        <h3>测试数据</h3>
+        <button onclick="testCreateQuestionnaire()">测试创建问卷</button>
+        <button onclick="testUpdateQuestionnaire()">测试更新问卷</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // 模拟配置
+        const CONFIG = {
+            API_ENDPOINTS: {
+                QUESTIONNAIRE_CREATE: '/questionCreate/create',
+                QUESTIONNAIRE_UPDATE: '/questionCreate/update'
+            }
+        };
+
+        const UTILS = {
+            getApiUrl: (endpoint) => `http://localhost:7070/api${endpoint}`,
+            showToast: (message, type) => {
+                document.getElementById('result').innerHTML = `<strong>${type.toUpperCase()}:</strong> ${message}`;
+                console.log(`${type}: ${message}`);
+            }
+        };
+
+        // 测试创建问卷
+        async function testCreateQuestionnaire() {
+            try {
+                const testData = {
+                    title: "测试问卷",
+                    description: "这是一个测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "测试单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "选项2", sortNum: 2, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "测试多选题",
+                            questionType: 2,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项A", sortNum: 1 },
+                                { optionContent: "选项B", sortNum: 2 },
+                                { optionContent: "选项C", sortNum: 3 }
+                            ]
+                        },
+                        {
+                            content: "测试填空题",
+                            questionType: 3,
+                            sortNum: 3,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送测试数据:', testData);
+
+                const response = await fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.json();
+                console.log('创建问卷响应:', result);
+
+                if (result.code === 200) {
+                    UTILS.showToast(`问卷创建成功！ID: ${result.data.id}`, 'success');
+                } else {
+                    UTILS.showToast(`创建失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('测试创建问卷时发生错误:', error);
+                UTILS.showToast(`网络错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试更新问卷
+        async function testUpdateQuestionnaire() {
+            try {
+                const testData = {
+                    id: 1, // 假设存在ID为1的问卷
+                    title: "更新后的测试问卷",
+                    description: "这是更新后的测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 200,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "更新后的单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "新选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "新选项2", sortNum: 2, isDefault: 0 },
+                                { optionContent: "新选项3", sortNum: 3, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "更新后的填空题",
+                            questionType: 3,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送更新测试数据:', testData);
+
+                const response = await fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_UPDATE), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.json();
+                console.log('更新问卷响应:', result);
+
+                if (result.code === 200) {
+                    UTILS.showToast(`问卷更新成功！`, 'success');
+                } else {
+                    UTILS.showToast(`更新失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                console.error('测试更新问卷时发生错误:', error);
+                UTILS.showToast(`网络错误: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html> 
