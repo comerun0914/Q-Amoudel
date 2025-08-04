@@ -6,10 +6,10 @@ const CONFIG = {
     // API端点配置
     API_ENDPOINTS: {
         // 用户相关
-        LOGIN: '/api/users/login',
-        REGISTER: '/api/users/register',
-        LOGOUT: '/api/users/logout',
-        USER_PROFILE: '/api/users/profile',
+        LOGIN: '/users/login',
+        REGISTER: '/users/register',
+        LOGOUT: '/users/logout',
+        USER_PROFILE: '/users/profile',
         
         // 问卷相关
         QUESTIONNAIRE_LIST: '/questionCreate/list',
