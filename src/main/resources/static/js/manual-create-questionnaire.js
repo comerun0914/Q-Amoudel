@@ -4,9 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const createBtn = document.querySelector('.btn-create-questionnaire');
     const titleInput = document.getElementById('questionnaire-title');
     const descriptionInput = document.getElementById('questionnaire-description');
-    if (createBtn) {
-        createBtn.addEventListener('click', handleCreateQuestionnaire);
-    }
+    // 移除重复的事件绑定，只保留下面的完整实现
+    // if (createBtn) {
+    //     createBtn.addEventListener('click', handleCreateQuestionnaire);
+    // }
 
     // 绑定问卷管理按钮
     const questionnaireManagementBtn = document.getElementById('questionnaireManagementBtn');
@@ -90,13 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(questionnaireData)
             });
 
+            console.log('请求URL:', UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE));
+            console.log('请求数据:', questionnaireData);
+
             const result = await response.json();
             console.log('=== 后端响应 ===');
             console.log('创建问卷响应:', result);
             console.log('响应状态码:', result.code);
             console.log('响应数据:', result.data);
 
-            if (result.code === 200 && result.data) {
+            if ((result.code === 200 || result.returnCode === 1 || result.returnCode === 0) && result.data) {
                 // 创建成功，先执行动画
                 const questionnaire = result.data;
                 console.log('创建的问卷数据:', questionnaire);
@@ -142,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 console.log('跳转代码已执行');
             } else {
+                console.error('创建问卷失败:', result);
                 alert('创建问卷失败: ' + (result.message || '未知错误'));
             }
         } catch (error) {
@@ -164,6 +169,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return userInfo.id;
         }
         return 1; // 默认用户ID
+    }
+
+    // 问卷管理按钮点击事件
+    function handleQuestionnaireManagement() {
+        window.location.href = 'questionnaire-management.html';
     }
 
 

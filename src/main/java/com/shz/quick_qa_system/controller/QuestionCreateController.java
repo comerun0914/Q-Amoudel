@@ -2,6 +2,7 @@ package com.shz.quick_qa_system.controller;
 
 import com.shz.quick_qa_system.Costant.ApiResult;
 import com.shz.quick_qa_system.dto.QuestionCreateDto;
+import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.entity.QuestionCreate;
 import com.shz.quick_qa_system.entity.Users;
 import com.shz.quick_qa_system.service.QuestionCreateService;

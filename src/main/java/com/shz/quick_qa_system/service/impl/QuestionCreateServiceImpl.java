@@ -20,7 +20,6 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +49,10 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
     @Resource
     private MultipleChoiceOptionMapper multipleChoiceOptionMapper;
 
-    @Override
     public QuestionCreate CreateQuestion(QuestionCreate questionCreate) {
         // 设置表单ID
         Integer formId = CodeGenerator.generateFormId();
-        while (questionCreateMapper.exists(new QueryWrapper<QuestionCreate>().eq("id", formId))){
+        while (questionCreateMapper.exists(new QueryWrapper<QuestionCreate>().eq("id", formId))) {
             formId = CodeGenerator.generateFormId();
         }
         questionCreate.setId(formId);
@@ -69,36 +67,37 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             return questionCreate;
         }
         return null;
-    public Boolean CreateQuestion(QuestionCreate questionCreate) {
-        try {
-            // 设置表单ID
-            Integer formId = CodeGenerator.generateFormId();
-            // 检查ID是否已存在，如果存在则重新生成
-            while (count(new QueryWrapper<QuestionCreate>().eq("id", formId)) > 0) {
-                formId = CodeGenerator.generateFormId();
-            }
-            questionCreate.setId(formId);
-
-            // 设置创建时间和更新时间
-            questionCreate.setCreatedTime(LocalDateTime.now());
-            questionCreate.setUpdatedTime(LocalDateTime.now());
-
-            // 确保状态不为空
-            if (questionCreate.getStatus() == null) {
-                questionCreate.setStatus(true);
-            }
-
-            // 确保提交限制不为空
-            if (questionCreate.getSubmissionLimit() == null) {
-                questionCreate.setSubmissionLimit(1);
-            }
-
-            return save(questionCreate);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("创建问卷失败: " + e.getMessage());
-        }
     }
+//    public Boolean CreateQuestion(QuestionCreate questionCreate) {
+//        try {
+//            // 设置表单ID
+//            Integer formId = CodeGenerator.generateFormId();
+//            // 检查ID是否已存在，如果存在则重新生成
+//            while (count(new QueryWrapper<QuestionCreate>().eq("id", formId)) > 0) {
+//                formId = CodeGenerator.generateFormId();
+//            }
+//            questionCreate.setId(formId);
+//
+//            // 设置创建时间和更新时间
+//            questionCreate.setCreatedTime(LocalDateTime.now());
+//            questionCreate.setUpdatedTime(LocalDateTime.now());
+//
+//            // 确保状态不为空
+//            if (questionCreate.getStatus() == null) {
+//                questionCreate.setStatus(true);
+//            }
+//
+//            // 确保提交限制不为空
+//            if (questionCreate.getSubmissionLimit() == null) {
+//                questionCreate.setSubmissionLimit(1);
+//            }
+//
+//            return save(questionCreate);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new RuntimeException("创建问卷失败: " + e.getMessage());
+//        }
+//    }
 
     /**
      * 创建问卷（包含问题数据）

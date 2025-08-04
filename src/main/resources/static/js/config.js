@@ -1,7 +1,7 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://localhost:7070',
+    BACKEND_BASE_URL: 'http://localhost:7070/api',
     
     // API端点配置
     API_ENDPOINTS: {

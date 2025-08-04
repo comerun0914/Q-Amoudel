@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测试创建问卷接口</title>
+    <title>测试问卷创建</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,16 +17,16 @@
             border: 1px solid #ddd;
             border-radius: 8px;
         }
-        .test-button {
+        .test-btn {
             background: #007bff;
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
-            margin: 10px 5px;
+            margin: 5px;
         }
-        .test-button:hover {
+        .test-btn:hover {
             background: #0056b3;
         }
         .result {
@@ -36,151 +36,81 @@
             border-radius: 4px;
             white-space: pre-wrap;
         }
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .success {
-            background: #d4edda;
-            color: #155724;
-        }
     </style>
 </head>
 <body>
-    <h1>测试创建问卷接口</h1>
+    <h1>问卷创建功能测试</h1>
     
     <div class="test-section">
-        <h3>1. 测试创建问卷</h3>
-        <button class="test-button" onclick="testCreateQuestionnaire()">创建测试问卷</button>
-        <div id="createResult" class="result" style="display: none;"></div>
-    </div>
-    
-    <div class="test-section">
-        <h3>2. 测试获取问卷列表</h3>
-        <button class="test-button" onclick="testGetQuestionnaireList()">获取问卷列表</button>
-        <div id="listResult" class="result" style="display: none;"></div>
-    </div>
-    
-    <div class="test-section">
-        <h3>3. 测试统计信息</h3>
-        <button class="test-button" onclick="testGetStatistics()">获取统计信息</button>
-        <div id="statisticsResult" class="result" style="display: none;"></div>
-    </div>
-    
-    <div class="test-section">
-        <h3>4. 测试连接</h3>
-        <button class="test-button" onclick="testConnection()">测试后端连接</button>
-        <div id="connectionResult" class="result" style="display: none;"></div>
+        <h3>测试创建问卷</h3>
+        <button class="test-btn" onclick="testCreateQuestionnaire()">测试创建问卷</button>
+        <div id="createResult" class="result"></div>
     </div>
 
+    <div class="test-section">
+        <h3>测试用户信息</h3>
+        <button class="test-btn" onclick="testUserInfo()">检查用户信息</button>
+        <div id="userResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试API配置</h3>
+        <button class="test-btn" onclick="testApiConfig()">检查API配置</button>
+        <div id="apiResult" class="result"></div>
+    </div>
+
+    <script src="js/config.js"></script>
     <script>
-        const BASE_URL = 'http://localhost:7070/api';
-        
-        function showResult(elementId, data, isError = false) {
-            const element = document.getElementById(elementId);
-            element.style.display = 'block';
-            element.className = `result ${isError ? 'error' : 'success'}`;
-            element.textContent = JSON.stringify(data, null, 2);
-        }
-        
-        function testConnection() {
-            fetch(`${BASE_URL}/questionCreate/list?page=1&size=1`)
-                .then(response => {
-                    console.log('响应状态:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    showResult('connectionResult', {
-                        status: 'success',
-                        message: '后端连接正常',
-                        data: data
-                    });
-                })
-                .catch(error => {
-                    showResult('connectionResult', {
-                        status: 'error',
-                        message: '后端连接失败',
-                        error: error.message
-                    }, true);
-                });
-        }
-        
         function testCreateQuestionnaire() {
+            const resultDiv = document.getElementById('createResult');
+            resultDiv.textContent = '正在测试...';
+            
             const testData = {
-                title: "测试问卷 " + new Date().toLocaleString(),
-                description: "这是一个测试问卷",
-                startDate: "2025-01-01",
-                endDate: "2025-12-31",
+                title: '测试问卷',
+                description: '这是一个测试问卷',
+                startDate: '2025-01-01',
+                endDate: '2025-12-31',
                 submissionLimit: 1,
                 status: true,
                 creatorId: 1
             };
             
-            console.log('发送数据:', testData);
+            console.log('测试数据:', testData);
+            console.log('API URL:', UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE));
             
-            fetch(`${BASE_URL}/questionCreate/create`, {
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE), {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(testData)
             })
-            .then(response => {
-                console.log('响应状态:', response.status);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                showResult('createResult', {
-                    status: 'success',
-                    message: '创建问卷成功',
-                    data: data
-                });
+                console.log('响应数据:', data);
+                resultDiv.textContent = JSON.stringify(data, null, 2);
             })
             .catch(error => {
-                showResult('createResult', {
-                    status: 'error',
-                    message: '创建问卷失败',
-                    error: error.message
-                }, true);
+                console.error('错误:', error);
+                resultDiv.textContent = '错误: ' + error.message;
             });
         }
         
-        function testGetQuestionnaireList() {
-            fetch(`${BASE_URL}/questionCreate/list?page=1&size=5`)
-                .then(response => response.json())
-                .then(data => {
-                    showResult('listResult', {
-                        status: 'success',
-                        message: '获取问卷列表成功',
-                        data: data
-                    });
-                })
-                .catch(error => {
-                    showResult('listResult', {
-                        status: 'error',
-                        message: '获取问卷列表失败',
-                        error: error.message
-                    }, true);
-                });
+        function testUserInfo() {
+            const resultDiv = document.getElementById('userResult');
+            const userInfo = UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
+            resultDiv.textContent = JSON.stringify(userInfo, null, 2);
         }
         
-        function testGetStatistics() {
-            fetch(`${BASE_URL}/questionCreate/statistics`)
-                .then(response => response.json())
-                .then(data => {
-                    showResult('statisticsResult', {
-                        status: 'success',
-                        message: '获取统计信息成功',
-                        data: data
-                    });
-                })
-                .catch(error => {
-                    showResult('statisticsResult', {
-                        status: 'error',
-                        message: '获取统计信息失败',
-                        error: error.message
-                    }, true);
-                });
+        function testApiConfig() {
+            const resultDiv = document.getElementById('apiResult');
+            const config = {
+                backendUrl: CONFIG.BACKEND_BASE_URL,
+                createEndpoint: CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE,
+                fullUrl: UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE),
+                expectedUrl: 'http://localhost:7070/api/questionCreate/create?userId=1'
+            };
+            resultDiv.textContent = JSON.stringify(config, null, 2);
         }
     </script>
 </body>
