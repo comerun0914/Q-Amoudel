@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         loadQuestionnaireInfo();
     }, 100);
-    
+
     let questionCount = 0;
     
     // 获取DOM元素
@@ -1680,20 +1680,20 @@ function loadQuestionnaireInfo() {
     console.log('=== 开始加载问卷信息 ===');
     console.log('当前页面URL:', window.location.href);
     console.log('当前页面search:', window.location.search);
-    
+
     // 优先从本地存储获取问卷ID
     let questionnaireId = localStorage.getItem('current_questionnaire_id');
-    
+
     if (questionnaireId) {
         console.log('从本地存储获取到问卷ID:', questionnaireId);
     } else {
         // 如果本地存储没有，尝试从URL参数获取
         console.log('本地存储中没有问卷ID，尝试从URL参数获取');
-        
+
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const encodedQuestionnaireId = urlParams.get('id');
-            
+
             if (encodedQuestionnaireId) {
                 questionnaireId = decodeURIComponent(encodedQuestionnaireId);
                 console.log('成功从URL参数解析问卷ID:', questionnaireId);
@@ -1711,10 +1711,10 @@ function loadQuestionnaireInfo() {
             }
         }
     }
-    
+
     console.log('最终获取的问卷ID:', questionnaireId);
     console.log('问卷ID类型:', typeof questionnaireId);
-    
+
     if (questionnaireId) {
         // 如果有问卷ID，从后端获取问卷信息
         console.log('调用后端接口获取问卷信息');
@@ -1739,16 +1739,16 @@ async function fetchQuestionnaireFromBackend(questionnaireId) {
         const separator = baseUrl.includes('?') ? '&' : '?';
         const apiUrl = baseUrl + separator + `id=${questionnaireId}`;
         console.log('API URL:', apiUrl);
-        
+
         const response = await fetch(apiUrl);
         const result = await response.json();
-        
+
         console.log('API响应结果:', result);
-        
+
         if (result.code === 200 && result.data) {
             const questionnaire = result.data; // 问卷数据
             const creatorName = result.userInfo;   // 创建人用户名
-            
+
             // 合并数据
             const fullQuestionnaire = {
                 ...questionnaire,
@@ -1780,25 +1780,25 @@ function displayQuestionnaireInfo(questionnaire) {
     if (titleElement && questionnaire.title) {
         titleElement.textContent = questionnaire.title;
     }
-    
+
     // 更新问卷描述
     const descriptionElement = document.getElementById('questionnaire-description-display');
     if (descriptionElement && questionnaire.description) {
         descriptionElement.textContent = questionnaire.description;
     }
-    
+
     // 更新开始日期
     const startDateElement = document.getElementById('start-date');
     if (startDateElement && questionnaire.startDate) {
         startDateElement.textContent = questionnaire.startDate;
     }
-    
+
     // 更新结束日期
     const endDateElement = document.getElementById('end-date');
     if (endDateElement && questionnaire.endDate) {
         endDateElement.textContent = questionnaire.endDate;
     }
-    
+
     // 更新创建人信息
     const creatorElement = document.getElementById('creator-name-display');
     if (creatorElement) {
@@ -1808,11 +1808,11 @@ function displayQuestionnaireInfo(questionnaire) {
             creatorElement.textContent = '未知用户';
         }
     }
-    
+
     // 清除本地存储中的问卷ID，避免影响后续使用
     localStorage.removeItem('current_questionnaire_id');
     console.log('已清除本地存储中的问卷ID');
-    
+
     console.log('问卷信息已加载:', questionnaire);
 }
 
@@ -1838,7 +1838,7 @@ function showErrorMessage(message) {
         max-width: 400px;
         font-weight: 500;
     `;
-    
+
     errorContainer.innerHTML = `
         <div style="margin-bottom: 10px;">
             <i style="font-size: 24px;">⚠️</i>
@@ -1846,9 +1846,9 @@ function showErrorMessage(message) {
         <div style="margin-bottom: 15px;">${message}</div>
         <div style="font-size: 14px; opacity: 0.8;">页面将在3秒后自动跳转...</div>
     `;
-    
+
     document.body.appendChild(errorContainer);
-    
+
     // 3秒后自动移除
     setTimeout(() => {
         if (errorContainer.parentNode) {

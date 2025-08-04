@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据收集测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .form-group { margin: 10px 0; }
+        label { display: block; margin-bottom: 5px; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>数据收集测试</h1>
+    
+    <div class="test-section">
+        <h3>问卷基本信息</h3>
+        <div class="form-group">
+            <label for="questionnaire-title">问卷标题</label>
+            <input type="text" id="questionnaire-title" value="测试问卷">
+        </div>
+        <div class="form-group">
+            <label for="questionnaire-description">问卷描述</label>
+            <textarea id="questionnaire-description" rows="3">这是一个测试问卷</textarea>
+        </div>
+        <div class="form-group">
+            <label for="start-date">开始日期</label>
+            <input type="date" id="start-date" value="2025-01-01">
+        </div>
+        <div class="form-group">
+            <label for="end-date">结束日期</label>
+            <input type="date" id="end-date" value="2025-12-31">
+        </div>
+        <div class="form-group">
+            <label for="submission-limit">提交限制</label>
+            <input type="number" id="submission-limit" value="1" min="1">
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试问题</h3>
+        <div class="question-item" data-type="single">
+            <div class="question-content-container">
+                <input type="text" class="question-content" value="测试单选题" placeholder="请输入问题内容">
+            </div>
+            <div class="options">
+                <div class="option-item">
+                    <input type="radio" name="single_1" disabled>
+                    <input type="text" class="option-content" value="选项1" placeholder="选项1">
+                </div>
+                <div class="option-item">
+                    <input type="radio" name="single_1" disabled>
+                    <input type="text" class="option-content" value="选项2" placeholder="选项2">
+                </div>
+            </div>
+        </div>
+        
+        <div class="question-item" data-type="multiple">
+            <div class="question-content-container">
+                <input type="text" class="question-content" value="测试多选题" placeholder="请输入问题内容">
+            </div>
+            <div class="options">
+                <div class="option-item">
+                    <input type="checkbox" name="multiple" disabled>
+                    <input type="text" class="option-content" value="选项A" placeholder="选项A">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" name="multiple" disabled>
+                    <input type="text" class="option-content" value="选项B" placeholder="选项B">
+                </div>
+            </div>
+        </div>
+        
+        <div class="question-item" data-type="text">
+            <div class="question-content-container">
+                <input type="text" class="question-content" value="测试填空题" placeholder="请输入问题内容">
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <button onclick="testDataCollection()">测试数据收集</button>
+        <button onclick="testSaveToBackend()">测试保存到后端</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(message, isSuccess = true) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        // 模拟 collectQuestionsData 函数
+        function collectQuestionsData() {
+            const questions = [];
+            const questionElements = document.querySelectorAll('.question-item');
+            
+            console.log('找到问题元素数量:', questionElements.length);
+            
+            questionElements.forEach((element, index) => {
+                const questionType = element.getAttribute('data-type');
+                const questionContent = element.querySelector('.question-content')?.value || '';
+                
+                console.log(`问题 ${index + 1}:`, {
+                    type: questionType,
+                    content: questionContent,
+                    hasContent: !!questionContent.trim()
+                });
+                
+                if (!questionContent.trim()) {
+                    console.log(`跳过空问题 ${index + 1}`);
+                    return; // 跳过空问题
+                }
+                
+                const questionData = {
+                    content: questionContent.trim(),
+                    questionType: getQuestionTypeCode(questionType),
+                    sortNum: index + 1,
+                    isRequired: 1, // 默认必填
+                    options: []
+                };
+                
+                // 根据问题类型收集选项数据
+                if (questionType === 'single' || questionType === 'multiple') {
+                    const options = element.querySelectorAll('.option-content');
+                    console.log(`问题 ${index + 1} 找到选项数量:`, options.length);
+                    
+                    options.forEach((option, optionIndex) => {
+                        const optionText = option.value.trim();
+                        if (optionText) {
+                            questionData.options.push({
+                                optionContent: optionText,
+                                sortNum: optionIndex + 1,
+                                isDefault: 0
+                            });
+                        }
+                    });
+                }
+                
+                console.log(`问题 ${index + 1} 数据:`, questionData);
+                questions.push(questionData);
+            });
+            
+            console.log('收集到的问题数据:', questions);
+            return questions;
+        }
+
+        function getQuestionTypeCode(type) {
+            const typeMap = {
+                'single': 1,    // 单选题
+                'multiple': 2,  // 多选题
+                'text': 3,      // 填空题
+                'rating': 4,    // 评分题
+                'matrix': 5,    // 矩阵题
+                'date': 6,      // 日期题
+                'time': 7,      // 时间题
+                'file': 8,      // 文件上传
+                'location': 9,  // 位置选择
+                'signature': 10 // 签名题
+            };
+            
+            return typeMap[type] || 3; // 默认为填空题
+        }
+
+        function testDataCollection() {
+            try {
+                // 收集问卷基本信息
+                const title = document.getElementById('questionnaire-title')?.value || '';
+                const description = document.getElementById('questionnaire-description')?.value || '';
+                const startDate = document.getElementById('start-date')?.value || '';
+                const endDate = document.getElementById('end-date')?.value || '';
+                const submissionLimit = parseInt(document.getElementById('submission-limit')?.value) || 1;
+
+                // 收集问题数据
+                const questions = collectQuestionsData();
+                
+                // 构建请求数据
+                const questionnaireData = {
+                    title: title.trim(),
+                    description: description.trim(),
+                    startDate: startDate,
+                    endDate: endDate,
+                    submissionLimit: submissionLimit,
+                    status: true, // 默认启用
+                    creatorId: 1,
+                    questions: questions
+                };
+
+                showResult(`数据收集成功！\n收集到的数据:\n${JSON.stringify(questionnaireData, null, 2)}`, true);
+            } catch (error) {
+                showResult(`数据收集失败: ${error.message}`, false);
+            }
+        }
+
+        async function testSaveToBackend() {
+            try {
+                showResult('正在测试保存到后端...', true);
+                
+                // 收集数据
+                const title = document.getElementById('questionnaire-title')?.value || '';
+                const description = document.getElementById('questionnaire-description')?.value || '';
+                const startDate = document.getElementById('start-date')?.value || '';
+                const endDate = document.getElementById('end-date')?.value || '';
+                const submissionLimit = parseInt(document.getElementById('submission-limit')?.value) || 1;
+                const questions = collectQuestionsData();
+                
+                const questionnaireData = {
+                    title: title.trim(),
+                    description: description.trim(),
+                    startDate: startDate,
+                    endDate: endDate,
+                    submissionLimit: submissionLimit,
+                    status: true,
+                    creatorId: 1,
+                    questions: questions
+                };
+
+                console.log('发送数据:', questionnaireData);
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(questionnaireData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult(`保存成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                } else {
+                    const errorText = await response.text();
+                    showResult(`保存失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                showResult(`保存错误: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 

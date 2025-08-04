@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷管理 - 幼儿星</title>
+    <link rel="stylesheet" href="css/questionnaire-management.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="questionnaire-management.html" class="active">问卷管理</a>
+                <a href="#">数据统计</a>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
+                <a href="login.html" class="btn-login" id="loginBtn">登录</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="management-container">
+            <!-- 页面标题和操作按钮 -->
+            <div class="page-header">
+                <div class="header-left">
+                    <h1>问卷管理</h1>
+                    <span class="subtitle">管理您创建的所有问卷</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-create" id="createQuestionnaire">
+                        <i class="iconfont icon-plus"></i>
+                        创建问卷
+                    </button>
+                    <button class="btn-import" id="importQuestionnaire">
+                        <i class="iconfont icon-upload"></i>
+                        导入问卷
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜索和筛选区域 -->
+            <div class="search-filter-section">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索问卷标题或描述...">
+                    <button class="search-btn" id="searchBtn">
+                        <i class="iconfont icon-search"></i>
+                    </button>
+                </div>
+                <div class="filter-group">
+                    <select id="statusFilter" class="filter-select">
+                        <option value="">全部状态</option>
+                        <option value="1">已启用</option>
+                        <option value="0">已禁用</option>
+                    </select>
+                    <select id="dateFilter" class="filter-select">
+                        <option value="">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month">本月</option>
+                        <option value="year">今年</option>
+                    </select>
+                    <button class="btn-clear-filter" id="clearFilter">清除筛选</button>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="iconfont icon-questionnaire"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalQuestionnaires">0</div>
+                        <div class="stat-label">总问卷数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon active">
+                        <i class="iconfont icon-active"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="activeQuestionnaires">0</div>
+                        <div class="stat-label">已启用</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon draft">
+                        <i class="iconfont icon-draft"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="draftQuestionnaires">0</div>
+                        <div class="stat-label">草稿</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon expired">
+                        <i class="iconfont icon-expired"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="expiredQuestionnaires">0</div>
+                        <div class="stat-label">已过期</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问卷列表 -->
+            <div class="questionnaire-list-section">
+                <div class="list-header">
+                    <div class="list-title">问卷列表</div>
+                    <div class="list-actions">
+                        <button class="btn-batch-action" id="batchDelete" disabled>
+                            <i class="iconfont icon-delete"></i>
+                            批量删除
+                        </button>
+                        <button class="btn-batch-action" id="batchEnable" disabled>
+                            <i class="iconfont icon-enable"></i>
+                            批量启用
+                        </button>
+                        <button class="btn-batch-action" id="batchDisable" disabled>
+                            <i class="iconfont icon-disable"></i>
+                            批量禁用
+                        </button>
+                    </div>
+                </div>
+
+                <div class="questionnaire-table-container">
+                    <table class="questionnaire-table" id="questionnaireTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>问卷标题</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>开始日期</th>
+                                <th>结束日期</th>
+                                <th>填写次数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questionnaireTableBody">
+                            <!-- 问卷数据将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination-section">
+                    <div class="pagination-info">
+                        <span>显示第 <span id="startIndex">1</span> - <span id="endIndex">10</span> 条，共 <span id="totalCount">0</span> 条</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="btn-page" id="prevPage" disabled>
+                            <i class="iconfont icon-arrow-left"></i>
+                        </button>
+                        <div class="page-numbers" id="pageNumbers">
+                            <!-- 页码将通过JavaScript动态生成 -->
+                        </div>
+                        <button class="btn-page" id="nextPage" disabled>
+                            <i class="iconfont icon-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 模态框 -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close" id="closeDeleteModal">
+                    <i class="iconfont icon-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除选中的问卷吗？此操作不可恢复。</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelDelete">取消</button>
+                <button class="btn-confirm" id="confirmDelete">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/questionnaire-management.js"></script>
+</body>
+</html> 

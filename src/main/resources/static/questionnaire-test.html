@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷测试 - 幼儿星</title>
+    <link rel="stylesheet" href="css/questionnaire-test.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="questionnaire-management.html">问卷管理</a>
+                <a href="#" class="active">问卷测试</a>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
+                <a href="login.html" class="btn-login" id="loginBtn">登录</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="test-container">
+            <!-- 页面标题和操作按钮 -->
+            <div class="page-header">
+                <div class="header-left">
+                    <h1>问卷测试</h1>
+                    <span class="subtitle">测试问卷的填写和提交功能</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-exit-test" onclick="exitTestMode()">
+                        <i class="iconfont icon-close"></i>
+                        退出测试
+                    </button>
+                </div>
+            </div>
+
+            <!-- 测试模式提示 -->
+            <div class="test-mode-banner">
+                <div class="banner-content">
+                    <i class="iconfont icon-test"></i>
+                    <div class="banner-text">
+                        <h3>问卷测试模式</h3>
+                        <p>您正在测试问卷的填写和提交功能。测试数据不会影响正式统计。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 问卷信息 -->
+            <div class="questionnaire-info" id="questionnaireInfo">
+                <div class="info-header">
+                    <h1 id="questionnaireTitle">加载中...</h1>
+                    <div class="info-meta">
+                        <span class="meta-item">
+                            <i class="iconfont icon-time"></i>
+                            创建时间：<span id="createdTime">-</span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="iconfont icon-calendar"></i>
+                            有效期：<span id="validPeriod">-</span>
+                        </span>
+                        <span class="meta-item">
+                            <i class="iconfont icon-limit"></i>
+                            填写限制：<span id="submissionLimit">-</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="info-description" id="questionnaireDescription">
+                    <!-- 问卷描述将通过JavaScript加载 -->
+                </div>
+            </div>
+
+            <!-- 测试表单 -->
+            <div class="test-form-container">
+                <form id="testForm" class="test-form">
+                    <div class="form-section">
+                        <h3>测试信息</h3>
+                        <div class="form-group">
+                            <label for="testName">测试者姓名</label>
+                            <input type="text" id="testName" name="testName" placeholder="请输入测试者姓名" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="testEmail">测试者邮箱</label>
+                            <input type="email" id="testEmail" name="testEmail" placeholder="请输入测试者邮箱" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="testPhone">测试者电话</label>
+                            <input type="tel" id="testPhone" name="testPhone" placeholder="请输入测试者电话">
+                        </div>
+                    </div>
+
+                    <!-- 问卷问题区域 -->
+                    <div class="questions-section" id="questionsSection">
+                        <h3>问卷问题</h3>
+                        <div class="loading-questions">
+                            <i class="iconfont icon-loading"></i>
+                            <span>正在加载问卷问题...</span>
+                        </div>
+                    </div>
+
+                    <!-- 测试操作按钮 -->
+                    <div class="test-actions">
+                        <button type="button" class="btn-test-preview" onclick="previewTestSubmission()">
+                            <i class="iconfont icon-eye"></i>
+                            预览提交数据
+                        </button>
+                        <button type="submit" class="btn-test-submit">
+                            <i class="iconfont icon-submit"></i>
+                            提交测试数据
+                        </button>
+                        <button type="button" class="btn-test-reset" onclick="resetTestForm()">
+                            <i class="iconfont icon-reset"></i>
+                            重置表单
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 测试结果 -->
+            <div class="test-results" id="testResults" style="display: none;">
+                <h3>测试结果</h3>
+                <div class="result-content" id="resultContent">
+                    <!-- 测试结果将通过JavaScript显示 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 预览模态框 -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>预览提交数据</h3>
+                <button class="modal-close" onclick="closePreviewModal()">
+                    <i class="iconfont icon-close"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- 预览内容将通过JavaScript生成 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closePreviewModal()">关闭</button>
+                <button class="btn-confirm" onclick="submitTestData()">确认提交</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/questionnaire-test.js"></script>
+</body>
+</html> 

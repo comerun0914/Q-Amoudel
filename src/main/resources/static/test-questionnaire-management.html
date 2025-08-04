@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷管理测试 - 幼儿星</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷管理功能测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 创建问卷测试</h3>
+            <button class="test-button" onclick="testCreateQuestionnaire()">创建测试问卷</button>
+            <div id="createResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 获取问卷列表测试</h3>
+            <button class="test-button" onclick="testGetQuestionnaireList()">获取问卷列表</button>
+            <div id="listResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. 问卷状态切换测试</h3>
+            <button class="test-button" onclick="testToggleStatus()">切换问卷状态</button>
+            <div id="toggleResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 复制问卷测试</h3>
+            <button class="test-button" onclick="testCopyQuestionnaire()">复制问卷</button>
+            <div id="copyResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. 删除问卷测试</h3>
+            <button class="test-button" onclick="testDeleteQuestionnaire()">删除问卷</button>
+            <div id="deleteResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>6. 统计信息测试</h3>
+            <button class="test-button" onclick="testStatistics()">获取统计信息</button>
+            <div id="statisticsResult" class="result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>7. 跳转到问卷管理页面</h3>
+            <button class="test-button" onclick="goToManagement()">打开问卷管理页面</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        // 测试创建问卷
+        function testCreateQuestionnaire() {
+            const testData = {
+                title: "测试问卷 " + new Date().toLocaleString(),
+                description: "这是一个测试问卷，用于验证问卷管理功能",
+                startDate: "2025-01-01",
+                endDate: "2025-12-31",
+                submissionLimit: 1,
+                status: true,
+                creatorId: 1,
+                createdTime: new Date().toISOString(),
+                updatedTime: null
+            };
+            
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('createResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('createResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 测试获取问卷列表
+        function testGetQuestionnaireList() {
+            const params = new URLSearchParams({
+                page: 1,
+                size: 10,
+                keyword: '',
+                status: '',
+                dateFilter: '',
+                creatorId: 1
+            });
+            
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST) + '?' + params)
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('listResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('listResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 测试切换状态
+        function testToggleStatus() {
+            // 先获取问卷列表，然后切换第一个问卷的状态
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST) + '?page=1&size=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200 && data.data.list && data.data.list.length > 0) {
+                    const questionnaire = data.data.list[0];
+                    return fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_TOGGLE_STATUS), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: questionnaire.id,
+                            status: !questionnaire.status
+                        })
+                    });
+                } else {
+                    throw new Error('没有找到可用的问卷');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('toggleResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('toggleResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 测试复制问卷
+        function testCopyQuestionnaire() {
+            // 先获取问卷列表，然后复制第一个问卷
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST) + '?page=1&size=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200 && data.data.list && data.data.list.length > 0) {
+                    const questionnaire = data.data.list[0];
+                    return fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_COPY), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: questionnaire.id
+                        })
+                    });
+                } else {
+                    throw new Error('没有找到可用的问卷');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('copyResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('copyResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 测试删除问卷
+        function testDeleteQuestionnaire() {
+            // 先获取问卷列表，然后删除第一个问卷
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST) + '?page=1&size=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.code === 200 && data.data.list && data.data.list.length > 0) {
+                    const questionnaire = data.data.list[0];
+                    return fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_DELETE), {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id: questionnaire.id
+                        })
+                    });
+                } else {
+                    throw new Error('没有找到可用的问卷');
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('deleteResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('deleteResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 测试统计信息
+        function testStatistics() {
+            fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_STATISTICS) + '?creatorId=1')
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById('statisticsResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result ' + (data.code === 200 ? 'success' : 'error');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById('statisticsResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请求失败: ' + error.message;
+            });
+        }
+        
+        // 跳转到问卷管理页面
+        function goToManagement() {
+            window.open('questionnaire-management.html', '_blank');
+        }
+    </script>
+</body>
+</html> 

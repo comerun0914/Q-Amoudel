@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试问题保存</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>调试问题保存</h1>
+    
+    <div class="test-section">
+        <h3>测试简单问题保存</h3>
+        <button onclick="testSimpleQuestion()">测试单个问题保存</button>
+        <div id="simple-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>测试问题查询</h3>
+        <button onclick="testQuestionQuery()">查询所有问题</button>
+        <div id="query-result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        async function testSimpleQuestion() {
+            try {
+                showResult('simple-result', '正在测试简单问题保存...', true);
+                
+                const testData = {
+                    title: "调试测试问卷",
+                    description: "这是一个调试测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "这是一个测试问题",
+                            questionType: 3,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送调试数据:', testData);
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('调试响应:', result);
+                    if (result.code === 200) {
+                        showResult('simple-result', `✅ 创建成功！\n问卷ID: ${result.data.id}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                        
+                        // 立即查询问题
+                        setTimeout(() => {
+                            testQuestionQuery();
+                        }, 1000);
+                    } else {
+                        showResult('simple-result', `❌ 创建失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('simple-result', `❌ 创建失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('调试错误:', error);
+                showResult('simple-result', `❌ 调试错误: ${error.message}`, false);
+            }
+        }
+
+        async function testQuestionQuery() {
+            try {
+                showResult('query-result', '正在查询所有问题...', true);
+                
+                const response = await fetch('http://localhost:7070/api/questionCreate/questions?questionnaireId=79381255', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('查询响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('查询响应:', result);
+                    if (result.code === 200) {
+                        showResult('query-result', `✅ 查询成功！\n问题数量: ${result.data.length}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('query-result', `❌ 查询失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('query-result', `❌ 查询失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('查询错误:', error);
+                showResult('query-result', `❌ 查询错误: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 

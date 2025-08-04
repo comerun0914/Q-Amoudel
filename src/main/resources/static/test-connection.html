@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>连接测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>后端连接测试</h1>
+    
+    <div class="test-section">
+        <h3>测试连接</h3>
+        <button onclick="testConnection()">测试后端连接</button>
+        <button onclick="testCreateQuestionnaire()">测试创建问卷</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(message, isSuccess = true) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        async function testConnection() {
+            try {
+                showResult('正在测试连接...', true);
+                
+                const response = await fetch('http://localhost:7070/api/questionCreate/list?page=1&size=1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult(`连接成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                } else {
+                    showResult(`连接失败: HTTP ${response.status}`, false);
+                }
+            } catch (error) {
+                showResult(`连接错误: ${error.message}`, false);
+            }
+        }
+
+        async function testCreateQuestionnaire() {
+            try {
+                showResult('正在测试创建问卷...', true);
+                
+                const testData = {
+                    title: "测试问卷",
+                    description: "这是一个测试问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "测试单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "选项2", sortNum: 2, isDefault: 0 }
+                            ]
+                        }
+                    ]
+                };
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResult(`创建成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                } else {
+                    const errorText = await response.text();
+                    showResult(`创建失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                showResult(`创建错误: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 

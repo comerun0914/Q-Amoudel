@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问题保存测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>问题保存测试</h1>
+    
+    <div class="test-section">
+        <h3>创建带问题的问卷</h3>
+        <button onclick="createQuestionnaireWithQuestions()">创建问卷（包含问题）</button>
+        <div id="create-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>查询问卷问题</h3>
+        <input type="number" id="questionnaire-id" placeholder="输入问卷ID" value="45067318">
+        <button onclick="getQuestionnaireQuestions()">查询问题</button>
+        <div id="questions-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>查询问卷详情</h3>
+        <input type="number" id="detail-id" placeholder="输入问卷ID" value="45067318">
+        <button onclick="getQuestionnaireDetail()">查询详情</button>
+        <div id="detail-result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        async function createQuestionnaireWithQuestions() {
+            try {
+                showResult('create-result', '正在创建带问题的问卷...', true);
+                
+                const testData = {
+                    title: "问题保存测试问卷",
+                    description: "这是一个测试问题保存的问卷",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "测试单选题",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项1", sortNum: 1, isDefault: 0 },
+                                { optionContent: "选项2", sortNum: 2, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "测试多选题",
+                            questionType: 2,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "选项A", sortNum: 1 },
+                                { optionContent: "选项B", sortNum: 2 },
+                                { optionContent: "选项C", sortNum: 3 }
+                            ]
+                        },
+                        {
+                            content: "测试填空题",
+                            questionType: 3,
+                            sortNum: 3,
+                            isRequired: 1,
+                            options: []
+                        }
+                    ]
+                };
+
+                console.log('发送创建数据:', testData);
+
+                const response = await fetch('http://localhost:7070/api/questionCreate/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('创建响应:', result);
+                    if (result.code === 200) {
+                        showResult('create-result', `✅ 创建成功！\n问卷ID: ${result.data.id}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                        // 自动填充问卷ID到查询框
+                        document.getElementById('questionnaire-id').value = result.data.id;
+                        document.getElementById('detail-id').value = result.data.id;
+                    } else {
+                        showResult('create-result', `❌ 创建失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('create-result', `❌ 创建失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('创建问卷错误:', error);
+                showResult('create-result', `❌ 创建错误: ${error.message}`, false);
+            }
+        }
+
+        async function getQuestionnaireQuestions() {
+            try {
+                const questionnaireId = document.getElementById('questionnaire-id').value;
+                if (!questionnaireId) {
+                    showResult('questions-result', '❌ 请输入问卷ID', false);
+                    return;
+                }
+
+                showResult('questions-result', `正在查询问卷 ${questionnaireId} 的问题...`, true);
+                
+                const response = await fetch(`http://localhost:7070/api/questionCreate/questions?questionnaireId=${questionnaireId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('问题查询响应:', result);
+                    if (result.code === 200) {
+                        showResult('questions-result', `✅ 查询成功！\n问题数量: ${result.data.length}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('questions-result', `❌ 查询失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('questions-result', `❌ 查询失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('查询问题错误:', error);
+                showResult('questions-result', `❌ 查询错误: ${error.message}`, false);
+            }
+        }
+
+        async function getQuestionnaireDetail() {
+            try {
+                const questionnaireId = document.getElementById('detail-id').value;
+                if (!questionnaireId) {
+                    showResult('detail-result', '❌ 请输入问卷ID', false);
+                    return;
+                }
+
+                showResult('detail-result', `正在查询问卷 ${questionnaireId} 的详情...`, true);
+                
+                const response = await fetch(`http://localhost:7070/api/questionCreate/detail?id=${questionnaireId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('详情查询响应:', result);
+                    if (result.code === 200) {
+                        showResult('detail-result', `✅ 查询成功！\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('detail-result', `❌ 查询失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('detail-result', `❌ 查询失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('查询详情错误:', error);
+                showResult('detail-result', `❌ 查询错误: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 

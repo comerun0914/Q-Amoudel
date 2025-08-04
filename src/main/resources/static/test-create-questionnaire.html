@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试创建问卷接口</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试创建问卷接口</h1>
+    
+    <div class="test-section">
+        <h3>1. 测试创建问卷</h3>
+        <button class="test-button" onclick="testCreateQuestionnaire()">创建测试问卷</button>
+        <div id="createResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 测试获取问卷列表</h3>
+        <button class="test-button" onclick="testGetQuestionnaireList()">获取问卷列表</button>
+        <div id="listResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 测试统计信息</h3>
+        <button class="test-button" onclick="testGetStatistics()">获取统计信息</button>
+        <div id="statisticsResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 测试连接</h3>
+        <button class="test-button" onclick="testConnection()">测试后端连接</button>
+        <div id="connectionResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:7070/api';
+        
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        function testConnection() {
+            fetch(`${BASE_URL}/questionCreate/list?page=1&size=1`)
+                .then(response => {
+                    console.log('响应状态:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    showResult('connectionResult', {
+                        status: 'success',
+                        message: '后端连接正常',
+                        data: data
+                    });
+                })
+                .catch(error => {
+                    showResult('connectionResult', {
+                        status: 'error',
+                        message: '后端连接失败',
+                        error: error.message
+                    }, true);
+                });
+        }
+        
+        function testCreateQuestionnaire() {
+            const testData = {
+                title: "测试问卷 " + new Date().toLocaleString(),
+                description: "这是一个测试问卷",
+                startDate: "2025-01-01",
+                endDate: "2025-12-31",
+                submissionLimit: 1,
+                status: true,
+                creatorId: 1
+            };
+            
+            console.log('发送数据:', testData);
+            
+            fetch(`${BASE_URL}/questionCreate/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(testData)
+            })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                showResult('createResult', {
+                    status: 'success',
+                    message: '创建问卷成功',
+                    data: data
+                });
+            })
+            .catch(error => {
+                showResult('createResult', {
+                    status: 'error',
+                    message: '创建问卷失败',
+                    error: error.message
+                }, true);
+            });
+        }
+        
+        function testGetQuestionnaireList() {
+            fetch(`${BASE_URL}/questionCreate/list?page=1&size=5`)
+                .then(response => response.json())
+                .then(data => {
+                    showResult('listResult', {
+                        status: 'success',
+                        message: '获取问卷列表成功',
+                        data: data
+                    });
+                })
+                .catch(error => {
+                    showResult('listResult', {
+                        status: 'error',
+                        message: '获取问卷列表失败',
+                        error: error.message
+                    }, true);
+                });
+        }
+        
+        function testGetStatistics() {
+            fetch(`${BASE_URL}/questionCreate/statistics`)
+                .then(response => response.json())
+                .then(data => {
+                    showResult('statisticsResult', {
+                        status: 'success',
+                        message: '获取统计信息成功',
+                        data: data
+                    });
+                })
+                .catch(error => {
+                    showResult('statisticsResult', {
+                        status: 'error',
+                        message: '获取统计信息失败',
+                        error: error.message
+                    }, true);
+                });
+        }
+    </script>
+</body>
+</html> 
