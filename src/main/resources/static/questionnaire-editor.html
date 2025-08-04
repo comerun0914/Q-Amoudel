@@ -16,7 +16,7 @@
             <div class="logo">幼儿星</div>
             <div class="nav-links">
                 <a href="index.html">首页</a>
-                <a href="questionnaire-management.html">问卷管理</a>
+                <a href="#">问卷管理</a>
                 <a href="#">数据统计</a>
                 <div class="user-info" id="userInfo">
                     <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
@@ -76,6 +76,14 @@
                             <i class="iconfont icon-table"></i>
                             <span>矩阵题</span>
                         </button>
+                        <!-- <button class="format-btn" data-type="date">
+                            <i class="iconfont icon-calendar"></i>
+                            <span>日期题</span>
+                        </button>
+                        <button class="format-btn" data-type="time">
+                            <i class="iconfont icon-clock"></i>
+                            <span>时间题</span>
+                        </button> -->
                     </div>
                 </div>
 
@@ -118,68 +126,33 @@
 
             <!-- 主要内容区域 -->
             <div class="main-content-area">
-                <!-- 优化后的问卷信息区域 -->
-                <div class="questionnaire-info-section">
-                    <div class="section-header">
-                        <h2><i class="iconfont icon-edit"></i> 问卷基本信息</h2>
-                        <p class="section-description">设置问卷的标题、描述和基本配置</p>
+                <div class="questionnaire-info">
+                    <div class="form-group">
+                        <label for="questionnaire-title">问卷标题</label>
+                        <div class="text-display" id="questionnaire-title" placeholder="请输入问卷标题">幼儿教育满意度调查</div>
                     </div>
-                    
-                    <div class="questionnaire-info-form">
-                        <div class="form-row">
-                            <div class="form-group title-group">
-                                <label for="questionnaire-title">
-                                    <i class="iconfont icon-title"></i>
-                                    问卷标题 <span class="required">*</span>
-                                </label>
-                                <input type="text" id="questionnaire-title" placeholder="请输入问卷标题" class="title-input">
-                                <div class="input-hint">建议标题简洁明了，突出问卷主题</div>
-                            </div>
+                    <div class="form-group">
+                        <label for="questionnaire-description">问卷描述</label>
+                        <div class="text-display" id="questionnaire-description-display">本问卷旨在了解家长对幼儿园教育服务的满意度，您的反馈将帮助我们改进教育质量。感谢您的参与！</div>
+                    </div>
+                    <div class="form-group date-group">
+                        <div>
+                            <label for="start-date">开始日期</label>
+                            <div class="text-display" id="start-date">2023-11-15</div>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group description-group">
-                                <label for="questionnaire-description">
-                                    <i class="iconfont icon-description"></i>
-                                    问卷描述
-                                </label>
-                                <textarea id="questionnaire-description" placeholder="请输入问卷描述（可选）" rows="4" class="description-input"></textarea>
-                                <div class="input-hint">描述问卷的目的、填写说明或注意事项</div>
-                            </div>
+                        <div>
+                            <label for="end-date">结束日期</label>
+                            <div class="text-display" id="end-date">2023-12-15</div>
                         </div>
-                        
-                        <div class="form-row date-row">
-                            <div class="form-group date-group">
-                                <label for="start-date">
-                                    <i class="iconfont icon-calendar"></i>
-                                    开始日期 <span class="required">*</span>
-                                </label>
-                                <input type="date" id="start-date" class="date-input">
-                            </div>
-                            <div class="form-group date-group">
-                                <label for="end-date">
-                                    <i class="iconfont icon-calendar"></i>
-                                    结束日期 <span class="required">*</span>
-                                </label>
-                                <input type="date" id="end-date" class="date-input">
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group limit-group">
-                                <label for="submission-limit">
-                                    <i class="iconfont icon-limit"></i>
-                                    填写次数限制
-                                </label>
-                                <input type="number" id="submission-limit" min="1" max="999" value="1" class="limit-input">
-                                <div class="input-hint">每个用户最多可填写此问卷的次数</div>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="creator-name">创建人姓名</label>
+                        <div class="text-display" id="creator-name-display">张三</div>
                     </div>
                 </div>
                 
                 <div class="editor-header">
-                    <h1><i class="iconfont icon-questions"></i> 问卷编辑</h1>
+                    <h1>问卷编辑</h1>
                     <div class="editor-stats">
                         <span class="stat-item">
                             <i class="iconfont icon-question"></i>
@@ -201,17 +174,17 @@
                 <div class="form-actions">
                     <div class="action-sidebar">
                         <div class="action-buttons">
-                            <button class="format-lbtn save-btn" onclick="saveQuestionnaire()">
+                            <button class="format-lbtn" id="save-draft">
                                 <i class="iconfont icon-save"></i>
-                                保存问卷
+                                保存草稿
                             </button>
-                            <button class="format-lbtn preview" onclick="previewQuestionnaire()">
+                            <button class="format-lbtn preview" id="preview-questionnaire">
                                 <i class="iconfont icon-eye"></i>
                                 预览问卷
                             </button>
-                            <button class="format-lbtn" onclick="window.location.href='questionnaire-management.html'">
-                                <i class="iconfont icon-back"></i>
-                                返回管理
+                            <button class="format-lbtn publish" id="publish-questionnaire">
+                                <i class="iconfont icon-publish"></i>
+                                发布问卷
                             </button>
                         </div>
                     </div>

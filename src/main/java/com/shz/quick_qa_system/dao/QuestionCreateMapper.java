@@ -22,5 +22,5 @@ public interface QuestionCreateMapper extends BaseMapper<QuestionCreate> {
      * @param wrapper 查询条件
      * @return 是否存在
      */
-    boolean exists(@Param("ew") Wrapper<QuestionCreate> wrapper);
+//    boolean exists(@Param("ew") Wrapper<QuestionCreate> wrapper);
 }

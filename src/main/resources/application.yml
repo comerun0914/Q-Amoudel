@@ -9,8 +9,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/q-asystem?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
-    username: root # 使用环境变量或默认值
-    password: mor112112
+    username: comerun # 使用环境变量或默认值
+    password: shz@hyj1314
     type: com.zaxxer.hikari.HikariDataSource  # 使用HikariCP连接池
     hikari:
       minimum-idle: 5

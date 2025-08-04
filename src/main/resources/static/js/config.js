@@ -14,7 +14,7 @@ const CONFIG = {
         // 问卷相关
         QUESTIONNAIRE_LIST: '/questionCreate/list',
         QUESTIONNAIRE_DETAIL: '/questionCreate/detail',
-        QUESTIONNAIRE_GETINFOBYID: '/questionCreate/detail',
+        QUESTIONNAIRE_GETINFOBYID: '/questionCreate/getInfoById',
         QUESTIONNAIRE_QUESTIONS: '/questionCreate/questions',
         QUESTIONNAIRE_CREATE: '/questionCreate/create',
         QUESTIONNAIRE_UPDATE: '/questionCreate/update',
@@ -29,7 +29,7 @@ const CONFIG = {
         QUESTIONNAIRE_SUBMIT: '/questionCreate/submit',
         QUESTIONNAIRE_RESULT: '/questionCreate/result',
         QUESTIONNAIRE_RESULTS: '/questionCreate/results',
-        
+
         // 登录历史
         LOGIN_HISTORY: '/api/login-history',
         

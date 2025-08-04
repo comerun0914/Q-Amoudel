@@ -2,9 +2,12 @@ package com.shz.quick_qa_system.controller;
 
 import com.shz.quick_qa_system.Costant.ApiResult;
 import com.shz.quick_qa_system.dto.QuestionCreateDto;
+import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.entity.QuestionCreate;
+import com.shz.quick_qa_system.entity.Users;
 import com.shz.quick_qa_system.service.QuestionCreateService;
 import com.shz.quick_qa_system.service.impl.QuestionCreateServiceImpl;
+import com.shz.quick_qa_system.service.impl.UsersServiceImpl;
 import com.shz.quick_qa_system.utils.CodeGenerator;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +16,6 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import com.shz.quick_qa_system.dto.QuestionDto;
 
 /**
  * <p>
@@ -28,24 +30,30 @@ import com.shz.quick_qa_system.dto.QuestionDto;
 public class QuestionCreateController {
     @Resource
     private QuestionCreateServiceImpl questionCreateServiceImpl;
+    @Resource
+    private UsersServiceImpl usersServiceImpl;
 
     /**
      * 创建问卷
      */
     @PostMapping("/create")
-    public ApiResult CreateQuestion(@RequestBody Map<String, Object> request){
+    public ApiResult CreateQuestion(@RequestBody QuestionCreate questionCreate){
         try {
-            // 获取当前用户ID
-            Integer creatorId = (Integer) request.get("creatorId");
-            if (creatorId == null) {
-                // 如果没有提供creatorId，可以从session或token中获取
-                // 这里暂时使用默认值1
-                creatorId = 1;
+            QuestionCreate createdQuestion = questionCreateServiceImpl.CreateQuestion(questionCreate);
+            if (createdQuestion != null) {
+                // 获取创建人用户名
+                String creatorName = "未知用户";
+                if (createdQuestion.getCreatorId() != null) {
+                    Users creator = usersServiceImpl.getById(createdQuestion.getCreatorId());
+                    if (creator != null) {
+                        creatorName = creator.getUsername();
+                    }
+                }
+                // 使用新的ApiResult方法
+                return ApiResult.successQuestionnaire(createdQuestion, creatorName);
+            } else {
+                return ApiResult.error("创建问卷失败");
             }
-            request.put("creatorId", creatorId);
-            
-            QuestionCreate result = questionCreateServiceImpl.createQuestionnaireWithQuestions(request);
-            return ApiResult.success(result);
         } catch (Exception e) {
             return ApiResult.error("创建问卷失败: " + e.getMessage());
         }
@@ -95,7 +103,7 @@ public class QuestionCreateController {
                 creatorId = 1;
             }
             request.put("creatorId", creatorId);
-            
+
             QuestionCreate result = questionCreateServiceImpl.updateQuestionnaireWithQuestions(request);
             return ApiResult.success(result);
         } catch (Exception e) {
@@ -215,6 +223,29 @@ public class QuestionCreateController {
             return ApiResult.success(result);
         } catch (Exception e) {
             return ApiResult.error("获取统计信息失败: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("getInfoById")
+    public ApiResult GetQuestionInfoById(@RequestParam("id") Integer id){
+        try {
+            QuestionCreate questionCreate = questionCreateServiceImpl.getById(id);
+            if (questionCreate != null) {
+                // 获取创建人用户名
+                String creatorName = "未知用户";
+                if (questionCreate.getCreatorId() != null) {
+                    Users creator = usersServiceImpl.getById(questionCreate.getCreatorId());
+                    if (creator != null) {
+                        creatorName = creator.getUsername();
+                    }
+                }
+                // 使用新的ApiResult方法
+                return ApiResult.successQuestionnaireInfo(questionCreate, creatorName);
+            } else {
+                return ApiResult.error("未找到指定的问卷");
+            }
+        } catch (Exception e) {
+            return ApiResult.error("获取问卷信息失败: " + e.getMessage());
         }
     }
 }

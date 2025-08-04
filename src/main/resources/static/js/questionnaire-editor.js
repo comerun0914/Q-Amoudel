@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         loadQuestionnaireInfo();
     }, 100);
-    
+
     let questionCount = 0;
     
     // 获取DOM元素
@@ -1677,49 +1677,55 @@ function checkUserLoginStatus() {
  * 加载问卷信息
  */
 function loadQuestionnaireInfo() {
-    // 从URL参数获取问卷ID
     console.log('=== 开始加载问卷信息 ===');
     console.log('当前页面URL:', window.location.href);
     console.log('当前页面search:', window.location.search);
-    
-    // 更健壮的URL参数解析
-    let questionnaireId = null;
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedQuestionnaireId = urlParams.get('id');
-        
-        if (encodedQuestionnaireId) {
-            // 解码URL参数
-            questionnaireId = decodeURIComponent(encodedQuestionnaireId);
-            console.log('成功解析URL参数');
-        } else {
-            console.log('URL中没有找到id参数');
-        }
-    } catch (error) {
-        console.error('URL参数解析失败:', error);
-        // 尝试手动解析
-        const search = window.location.search;
-        const match = search.match(/[?&]id=([^&]*)/);
-        if (match) {
-            questionnaireId = decodeURIComponent(match[1]);
-            console.log('手动解析成功:', questionnaireId);
+
+    // 优先从本地存储获取问卷ID
+    let questionnaireId = localStorage.getItem('current_questionnaire_id');
+
+    if (questionnaireId) {
+        console.log('从本地存储获取到问卷ID:', questionnaireId);
+    } else {
+        // 如果本地存储没有，尝试从URL参数获取
+        console.log('本地存储中没有问卷ID，尝试从URL参数获取');
+
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedQuestionnaireId = urlParams.get('id');
+
+            if (encodedQuestionnaireId) {
+                questionnaireId = decodeURIComponent(encodedQuestionnaireId);
+                console.log('成功从URL参数解析问卷ID:', questionnaireId);
+            } else {
+                console.log('URL中也没有找到id参数');
+            }
+        } catch (error) {
+            console.error('URL参数解析失败:', error);
+            // 尝试手动解析
+            const search = window.location.search;
+            const match = search.match(/[?&]id=([^&]*)/);
+            if (match) {
+                questionnaireId = decodeURIComponent(match[1]);
+                console.log('手动解析成功:', questionnaireId);
+            }
         }
     }
-    
-    console.log('解码后的问卷ID:', questionnaireId);
-    console.log('URL参数类型:', typeof questionnaireId);
-    
+
+    console.log('最终获取的问卷ID:', questionnaireId);
+    console.log('问卷ID类型:', typeof questionnaireId);
+
     if (questionnaireId) {
-        // 如果有ID参数，从后端获取问卷信息
+        // 如果有问卷ID，从后端获取问卷信息
         console.log('调用后端接口获取问卷信息');
         fetchQuestionnaireFromBackend(questionnaireId);
     } else {
-        // 如果没有ID参数，显示错误信息并跳转
-        showErrorMessage('网络问题，。请检查网络连接');
+        // 如果没有问卷ID，显示错误信息并跳转
+        showErrorMessage('缺少问卷ID，请从正确的入口访问问卷编辑器');
         // 可以选择跳转到问卷列表页面或创建页面
         setTimeout(() => {
             window.location.href = 'index.html';
-        }, 100000);
+        }, 3000);
     }
 }
 
@@ -1733,16 +1739,16 @@ async function fetchQuestionnaireFromBackend(questionnaireId) {
         const separator = baseUrl.includes('?') ? '&' : '?';
         const apiUrl = baseUrl + separator + `id=${questionnaireId}`;
         console.log('API URL:', apiUrl);
-        
+
         const response = await fetch(apiUrl);
         const result = await response.json();
-        
+
         console.log('API响应结果:', result);
-        
+
         if (result.code === 200 && result.data) {
             const questionnaire = result.data; // 问卷数据
             const creatorName = result.userInfo;   // 创建人用户名
-            
+
             // 合并数据
             const fullQuestionnaire = {
                 ...questionnaire,
@@ -1772,33 +1778,27 @@ function displayQuestionnaireInfo(questionnaire) {
     // 更新问卷标题
     const titleElement = document.getElementById('questionnaire-title');
     if (titleElement && questionnaire.title) {
-        titleElement.value = questionnaire.title;
+        titleElement.textContent = questionnaire.title;
     }
-    
+
     // 更新问卷描述
-    const descriptionElement = document.getElementById('questionnaire-description');
+    const descriptionElement = document.getElementById('questionnaire-description-display');
     if (descriptionElement && questionnaire.description) {
-        descriptionElement.value = questionnaire.description;
+        descriptionElement.textContent = questionnaire.description;
     }
-    
+
     // 更新开始日期
     const startDateElement = document.getElementById('start-date');
     if (startDateElement && questionnaire.startDate) {
-        startDateElement.value = questionnaire.startDate;
+        startDateElement.textContent = questionnaire.startDate;
     }
-    
+
     // 更新结束日期
     const endDateElement = document.getElementById('end-date');
     if (endDateElement && questionnaire.endDate) {
-        endDateElement.value = questionnaire.endDate;
+        endDateElement.textContent = questionnaire.endDate;
     }
-    
-    // 更新提交限制
-    const submissionLimitElement = document.getElementById('submission-limit');
-    if (submissionLimitElement && questionnaire.submissionLimit) {
-        submissionLimitElement.value = questionnaire.submissionLimit;
-    }
-    
+
     // 更新创建人信息
     const creatorElement = document.getElementById('creator-name-display');
     if (creatorElement) {
@@ -1808,7 +1808,11 @@ function displayQuestionnaireInfo(questionnaire) {
             creatorElement.textContent = '未知用户';
         }
     }
-    
+
+    // 清除本地存储中的问卷ID，避免影响后续使用
+    localStorage.removeItem('current_questionnaire_id');
+    console.log('已清除本地存储中的问卷ID');
+
     console.log('问卷信息已加载:', questionnaire);
 }
 
@@ -1834,7 +1838,7 @@ function showErrorMessage(message) {
         max-width: 400px;
         font-weight: 500;
     `;
-    
+
     errorContainer.innerHTML = `
         <div style="margin-bottom: 10px;">
             <i style="font-size: 24px;">⚠️</i>
@@ -1842,225 +1846,13 @@ function showErrorMessage(message) {
         <div style="margin-bottom: 15px;">${message}</div>
         <div style="font-size: 14px; opacity: 0.8;">页面将在3秒后自动跳转...</div>
     `;
-    
+
     document.body.appendChild(errorContainer);
-    
+
     // 3秒后自动移除
     setTimeout(() => {
         if (errorContainer.parentNode) {
             errorContainer.parentNode.removeChild(errorContainer);
         }
     }, 3000);
-}
-
-/**
- * 保存问卷数据到数据库
- */
-async function saveQuestionnaire() {
-    try {
-        // 检查用户登录状态
-        const userInfo = UTILS.checkAuth(1);
-        if (!userInfo) {
-            UTILS.showToast('请先登录', 'error');
-            return;
-        }
-
-        // 收集问卷基本信息
-        const title = document.getElementById('questionnaire-title')?.value || '';
-        const description = document.getElementById('questionnaire-description')?.value || '';
-        const startDate = document.getElementById('start-date')?.value || '';
-        const endDate = document.getElementById('end-date')?.value || '';
-        const submissionLimit = parseInt(document.getElementById('submission-limit')?.value) || 1;
-
-        // 验证必填字段
-        if (!title.trim()) {
-            UTILS.showToast('请输入问卷标题', 'error');
-            return;
-        }
-        if (!startDate) {
-            UTILS.showToast('请选择开始日期', 'error');
-            return;
-        }
-        if (!endDate) {
-            UTILS.showToast('请选择结束日期', 'error');
-            return;
-        }
-
-        // 收集问题数据
-        const questions = collectQuestionsData();
-        
-        // 构建请求数据
-        const questionnaireData = {
-            title: title.trim(),
-            description: description.trim(),
-            startDate: startDate,
-            endDate: endDate,
-            submissionLimit: submissionLimit,
-            status: true, // 默认启用
-            creatorId: userInfo.id,
-            questions: questions
-        };
-
-        // 从URL获取问卷ID（如果是编辑模式）
-        const urlParams = new URLSearchParams(window.location.search);
-        const questionnaireId = urlParams.get('id');
-        
-        let apiUrl;
-        let method;
-        
-        if (questionnaireId) {
-            // 编辑模式 - 更新问卷
-            questionnaireData.id = parseInt(questionnaireId);
-            apiUrl = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_UPDATE, false);
-            method = 'POST';
-        } else {
-            // 创建模式 - 新建问卷
-            apiUrl = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false);
-            method = 'POST';
-        }
-
-        console.log('发送问卷数据:', questionnaireData);
-        console.log('API URL:', apiUrl);
-
-        // 发送请求
-        console.log('正在发送请求到:', apiUrl);
-        console.log('请求数据:', questionnaireData);
-        
-        const response = await fetch(apiUrl, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(questionnaireData)
-        });
-
-        console.log('响应状态:', response.status);
-        console.log('响应头:', response.headers);
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log('保存响应:', result);
-
-        if (result.code === 200) {
-            UTILS.showToast('问卷保存成功！', 'success');
-            
-            // 如果是新建问卷，更新URL为编辑模式
-            if (!questionnaireId && result.data && result.data.id) {
-                const newUrl = new URL(window.location);
-                newUrl.searchParams.set('id', result.data.id);
-                window.history.replaceState({}, '', newUrl);
-            }
-            
-            // 延迟跳转到预览页面
-            setTimeout(() => {
-                const previewId = questionnaireId || result.data.id;
-                console.log('跳转到预览页面，ID:', previewId);
-                window.location.href = 'questionnaire-preview.html?id=' + previewId;
-            }, 1500);
-        } else {
-            UTILS.showToast(result.message || '保存失败，请重试', 'error');
-        }
-    } catch (error) {
-        console.error('保存问卷时发生错误:', error);
-        if (error.name === 'TypeError' && error.message.includes('fetch')) {
-            UTILS.showToast('网络连接失败，请检查后端服务是否启动', 'error');
-        } else {
-            UTILS.showToast(`网络错误: ${error.message}`, 'error');
-        }
-    }
-}
-
-/**
- * 收集问题数据
- */
-function collectQuestionsData() {
-    const questions = [];
-    const questionElements = document.querySelectorAll('.question-item');
-    
-    console.log('找到问题元素数量:', questionElements.length);
-    
-    questionElements.forEach((element, index) => {
-        const questionType = element.getAttribute('data-type');
-        const questionContent = element.querySelector('.question-content')?.value || '';
-        
-        console.log(`问题 ${index + 1}:`, {
-            type: questionType,
-            content: questionContent,
-            hasContent: !!questionContent.trim()
-        });
-        
-        if (!questionContent.trim()) {
-            console.log(`跳过空问题 ${index + 1}`);
-            return; // 跳过空问题
-        }
-        
-        const questionData = {
-            content: questionContent.trim(),
-            questionType: getQuestionTypeCode(questionType),
-            sortNum: index + 1,
-            isRequired: 1, // 默认必填
-            options: []
-        };
-        
-        // 根据问题类型收集选项数据
-        if (questionType === 'single' || questionType === 'multiple') {
-            const options = element.querySelectorAll('.option-content');
-            console.log(`问题 ${index + 1} 找到选项数量:`, options.length);
-            
-            options.forEach((option, optionIndex) => {
-                const optionText = option.value.trim();
-                if (optionText) {
-                    questionData.options.push({
-                        optionContent: optionText,
-                        sortNum: optionIndex + 1,
-                        isDefault: 0
-                    });
-                }
-            });
-        }
-        
-        console.log(`问题 ${index + 1} 数据:`, questionData);
-        questions.push(questionData);
-    });
-    
-    console.log('收集到的问题数据:', questions);
-    return questions;
-}
-
-/**
- * 获取问题类型代码
- */
-function getQuestionTypeCode(type) {
-    const typeMap = {
-        'single': 1,    // 单选题
-        'multiple': 2,  // 多选题
-        'text': 3,      // 填空题
-        'rating': 4,    // 评分题
-        'matrix': 5,    // 矩阵题
-        'date': 6,      // 日期题
-        'time': 7,      // 时间题
-        'file': 8,      // 文件上传
-        'location': 9,  // 位置选择
-        'signature': 10 // 签名题
-    };
-    
-    return typeMap[type] || 3; // 默认为填空题
-}
-
-/**
- * 预览问卷
- */
-function previewQuestionnaire() {
-    // 收集当前问卷数据
-    const questionnaireData = collectQuestionnaireData();
-    
-    // 将数据编码并添加到URL参数
-    const encodedData = encodeURIComponent(JSON.stringify(questionnaireData));
-    const previewUrl = `${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?data=${encodedData}`;
-    
-    // 在新标签页中打开预览
-    window.open(previewUrl, '_blank');
 }
