@@ -1,7 +1,7 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://localhost:7070',
+    BACKEND_BASE_URL: 'http://localhost:7070/api',
 
     // API端点配置
     API_ENDPOINTS: {
@@ -31,10 +31,10 @@ const CONFIG = {
         QUESTIONNAIRE_RESULTS: '/questionCreate/results',
 
         // 登录历史
-        LOGIN_HISTORY: '/login-history',
+        LOGIN_HISTORY: '/api/login-history',
 
         // 文件上传
-        UPLOAD_FILE: '/upload/file'
+        UPLOAD_FILE: '/api/upload/file'
     },
 
     // 页面路由配置
