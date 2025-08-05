@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷保存测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>问卷保存功能测试</h1>
+    
+    <div class="test-section">
+        <h2>测试创建包含各种题型的问卷</h2>
+        <button onclick="testCreateQuestionnaire()">创建测试问卷</button>
+        <div id="create-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试查询问卷问题</h2>
+        <input type="number" id="questionnaire-id" placeholder="输入问卷ID">
+        <button onclick="testGetQuestions()">查询问题</button>
+        <div id="questions-result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<pre>${message}</pre>`;
+        }
+
+        async function testCreateQuestionnaire() {
+            try {
+                showResult('create-result', '正在创建包含各种题型的测试问卷...', true);
+                
+                const testData = {
+                    title: "综合题型测试问卷",
+                    description: "这是一个测试各种题型的问卷，包含单选题、多选题、问答题、评分题和矩阵题",
+                    startDate: "2025-01-01",
+                    endDate: "2025-12-31",
+                    submissionLimit: 100,
+                    status: true,
+                    creatorId: 1,
+                    questions: [
+                        {
+                            content: "您的性别？",
+                            questionType: 1,
+                            sortNum: 1,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "男", sortNum: 1, isDefault: 0 },
+                                { optionContent: "女", sortNum: 2, isDefault: 0 }
+                            ]
+                        },
+                        {
+                            content: "您喜欢的水果有哪些？",
+                            questionType: 2,
+                            sortNum: 2,
+                            isRequired: 1,
+                            options: [
+                                { optionContent: "苹果", sortNum: 1 },
+                                { optionContent: "香蕉", sortNum: 2 },
+                                { optionContent: "橙子", sortNum: 3 },
+                                { optionContent: "葡萄", sortNum: 4 }
+                            ]
+                        },
+                        {
+                            content: "请描述您对幼儿园的建议：",
+                            questionType: 3,
+                            sortNum: 3,
+                            isRequired: 1,
+                            hintText: "请详细描述您的建议",
+                            maxLength: 500,
+                            inputType: 2
+                        },
+                        {
+                            content: "您对幼儿园的整体满意度评分：",
+                            questionType: 4,
+                            sortNum: 4,
+                            isRequired: 1,
+                            minScore: 1,
+                            maxScore: 5,
+                            minLabel: "非常不满意",
+                            maxLabel: "非常满意",
+                            step: 1
+                        },
+                        {
+                            content: "请评价以下各项服务：",
+                            questionType: 5,
+                            sortNum: 5,
+                            isRequired: 1,
+                            subQuestionType: 1,
+                            description: "请对各项服务进行评价",
+                            rows: ["教学质量", "环境卫生", "安全保障", "沟通服务"],
+                            columns: ["非常满意", "满意", "一般", "不满意", "非常不满意"]
+                        }
+                    ]
+                };
+
+                console.log('发送创建数据:', testData);
+
+                const response = await fetch('http://localhost:7070/questionCreate/createWithQuestions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('创建响应:', result);
+                    if (result.code === 200) {
+                        showResult('create-result', `✅ 创建成功！\n问卷ID: ${result.data.id}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                        // 自动填充问卷ID到查询框
+                        document.getElementById('questionnaire-id').value = result.data.id;
+                    } else {
+                        showResult('create-result', `❌ 创建失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('create-result', `❌ 创建失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('创建问卷错误:', error);
+                showResult('create-result', `❌ 创建错误: ${error.message}`, false);
+            }
+        }
+
+        async function testGetQuestions() {
+            try {
+                const questionnaireId = document.getElementById('questionnaire-id').value;
+                if (!questionnaireId) {
+                    showResult('questions-result', '❌ 请输入问卷ID', false);
+                    return;
+                }
+
+                showResult('questions-result', `正在查询问卷 ${questionnaireId} 的问题...`, true);
+                
+                const response = await fetch(`http://localhost:7070/questionCreate/questions?questionnaireId=${questionnaireId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('查询响应:', result);
+                    if (result.code === 200) {
+                        showResult('questions-result', `✅ 查询成功！\n问题数量: ${result.data.length}\n响应: ${JSON.stringify(result, null, 2)}`, true);
+                    } else {
+                        showResult('questions-result', `❌ 查询失败: ${result.message}`, false);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showResult('questions-result', `❌ 查询失败: HTTP ${response.status}\n${errorText}`, false);
+                }
+            } catch (error) {
+                console.error('查询问题错误:', error);
+                showResult('questions-result', `❌ 查询错误: ${error.message}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 
