@@ -9,6 +9,15 @@ let questionnaireData = {
   questions: []
 };
 
+// 用户答案数据
+let userAnswers = {};
+
+// 提交时间
+let submitTime = '';
+
+// 填写时长
+let duration = 0;
+
 /**
  * 初始化预览页面
  */
@@ -27,6 +36,22 @@ function initPreview() {
  * 加载问卷数据
  */
 function loadQuestionnaireData() {
+  // 首先尝试从localStorage获取预览数据（填写完问卷后的数据）
+  const previewData = localStorage.getItem('questionnaire_preview_data');
+  if (previewData) {
+    try {
+      const data = JSON.parse(previewData);
+      questionnaireData = data.questionnaire;
+      userAnswers = data.answers;
+      submitTime = data.submitTime;
+      duration = data.duration;
+      console.log('加载预览数据:', data);
+      return;
+    } catch (error) {
+      console.error('解析预览数据失败:', error);
+    }
+  }
+  
   // 尝试从URL参数获取数据
   const urlParams = new URLSearchParams(window.location.search);
   const dataParam = urlParams.get('data');
@@ -86,6 +111,17 @@ function renderQuestionnaire() {
   // 设置问卷标题和描述
   document.getElementById('questionnaireTitle').textContent = questionnaireData.title;
   document.getElementById('questionnaireDescription').textContent = questionnaireData.description;
+  
+  // 如果有提交信息，更新页面标题和描述
+  if (submitTime) {
+    const header = document.querySelector('.preview-header .preview-title');
+    if (header) {
+      const title = header.querySelector('h1');
+      const subtitle = header.querySelector('.preview-subtitle');
+      if (title) title.textContent = '问卷填写结果预览';
+      if (subtitle) subtitle.textContent = `提交时间: ${new Date(submitTime).toLocaleString()} | 填写时长: ${Math.floor(duration / 60)}分${duration % 60}秒`;
+    }
+  }
   
   // 渲染问题列表
   const questionsContainer = document.getElementById('questionsContainer');
@@ -197,6 +233,9 @@ function createRadioOptions(question) {
   const container = document.createElement('div');
   container.className = 'options-container';
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  
   question.options.forEach((option) => {
     const optionDiv = document.createElement('div');
     optionDiv.className = 'option-item';
@@ -206,6 +245,12 @@ function createRadioOptions(question) {
     radio.name = `question_${question.id || Math.random()}`;
     radio.value = option;
     radio.disabled = true;
+    
+    // 如果这是用户选择的答案，则选中
+    if (userAnswer === option) {
+      radio.checked = true;
+      optionDiv.classList.add('selected-answer');
+    }
     
     const label = document.createElement('span');
     label.className = 'option-text';
@@ -226,6 +271,10 @@ function createCheckboxOptions(question) {
   const container = document.createElement('div');
   container.className = 'options-container';
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  const selectedOptions = Array.isArray(userAnswer) ? userAnswer : [];
+  
   question.options.forEach((option) => {
     const optionDiv = document.createElement('div');
     optionDiv.className = 'option-item';
@@ -234,6 +283,12 @@ function createCheckboxOptions(question) {
     checkbox.type = 'checkbox';
     checkbox.value = option;
     checkbox.disabled = true;
+    
+    // 如果这是用户选择的答案，则选中
+    if (selectedOptions.includes(option)) {
+      checkbox.checked = true;
+      optionDiv.classList.add('selected-answer');
+    }
     
     const label = document.createElement('span');
     label.className = 'option-text';
@@ -260,6 +315,13 @@ function createTextInput(question) {
   textarea.placeholder = '请输入您的答案...';
   textarea.disabled = true;
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  if (userAnswer) {
+    textarea.value = userAnswer;
+    textarea.classList.add('has-answer');
+  }
+  
   container.appendChild(textarea);
   return container;
 }
@@ -273,11 +335,22 @@ function createRatingInput(question) {
   
   const maxRating = question.maxRating || 5;
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  const rating = userAnswer ? parseInt(userAnswer) : 0;
+  
   for (let i = 1; i <= maxRating; i++) {
     const star = document.createElement('span');
     star.className = 'rating-star';
     star.textContent = '★';
     star.style.cursor = 'default';
+    
+    // 如果这是用户选择的评分，则高亮显示
+    if (i <= rating) {
+      star.style.color = '#ffd700';
+      star.classList.add('selected-rating');
+    }
+    
     container.appendChild(star);
   }
   
@@ -313,6 +386,9 @@ function createMatrixInput(question) {
   // 创建表体
   const tbody = document.createElement('tbody');
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  
   question.rows.forEach(row => {
     const tr = document.createElement('tr');
     
@@ -326,7 +402,15 @@ function createMatrixInput(question) {
       const radio = document.createElement('input');
       radio.type = 'radio';
       radio.name = `matrix_${row}`;
+      radio.value = column;
       radio.disabled = true;
+      
+      // 如果这是用户选择的答案，则选中
+      if (userAnswer && userAnswer[row] === column) {
+        radio.checked = true;
+        td.classList.add('selected-answer');
+      }
+      
       td.appendChild(radio);
       tr.appendChild(td);
     });
@@ -352,6 +436,13 @@ function createDateInput(question) {
   input.className = 'text-input';
   input.disabled = true;
   
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  if (userAnswer) {
+    input.value = userAnswer;
+    input.classList.add('has-answer');
+  }
+  
   container.appendChild(input);
   return container;
 }
@@ -367,6 +458,13 @@ function createTimeInput(question) {
   input.type = 'time';
   input.className = 'text-input';
   input.disabled = true;
+  
+  // 获取用户答案 - 尝试多种可能的键名
+  const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
+  if (userAnswer) {
+    input.value = userAnswer;
+    input.classList.add('has-answer');
+  }
   
   container.appendChild(input);
   return container;
@@ -395,7 +493,17 @@ function createComponentPreview(question) {
  * 绑定事件
  */
 function bindEvents() {
-  // 预览模式下不需要绑定太多事件，因为都是禁用状态
+  // 绑定返回按钮事件
+  const backButton = document.getElementById('btnBackToManagement');
+  if (backButton) {
+    backButton.addEventListener('click', () => {
+      // 清除预览数据
+      localStorage.removeItem('questionnaire_preview_data');
+      // 跳转到问卷管理页面
+      window.location.href = 'questionnaire-management.html';
+    });
+  }
+  
   console.log('问卷预览页面已加载');
 }
 

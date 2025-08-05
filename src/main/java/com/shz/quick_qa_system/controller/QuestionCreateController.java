@@ -34,6 +34,26 @@ public class QuestionCreateController {
     private UsersServiceImpl usersServiceImpl;
 
     /**
+     * 创建问卷（包含问题）
+     */
+    @PostMapping("/createWithQuestions")
+    public ApiResult createQuestionnaireWithQuestions(@RequestBody Map<String, Object> request) {
+        try {
+            // 获取当前用户ID
+            Integer creatorId = (Integer) request.get("creatorId");
+            if (creatorId == null) {
+                creatorId = 1; // 默认用户ID
+            }
+            request.put("creatorId", creatorId);
+
+            QuestionCreate result = questionCreateServiceImpl.createQuestionnaireWithQuestions(request);
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            return ApiResult.error("创建问卷失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 创建问卷
      */
     @PostMapping("/create")

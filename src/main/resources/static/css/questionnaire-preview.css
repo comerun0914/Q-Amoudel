@@ -394,3 +394,33 @@ body {
     justify-content: center;
   }
 } 
+
+/* 选中答案的样式 */
+.option-item.selected-answer {
+  background-color: #e0f2fe;
+  border-left: 4px solid var(--primary-color);
+  padding-left: 1rem;
+}
+
+.option-item.selected-answer .option-text {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* 有答案的文本输入框样式 */
+.text-input.has-answer {
+  background-color: #f0f9ff;
+  border-color: var(--primary-color);
+}
+
+/* 选中的评分星星样式 */
+.rating-star.selected-rating {
+  color: #ffd700 !important;
+  transform: scale(1.1);
+}
+
+/* 矩阵题选中答案样式 */
+.matrix-table td.selected-answer {
+  background-color: #e0f2fe;
+  border: 2px solid var(--primary-color);
+} 

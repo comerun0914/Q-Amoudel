@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>简单API测试</title>
+</head>
+<body>
+    <h1>API测试</h1>
+    <button onclick="testAPI()">测试API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('http://localhost:7070/questionCreate/list?page=1&size=1');
+                const data = await response.json();
+                resultDiv.textContent = '成功: ' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = '失败: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html> 

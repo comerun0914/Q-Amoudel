@@ -583,13 +583,22 @@ function submitQuestionnaire() {
     
     console.log('提交数据:', submitData);
     
+    // 保存答案数据到localStorage，供预览页面使用
+    const previewData = {
+        questionnaire: questionnaireData,
+        answers: userAnswers,
+        submitTime: submitData.submitTime,
+        duration: submitData.duration
+    };
+    localStorage.setItem('questionnaire_preview_data', JSON.stringify(previewData));
+    
     // 清除本地保存的答案
     localStorage.removeItem(`questionnaire-${questionnaireData.id}-answers`);
     
-    // 显示成功消息并跳转
+    // 显示成功消息并跳转到预览页面
     showToast('问卷提交成功！', 'success');
     setTimeout(() => {
-        window.location.href = CONFIG.ROUTES.QUESTIONNAIRE_RESULT + '?id=' + questionnaireData.id;
+        window.location.href = CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW;
     }, 2000);
 }
 

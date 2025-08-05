@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷数据测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background-color: #d4edda;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .question-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .option-item {
+            margin: 5px 0;
+            padding: 5px;
+            background-color: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷数据测试</h1>
+        
+        <!-- 问卷信息测试 -->
+        <div class="section">
+            <h2>1. 获取问卷基本信息</h2>
+            <div class="form-group">
+                <label for="questionnaireId">问卷ID:</label>
+                <input type="number" id="questionnaireId" value="1" placeholder="请输入问卷ID">
+            </div>
+            <button onclick="testGetQuestionnaireInfo()">获取问卷信息</button>
+            <div id="questionnaireResult" class="result"></div>
+        </div>
+
+        <!-- 题目信息测试 -->
+        <div class="section">
+            <h2>2. 获取问卷题目信息</h2>
+            <div class="form-group">
+                <label for="questionnaireIdForQuestions">问卷ID:</label>
+                <input type="number" id="questionnaireIdForQuestions" value="1" placeholder="请输入问卷ID">
+            </div>
+            <button onclick="testGetQuestionnaireQuestions()">获取题目信息</button>
+            <div id="questionsResult" class="result"></div>
+        </div>
+
+        <!-- 完整测试 -->
+        <div class="section">
+            <h2>3. 完整测试（问卷信息 + 题目信息）</h2>
+            <div class="form-group">
+                <label for="completeTestId">问卷ID:</label>
+                <input type="number" id="completeTestId" value="1" placeholder="请输入问卷ID">
+            </div>
+            <button onclick="testCompleteData()">完整测试</button>
+            <div id="completeResult" class="result"></div>
+        </div>
+
+        <!-- 数据库连接测试 -->
+        <div class="section">
+            <h2>4. 数据库连接测试</h2>
+            <button onclick="testDatabaseConnection()">测试数据库连接</button>
+            <div id="dbResult" class="result"></div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script>
+        // 测试获取问卷基本信息
+        async function testGetQuestionnaireInfo() {
+            const questionnaireId = document.getElementById('questionnaireId').value;
+            const resultDiv = document.getElementById('questionnaireResult');
+            
+            resultDiv.innerHTML = '<p>正在获取问卷信息...</p>';
+            resultDiv.className = 'result';
+            
+            try {
+                const baseUrl = CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QUESTIONNAIRE_GETINFOBYID;
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const apiUrl = baseUrl + separator + `id=${questionnaireId}`;
+                
+                console.log('请求URL:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+                
+                console.log('API响应:', result);
+                
+                if (result.code === 200 && result.data) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 问卷信息获取成功</h3>
+                        <p><strong>问卷ID:</strong> ${result.data.id}</p>
+                        <p><strong>标题:</strong> ${result.data.title}</p>
+                        <p><strong>描述:</strong> ${result.data.description}</p>
+                        <p><strong>创建时间:</strong> ${result.data.createdTime}</p>
+                        <p><strong>状态:</strong> ${result.data.status}</p>
+                        <p><strong>创建人:</strong> ${result.userInfo || '未知'}</p>
+                        <details>
+                            <summary>完整响应数据</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 问卷信息获取失败</h3>
+                        <p><strong>错误信息:</strong> ${result.message || '未知错误'}</p>
+                        <p><strong>响应代码:</strong> ${result.code}</p>
+                        <details>
+                            <summary>完整响应数据</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 网络错误</h3>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>错误详情:</strong> ${error}</p>
+                `;
+            }
+        }
+
+        // 测试获取问卷题目信息
+        async function testGetQuestionnaireQuestions() {
+            const questionnaireId = document.getElementById('questionnaireIdForQuestions').value;
+            const resultDiv = document.getElementById('questionsResult');
+            
+            resultDiv.innerHTML = '<p>正在获取题目信息...</p>';
+            resultDiv.className = 'result';
+            
+            try {
+                const baseUrl = CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QUESTIONNAIRE_QUESTIONS;
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                const apiUrl = baseUrl + separator + `questionnaireId=${questionnaireId}`;
+                
+                console.log('请求URL:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                const result = await response.json();
+                
+                console.log('API响应:', result);
+                
+                if (result.code === 200 && result.data) {
+                    const questions = result.data;
+                    resultDiv.className = 'result success';
+                    
+                    let questionsHtml = `
+                        <h3>✅ 题目信息获取成功</h3>
+                        <p><strong>题目数量:</strong> ${questions.length}</p>
+                    `;
+                    
+                    if (questions.length > 0) {
+                        questionsHtml += '<h4>题目列表:</h4>';
+                        questions.forEach((question, index) => {
+                            questionsHtml += `
+                                <div class="question-item">
+                                    <p><strong>题目 ${index + 1}:</strong></p>
+                                    <p><strong>ID:</strong> ${question.id}</p>
+                                    <p><strong>内容:</strong> ${question.content}</p>
+                                    <p><strong>类型:</strong> ${getQuestionTypeName(question.questionType)}</p>
+                                    <p><strong>排序:</strong> ${question.sortNum}</p>
+                                    <p><strong>必填:</strong> ${question.isRequired ? '是' : '否'}</p>
+                            `;
+                            
+                            if (question.options && question.options.length > 0) {
+                                questionsHtml += '<p><strong>选项:</strong></p>';
+                                question.options.forEach((option, optIndex) => {
+                                    questionsHtml += `
+                                        <div class="option-item">
+                                            <p>选项 ${optIndex + 1}: ${option.optionContent}</p>
+                                        </div>
+                                    `;
+                                });
+                            }
+                            
+                            questionsHtml += '</div>';
+                        });
+                    } else {
+                        questionsHtml += '<p>该问卷没有题目</p>';
+                    }
+                    
+                    questionsHtml += `
+                        <details>
+                            <summary>完整响应数据</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                    
+                    resultDiv.innerHTML = questionsHtml;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 题目信息获取失败</h3>
+                        <p><strong>错误信息:</strong> ${result.message || '未知错误'}</p>
+                        <p><strong>响应代码:</strong> ${result.code}</p>
+                        <details>
+                            <summary>完整响应数据</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 网络错误</h3>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>错误详情:</strong> ${error}</p>
+                `;
+            }
+        }
+
+        // 完整测试
+        async function testCompleteData() {
+            const questionnaireId = document.getElementById('completeTestId').value;
+            const resultDiv = document.getElementById('completeResult');
+            
+            resultDiv.innerHTML = '<p>正在执行完整测试...</p>';
+            resultDiv.className = 'result';
+            
+            try {
+                // 1. 获取问卷信息
+                const questionnaireUrl = CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QUESTIONNAIRE_GETINFOBYID;
+                const questionnaireSeparator = questionnaireUrl.includes('?') ? '&' : '?';
+                const questionnaireApiUrl = questionnaireUrl + questionnaireSeparator + `id=${questionnaireId}`;
+                
+                const questionnaireResponse = await fetch(questionnaireApiUrl);
+                const questionnaireResult = await questionnaireResponse.json();
+                
+                // 2. 获取题目信息
+                const questionsUrl = CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QUESTIONNAIRE_QUESTIONS;
+                const questionsSeparator = questionsUrl.includes('?') ? '&' : '?';
+                const questionsApiUrl = questionsUrl + questionsSeparator + `questionnaireId=${questionnaireId}`;
+                
+                const questionsResponse = await fetch(questionsApiUrl);
+                const questionsResult = await questionsResponse.json();
+                
+                // 3. 显示结果
+                if (questionnaireResult.code === 200 && questionsResult.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 完整测试成功</h3>
+                        <h4>问卷信息:</h4>
+                        <p><strong>标题:</strong> ${questionnaireResult.data.title}</p>
+                        <p><strong>描述:</strong> ${questionnaireResult.data.description}</p>
+                        <p><strong>创建人:</strong> ${questionnaireResult.userInfo || '未知'}</p>
+                        
+                        <h4>题目信息:</h4>
+                        <p><strong>题目数量:</strong> ${questionsResult.data.length}</p>
+                        
+                        <details>
+                            <summary>完整数据</summary>
+                            <h5>问卷数据:</h5>
+                            <pre>${JSON.stringify(questionnaireResult, null, 2)}</pre>
+                            <h5>题目数据:</h5>
+                            <pre>${JSON.stringify(questionsResult, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 完整测试失败</h3>
+                        <p><strong>问卷信息获取:</strong> ${questionnaireResult.code === 200 ? '成功' : '失败'}</p>
+                        <p><strong>题目信息获取:</strong> ${questionsResult.code === 200 ? '成功' : '失败'}</p>
+                        <details>
+                            <summary>错误详情</summary>
+                            <pre>问卷API: ${JSON.stringify(questionnaireResult, null, 2)}</pre>
+                            <pre>题目API: ${JSON.stringify(questionsResult, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 完整测试失败</h3>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>错误详情:</strong> ${error}</p>
+                `;
+            }
+        }
+
+        // 测试数据库连接
+        async function testDatabaseConnection() {
+            const resultDiv = document.getElementById('dbResult');
+            
+            resultDiv.innerHTML = '<p>正在测试数据库连接...</p>';
+            resultDiv.className = 'result';
+            
+            try {
+                // 尝试获取问卷列表来测试数据库连接
+                const response = await fetch(CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST + '?page=1&size=5');
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 数据库连接正常</h3>
+                        <p><strong>问卷总数:</strong> ${result.data.total || 0}</p>
+                        <p><strong>当前页问卷数:</strong> ${result.data.list ? result.data.list.length : 0}</p>
+                        <details>
+                            <summary>连接测试结果</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ 数据库连接异常</h3>
+                        <p><strong>错误信息:</strong> ${result.message}</p>
+                        <details>
+                            <summary>错误详情</summary>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 数据库连接失败</h3>
+                    <p><strong>错误信息:</strong> ${error.message}</p>
+                    <p><strong>可能原因:</strong> 后端服务未启动或网络连接问题</p>
+                `;
+            }
+        }
+
+        // 获取题目类型名称
+        function getQuestionTypeName(type) {
+            const typeNames = {
+                1: '单选题',
+                2: '多选题',
+                3: '问答题',
+                4: '评分题',
+                5: '矩阵题'
+            };
+            return typeNames[type] || '未知类型';
+        }
+    </script>
+</body>
+</html> 

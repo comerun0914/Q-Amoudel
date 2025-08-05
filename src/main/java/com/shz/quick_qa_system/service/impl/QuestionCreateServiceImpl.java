@@ -7,10 +7,20 @@ import com.shz.quick_qa_system.entity.QuestionCreate;
 import com.shz.quick_qa_system.entity.Question;
 import com.shz.quick_qa_system.entity.SingleChoiceOption;
 import com.shz.quick_qa_system.entity.MultipleChoiceOption;
+import com.shz.quick_qa_system.entity.RatingQuestion;
+import com.shz.quick_qa_system.entity.TextQuestion;
+import com.shz.quick_qa_system.entity.MatrixQuestion;
+import com.shz.quick_qa_system.entity.MatrixRow;
+import com.shz.quick_qa_system.entity.MatrixColumn;
 import com.shz.quick_qa_system.dao.QuestionCreateMapper;
 import com.shz.quick_qa_system.dao.QuestionMapper;
 import com.shz.quick_qa_system.dao.SingleChoiceOptionMapper;
 import com.shz.quick_qa_system.dao.MultipleChoiceOptionMapper;
+import com.shz.quick_qa_system.dao.RatingQuestionMapper;
+import com.shz.quick_qa_system.dao.TextQuestionMapper;
+import com.shz.quick_qa_system.dao.MatrixQuestionMapper;
+import com.shz.quick_qa_system.dao.MatrixRowMapper;
+import com.shz.quick_qa_system.dao.MatrixColumnMapper;
 import com.shz.quick_qa_system.service.QuestionCreateService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shz.quick_qa_system.utils.CodeGenerator;
@@ -48,6 +58,21 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
     @Resource
     private MultipleChoiceOptionMapper multipleChoiceOptionMapper;
+    
+    @Resource
+    private RatingQuestionMapper ratingQuestionMapper;
+    
+    @Resource
+    private TextQuestionMapper textQuestionMapper;
+    
+    @Resource
+    private MatrixQuestionMapper matrixQuestionMapper;
+    
+    @Resource
+    private MatrixRowMapper matrixRowMapper;
+    
+    @Resource
+    private MatrixColumnMapper matrixColumnMapper;
 
     public QuestionCreate CreateQuestion(QuestionCreate questionCreate) {
         // 设置表单ID
@@ -184,7 +209,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             int insertResult = questionMapper.insert(question);
             System.out.println("问题保存结果: " + insertResult + ", 问题ID: " + question.getId());
 
-            // 处理选项（如果是选择题）
+            // 处理选项和配置（根据题型）
             Integer questionType = question.getQuestionType();
             if (questionType == 1 || questionType == 2) { // 单选题或多选题
                 @SuppressWarnings("unchecked")
@@ -193,6 +218,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 if (options != null && !options.isEmpty()) {
                     saveOptions(question.getId(), questionType, options);
                 }
+            } else if (questionType == 3) { // 问答题
+                saveTextQuestionConfig(question.getId(), questionData);
+            } else if (questionType == 4) { // 评分题
+                saveRatingQuestionConfig(question.getId(), questionData);
+            } else if (questionType == 5) { // 矩阵题
+                saveMatrixQuestionConfig(question.getId(), questionData);
             }
         }
     }
@@ -219,6 +250,107 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 // MultipleChoiceOption doesn't have isDefault field, so we skip it
                 multipleChoiceOptionMapper.insert(option);
             }
+        }
+    }
+
+    /**
+     * 保存问答题配置
+     */
+    private void saveTextQuestionConfig(Integer questionId, Map<String, Object> questionData) {
+        TextQuestion textQuestion = new TextQuestion();
+        textQuestion.setQuestionId(questionId);
+        
+        // 设置默认值
+        textQuestion.setHintText((String) questionData.get("hintText"));
+        textQuestion.setMaxLength((Integer) questionData.get("maxLength"));
+        if (textQuestion.getMaxLength() == null) {
+            textQuestion.setMaxLength(500); // 默认最大长度
+        }
+        textQuestion.setInputType((Integer) questionData.get("inputType"));
+        if (textQuestion.getInputType() == null) {
+            textQuestion.setInputType(1); // 默认单行输入
+        }
+        
+        textQuestionMapper.insert(textQuestion);
+        System.out.println("问答题配置保存成功，问题ID: " + questionId);
+    }
+
+    /**
+     * 保存评分题配置
+     */
+    private void saveRatingQuestionConfig(Integer questionId, Map<String, Object> questionData) {
+        RatingQuestion ratingQuestion = new RatingQuestion();
+        ratingQuestion.setQuestionId(questionId);
+        
+        // 设置默认值
+        ratingQuestion.setMinScore((Integer) questionData.get("minScore"));
+        if (ratingQuestion.getMinScore() == null) {
+            ratingQuestion.setMinScore(1); // 默认最低分
+        }
+        ratingQuestion.setMaxScore((Integer) questionData.get("maxScore"));
+        if (ratingQuestion.getMaxScore() == null) {
+            ratingQuestion.setMaxScore(5); // 默认最高分
+        }
+        ratingQuestion.setMinLabel((String) questionData.get("minLabel"));
+        if (ratingQuestion.getMinLabel() == null) {
+            ratingQuestion.setMinLabel("非常不满意");
+        }
+        ratingQuestion.setMaxLabel((String) questionData.get("maxLabel"));
+        if (ratingQuestion.getMaxLabel() == null) {
+            ratingQuestion.setMaxLabel("非常满意");
+        }
+        ratingQuestion.setStep((Integer) questionData.get("step"));
+        if (ratingQuestion.getStep() == null) {
+            ratingQuestion.setStep(1); // 默认步长
+        }
+        
+        ratingQuestionMapper.insert(ratingQuestion);
+        System.out.println("评分题配置保存成功，问题ID: " + questionId);
+    }
+
+    /**
+     * 保存矩阵题配置
+     */
+    private void saveMatrixQuestionConfig(Integer questionId, Map<String, Object> questionData) {
+        // 创建矩阵题主体
+        MatrixQuestion matrixQuestion = new MatrixQuestion();
+        matrixQuestion.setQuestionId(questionId);
+        matrixQuestion.setSubQuestionType((Integer) questionData.get("subQuestionType"));
+        if (matrixQuestion.getSubQuestionType() == null) {
+            matrixQuestion.setSubQuestionType(1); // 默认单选矩阵
+        }
+        matrixQuestion.setDescription((String) questionData.get("description"));
+        
+        matrixQuestionMapper.insert(matrixQuestion);
+        System.out.println("矩阵题主体保存成功，问题ID: " + questionId + ", 矩阵ID: " + matrixQuestion.getId());
+        
+        // 保存矩阵行
+        @SuppressWarnings("unchecked")
+        List<String> rows = (List<String>) questionData.get("rows");
+        if (rows != null && !rows.isEmpty()) {
+            for (int i = 0; i < rows.size(); i++) {
+                MatrixRow matrixRow = new MatrixRow();
+                matrixRow.setMatrixId(matrixQuestion.getId());
+                matrixRow.setRowContent(rows.get(i));
+                matrixRow.setSortNum(i + 1);
+                matrixRowMapper.insert(matrixRow);
+            }
+            System.out.println("矩阵行保存成功，共 " + rows.size() + " 行");
+        }
+        
+        // 保存矩阵列
+        @SuppressWarnings("unchecked")
+        List<String> columns = (List<String>) questionData.get("columns");
+        if (columns != null && !columns.isEmpty()) {
+            for (int i = 0; i < columns.size(); i++) {
+                MatrixColumn matrixColumn = new MatrixColumn();
+                matrixColumn.setMatrixId(matrixQuestion.getId());
+                matrixColumn.setColumnContent(columns.get(i));
+                matrixColumn.setSortNum(i + 1);
+                matrixColumn.setScore((Integer) questionData.get("score"));
+                matrixColumnMapper.insert(matrixColumn);
+            }
+            System.out.println("矩阵列保存成功，共 " + columns.size() + " 列");
         }
     }
 

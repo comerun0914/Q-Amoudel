@@ -1,16 +1,16 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://localhost:7070/api',
-    
+    BACKEND_BASE_URL: 'http://localhost:7070',
+
     // API端点配置
     API_ENDPOINTS: {
         // 用户相关
-        LOGIN: '/api/users/login',
-        REGISTER: '/api/users/register',
-        LOGOUT: '/api/users/logout',
-        USER_PROFILE: '/api/users/profile',
-        
+        LOGIN: '/users/login',
+        REGISTER: '/users/register',
+        LOGOUT: '/users/logout',
+        USER_PROFILE: '/users/profile',
+
         // 问卷相关
         QUESTIONNAIRE_LIST: '/questionCreate/list',
         QUESTIONNAIRE_DETAIL: '/questionCreate/detail',
@@ -31,12 +31,12 @@ const CONFIG = {
         QUESTIONNAIRE_RESULTS: '/questionCreate/results',
 
         // 登录历史
-        LOGIN_HISTORY: '/api/login-history',
-        
+        LOGIN_HISTORY: '/login-history',
+
         // 文件上传
-        UPLOAD_FILE: '/api/upload/file'
+        UPLOAD_FILE: '/upload/file'
     },
-    
+
     // 页面路由配置
     ROUTES: {
         LOGIN: 'login.html',
@@ -51,7 +51,7 @@ const CONFIG = {
         CREATE_QUESTIONNAIRE: 'create-questionnaire.html',
         MANUAL_CREATE: 'manual-create-questionnaire.html'
     },
-    
+
     // 问题类型配置
     QUESTION_TYPES: {
         RADIO: 'radio',
@@ -66,7 +66,7 @@ const CONFIG = {
         PHONE: 'phone',
         NUMBER: 'number'
     },
-    
+
     // 问题类型显示名称
     QUESTION_TYPE_NAMES: {
         radio: '单选题',
@@ -81,7 +81,7 @@ const CONFIG = {
         phone: '电话题',
         number: '数字题'
     },
-    
+
     // 状态配置
     STATUS: {
         SUCCESS: 'success',
@@ -89,7 +89,7 @@ const CONFIG = {
         WARNING: 'warning',
         INFO: 'info'
     },
-    
+
     // 本地存储键名
     STORAGE_KEYS: {
         USER_TOKEN: 'user_token',
@@ -98,7 +98,7 @@ const CONFIG = {
         FILL_PROGRESS: 'fill_progress',
         CURRENT_QUESTIONNAIRE_ID: 'current_questionnaire_id'
     },
-    
+
     // 默认配置
     DEFAULTS: {
         PAGE_SIZE: 10,
@@ -114,16 +114,16 @@ const UTILS = {
     getApiUrl: function(endpoint, addUserId = true) {
         const userInfo = this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
         let url = CONFIG.BACKEND_BASE_URL + endpoint;
-        
+
         // 如果用户已登录且需要添加userId参数，在URL中添加userid参数
         if (addUserId && userInfo && userInfo.id) {
             const separator = endpoint.includes('?') ? '&' : '?';
             url += separator + 'userId=' + userInfo.id;
         }
-        
+
         return url;
     },
-    
+
     // 获取本地存储
     getStorage: function(key) {
         try {
@@ -133,7 +133,7 @@ const UTILS = {
             return null;
         }
     },
-    
+
     // 设置本地存储
     setStorage: function(key, value) {
         try {
@@ -142,30 +142,30 @@ const UTILS = {
             console.error('设置本地存储失败:', error);
         }
     },
-    
+
     // 删除本地存储
     removeStorage: function(key) {
         localStorage.removeItem(key);
     },
-    
+
     // 清除所有本地存储
     clearStorage: function() {
         localStorage.clear();
     },
-    
+
     // 获取URL参数
     getUrlParam: function(name) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
     },
-    
+
     // 设置URL参数
     setUrlParam: function(name, value) {
         const url = new URL(window.location);
         url.searchParams.set(name, value);
         window.history.replaceState({}, '', url);
     },
-    
+
     // 显示提示信息
     showToast: function(message, type = 'info', duration = CONFIG.DEFAULTS.TOAST_DURATION) {
         // 创建toast元素
@@ -176,20 +176,20 @@ const UTILS = {
                 <span>${message}</span>
             </div>
         `;
-        
+
         // 添加到页面
         document.body.appendChild(toast);
-        
+
         // 显示动画
         setTimeout(() => toast.classList.add('show'), 100);
-        
+
         // 自动隐藏
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => document.body.removeChild(toast), 300);
         }, duration);
     },
-    
+
     // 格式化日期
     formatDate: function(date, format = 'YYYY-MM-DD HH:mm:ss') {
         const d = new Date(date);
@@ -199,7 +199,7 @@ const UTILS = {
         const hours = String(d.getHours()).padStart(2, '0');
         const minutes = String(d.getMinutes()).padStart(2, '0');
         const seconds = String(d.getSeconds()).padStart(2, '0');
-        
+
         return format
             .replace('YYYY', year)
             .replace('MM', month)
@@ -208,7 +208,7 @@ const UTILS = {
             .replace('mm', minutes)
             .replace('ss', seconds);
     },
-    
+
     // 防抖函数
     debounce: function(func, wait) {
         let timeout;
@@ -221,7 +221,7 @@ const UTILS = {
             timeout = setTimeout(later, wait);
         };
     },
-    
+
     // 节流函数
     throttle: function(func, limit) {
         let inThrottle;
@@ -235,17 +235,17 @@ const UTILS = {
             }
         };
     },
-    
+
     // 身份校验函数
     checkAuth: function(requiredRole = null) {
         const userInfo = this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
-        
+
         if (!userInfo || !userInfo.username) {
             // 未登录，跳转到登录页面
             window.location.href = CONFIG.ROUTES.LOGIN;
             return false;
         }
-        
+
         if (requiredRole !== null && userInfo.role !== requiredRole) {
             // 权限不足，跳转到对应页面
             if (userInfo.role === 1) {
@@ -255,22 +255,22 @@ const UTILS = {
             }
             return false;
         }
-        
+
         return userInfo;
     },
-    
+
     // 显示用户信息
     displayUserInfo: function(userInfo, containerId = 'userInfo') {
         const container = document.getElementById(containerId);
         if (!container) return;
-        
+
         const userNameElement = container.querySelector('.user-name') || container.querySelector('#userName');
         const userAvatarElement = container.querySelector('.user-avatar') || container.querySelector('#userAvatar');
-        
+
         if (userNameElement) {
             userNameElement.textContent = userInfo.username || '用户';
         }
-        
+
         if (userAvatarElement) {
             if (userInfo.avatar) {
                 userAvatarElement.src = userInfo.avatar;
@@ -280,16 +280,16 @@ const UTILS = {
             }
         }
     },
-    
+
     // 绑定用户下拉菜单事件
     bindUserDropdown: function(containerId = 'userInfo') {
         const container = document.getElementById(containerId);
         if (!container) return;
-        
+
         const dropdown = container.querySelector('.user-dropdown') || container.querySelector('#userDropdown');
         const userCenterBtn = container.querySelector('#userCenter');
         const logoutBtn = container.querySelector('#logoutBtn');
-        
+
         // 点击用户信息显示/隐藏下拉菜单
         container.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -297,14 +297,14 @@ const UTILS = {
                 dropdown.classList.toggle('show');
             }
         });
-        
+
         // 点击其他地方隐藏下拉菜单
         document.addEventListener('click', function() {
             if (dropdown) {
                 dropdown.classList.remove('show');
             }
         });
-        
+
         // 用户中心按钮
         if (userCenterBtn) {
             userCenterBtn.addEventListener('click', function(e) {
@@ -317,7 +317,7 @@ const UTILS = {
                 }
             });
         }
-        
+
         // 退出登录按钮
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function(e) {
@@ -346,13 +346,13 @@ const UTILS = {
             });
         }
     },
-    
+
     // 全局用户信息初始化函数
     initUserInfo: function() {
         const userInfo = this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
         const userInfoElement = document.getElementById('userInfo');
         const loginBtn = document.getElementById('loginBtn');
-        
+
         if (userInfo && userInfo.username) {
             // 用户已登录，显示用户信息
             this.displayUserInfo(userInfo);
@@ -371,11 +371,11 @@ const UTILS = {
                 loginBtn.style.display = 'block';
             }
         }
-        
+
         // 绑定用户相关事件
         this.bindUserDropdown();
     },
-    
+
     // 校验用户登录状态
     checkUserAuth: function() {
         const userInfo = this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
@@ -385,34 +385,34 @@ const UTILS = {
         }
         return true;
     },
-    
+
     // 自动校验用户登录状态（每5秒检查一次）
     startAutoAuthCheck: function(interval = 5000, excludePages = ['login.html']) {
         // 检查当前页面是否在排除列表中
         const currentPage = window.location.pathname;
         const shouldExclude = excludePages.some(page => currentPage.includes(page));
-        
+
         if (shouldExclude) {
             return;
         }
-        
+
         // 立即检查一次
         this.checkUserAuth();
-        
+
         // 定时检查
         setInterval(() => {
             // 再次检查当前页面是否在排除列表中
             const currentPage = window.location.pathname;
             const shouldExclude = excludePages.some(page => currentPage.includes(page));
-            
+
             if (shouldExclude) {
                 return;
             }
-            
+
             this.checkUserAuth();
         }, interval);
     },
-    
+
     // 显示重新登录弹窗
     showReLoginModal: function() {
         // 创建弹窗样式
@@ -505,7 +505,7 @@ const UTILS = {
             }
         `;
         document.head.appendChild(style);
-        
+
         // 创建弹窗HTML
         const modal = document.createElement('div');
         modal.className = 're-login-modal';
@@ -517,16 +517,16 @@ const UTILS = {
                 <button class="re-login-btn" onclick="UTILS.goToLogin()">立即登录</button>
             </div>
         `;
-        
+
         // 添加到页面
         document.body.appendChild(modal);
-        
+
         // 3秒后自动跳转
         setTimeout(() => {
             this.goToLogin();
         }, 3000);
     },
-    
+
     // 跳转到登录页面
     goToLogin: function() {
         // 清除本地存储
@@ -534,20 +534,25 @@ const UTILS = {
         // 跳转到登录页面
         window.location.href = CONFIG.ROUTES.LOGIN;
     },
-    
+
     // 页面保护函数 - 用于需要登录的页面
     protectPage: function() {
         // 校验用户登录状态
         if (!this.checkUserAuth()) {
             return false;
         }
-        
+
         // 初始化用户信息显示和退出逻辑
         this.initUserInfo();
         return true;
+    },
+
+    // 获取用户信息
+    getUserInfo: function() {
+        return this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
     }
 };
 
 // 导出到全局作用域
 window.CONFIG = CONFIG;
-window.UTILS = UTILS; 
+window.UTILS = UTILS;

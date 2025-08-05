@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简单API测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 测试基本连接</h3>
+            <button onclick="testBasicConnection()">测试连接</button>
+            <div id="basicResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. 测试问卷列表API</h3>
+            <button onclick="testQuestionnaireList()">测试问卷列表</button>
+            <div id="listResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. 测试问卷详情API</h3>
+            <input type="number" id="questionnaireId" value="1" placeholder="问卷ID">
+            <button onclick="testQuestionnaireDetail()">测试问卷详情</button>
+            <div id="detailResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. 测试问卷题目API</h3>
+            <input type="number" id="questionnaireIdForQuestions" value="1" placeholder="问卷ID">
+            <button onclick="testQuestionnaireQuestions()">测试问卷题目</button>
+            <div id="questionsResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 测试基本连接
+        async function testBasicConnection() {
+            const resultDiv = document.getElementById('basicResult');
+            resultDiv.textContent = '正在测试连接...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch('http://localhost:7070/questionCreate/list?page=1&size=1');
+                const result = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ 连接成功!\n状态码: ${response.status}\n响应数据: ${JSON.stringify(result, null, 2)}`;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 连接失败!\n错误信息: ${error.message}\n错误详情: ${error}`;
+            }
+        }
+
+        // 测试问卷列表API
+        async function testQuestionnaireList() {
+            const resultDiv = document.getElementById('listResult');
+            resultDiv.textContent = '正在测试问卷列表API...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch('http://localhost:7070/questionCreate/list?page=1&size=5');
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 问卷列表API测试成功!\n问卷总数: ${result.data.total}\n当前页问卷数: ${result.data.list.length}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 问卷列表API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
+            }
+        }
+
+        // 测试问卷详情API
+        async function testQuestionnaireDetail() {
+            const questionnaireId = document.getElementById('questionnaireId').value;
+            const resultDiv = document.getElementById('detailResult');
+            resultDiv.textContent = '正在测试问卷详情API...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`http://localhost:7070/questionCreate/getInfoById?id=${questionnaireId}`);
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 问卷详情API测试成功!\n问卷ID: ${result.data.id}\n标题: ${result.data.title}\n描述: ${result.data.description}\n创建人: ${result.userInfo}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 问卷详情API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
+            }
+        }
+
+        // 测试问卷题目API
+        async function testQuestionnaireQuestions() {
+            const questionnaireId = document.getElementById('questionnaireIdForQuestions').value;
+            const resultDiv = document.getElementById('questionsResult');
+            resultDiv.textContent = '正在测试问卷题目API...';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`http://localhost:7070/questionCreate/questions?questionnaireId=${questionnaireId}`);
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 问卷题目API测试成功!\n题目数量: ${result.data.length}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 问卷题目API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
+            }
+        }
+    </script>
+</body>
+</html> 
