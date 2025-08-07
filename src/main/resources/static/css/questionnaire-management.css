@@ -48,51 +48,73 @@ body {
 }
 
 .user-info {
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.user-info:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .user-name {
+    font-weight: 500;
     color: white;
-    font-size: 0.9rem;
+    font-size: 14px;
 }
 
 .user-dropdown {
     position: absolute;
     top: 100%;
     right: 0;
-    background: white;
+    background-color: white;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    padding: 0.5rem 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     min-width: 150px;
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
     z-index: 1000;
 }
 
-.user-info:hover .user-dropdown {
-    display: block;
+.user-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .dropdown-item {
     display: block;
-    padding: 0.5rem 1rem;
-    color: #333;
+    padding: 12px 16px;
+    color: #374151;
     text-decoration: none;
-    transition: background-color 0.3s;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
 }
 
 .dropdown-item:hover {
-    background-color: #f5f7fa;
+    background-color: #f3f4f6;
+    color: #3b82f6;
 }
 
 .btn-login {
@@ -154,6 +176,12 @@ body {
     gap: 0.5rem;
     font-weight: 500;
     transition: transform 0.3s;
+}
+
+.btn-create i,
+.btn-import i {
+    width: 16px;
+    text-align: center;
 }
 
 .btn-create:hover {
@@ -227,6 +255,8 @@ body {
 
 .search-btn i {
     font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
 }
 
 .filter-group {
@@ -293,6 +323,11 @@ body {
     font-size: 1.5rem;
     color: white;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon i {
+    width: 24px;
+    text-align: center;
 }
 
 .stat-icon.active {
@@ -362,6 +397,11 @@ body {
     align-items: center;
     gap: 0.25rem;
     transition: all 0.3s;
+}
+
+.btn-batch-action i {
+    width: 16px;
+    text-align: center;
 }
 
 .btn-batch-action:not(:disabled):hover {
@@ -474,6 +514,8 @@ body {
 
 .btn-action i {
     font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
 }
 
 .btn-edit {
@@ -572,6 +614,11 @@ body {
     min-width: 40px;
 }
 
+.btn-page i {
+    width: 16px;
+    text-align: center;
+}
+
 .btn-page:hover:not(:disabled) {
     background: #667eea;
     color: white;
@@ -653,6 +700,16 @@ body {
     cursor: pointer;
     color: #7f8c8d;
     transition: color 0.3s;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close i {
+    width: 20px;
+    text-align: center;
 }
 
 .modal-close:hover {
@@ -777,6 +834,62 @@ footer {
     .action-buttons {
         flex-direction: column;
     }
+    
+    .btn-action {
+        min-width: 60px;
+        font-size: 0.8rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    /* 移动端用户头像样式 */
+    .user-info {
+        padding: 6px 8px;
+    }
+    
+    .user-name {
+        display: none;
+    }
+    
+    .user-dropdown {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .management-container {
+        padding: 0.5rem;
+    }
+    
+    .stats-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .questionnaire-table-container {
+        overflow-x: auto;
+    }
+    
+    .questionnaire-table {
+        min-width: 600px;
+    }
+    
+    .action-buttons {
+        gap: 0.25rem;
+    }
+    
+    .btn-action {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+        min-width: 50px;
+    }
 }
 
 /* 加载动画 */
@@ -806,6 +919,11 @@ footer {
     font-size: 4rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    width: 64px;
+    text-align: center;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .empty-state h3 {
@@ -843,4 +961,63 @@ footer {
 .tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
+}
+
+/* 问卷标题样式优化 */
+.questionnaire-title {
+    max-width: 300px;
+}
+
+.questionnaire-title strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.questionnaire-desc {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    line-height: 1.4;
+    margin-top: 0.25rem;
+}
+
+/* 表格行悬停效果优化 */
+.questionnaire-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* 按钮禁用状态优化 */
+.btn-action:disabled,
+.btn-batch-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* 加载状态优化 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 空状态按钮样式 */
+.empty-state .btn-create {
+    margin: 0 auto;
+    display: inline-flex;
 } 

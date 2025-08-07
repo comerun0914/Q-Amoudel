@@ -150,7 +150,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
 
             questionCreate.setSubmissionLimit((Integer) request.get("submissionLimit"));
-            questionCreate.setStatus((Boolean) request.get("status"));
+            questionCreate.setStatus((Integer) request.get("status"));
             questionCreate.setCreatorId((Integer) request.get("creatorId"));
 
             // 生成问卷ID
@@ -585,7 +585,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 existingQuestionnaire.setSubmissionLimit((Integer) request.get("submissionLimit"));
             }
             if (request.containsKey("status")) {
-                existingQuestionnaire.setStatus((Boolean) request.get("status"));
+                existingQuestionnaire.setStatus((Integer) request.get("status"));
             }
 
             // 设置更新时间
@@ -634,7 +634,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
     }
 
     @Override
-    public Boolean toggleQuestionnaireStatus(Integer id, Boolean status) {
+    public Boolean toggleQuestionnaireStatus(Integer id, Integer status) {
         QuestionCreate questionnaire = getById(id);
         if (questionnaire == null) {
             return false;
@@ -646,7 +646,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
     }
 
     @Override
-    public Boolean batchToggleQuestionnaireStatus(List<Integer> ids, Boolean status) {
+    public Boolean batchToggleQuestionnaireStatus(List<Integer> ids, Integer status) {
         List<QuestionCreate> questionnaires = listByIds(ids);
         for (QuestionCreate questionnaire : questionnaires) {
             questionnaire.setStatus(status);
@@ -669,7 +669,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         copy.setStartDate(original.getStartDate());
         copy.setEndDate(original.getEndDate());
         copy.setSubmissionLimit(original.getSubmissionLimit());
-        copy.setStatus(false); // 副本默认为禁用状态
+        copy.setStatus(0); // 副本默认为禁用状态
         copy.setCreatorId(original.getCreatorId());
         copy.setCreatedTime(LocalDateTime.now());
         copy.setUpdatedTime(LocalDateTime.now());
@@ -703,7 +703,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
             // 设置其他字段
             questionnaire.setSubmissionLimit((Integer) questionnaireData.get("submissionLimit"));
-            questionnaire.setStatus(false); // 导入的问卷默认为禁用状态
+            questionnaire.setStatus(0); // 导入的问卷默认为禁用状态
             questionnaire.setCreatorId((Integer) questionnaireData.get("creatorId"));
             questionnaire.setCreatedTime(LocalDateTime.now());
             questionnaire.setUpdatedTime(LocalDateTime.now());

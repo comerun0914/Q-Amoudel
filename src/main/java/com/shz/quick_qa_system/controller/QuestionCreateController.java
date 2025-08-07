@@ -1,5 +1,6 @@
 package com.shz.quick_qa_system.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.shz.quick_qa_system.Costant.ApiResult;
 import com.shz.quick_qa_system.dto.QuestionCreateDto;
 import com.shz.quick_qa_system.dto.QuestionDto;
@@ -12,7 +13,9 @@ import com.shz.quick_qa_system.utils.CodeGenerator;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -83,16 +86,11 @@ public class QuestionCreateController {
      * 获取问卷列表
      */
     @GetMapping("/list")
-    public ApiResult getQuestionnaireList(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) String dateFilter,
-            @RequestParam(required = false) Integer creatorId) {
+    public ApiResult getQuestionnaireList(@RequestParam(value = "creatorId") String creatorId) {
         try {
-            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireList(page, size, keyword, status, dateFilter, creatorId);
-            return ApiResult.success(result);
+            Integer id = Integer.valueOf(creatorId);
+            List<QuestionCreate> result = questionCreateServiceImpl.list(new QueryWrapper<QuestionCreate>().eq("creator_id", id));
+            return ApiResult.successWithPagination(result, 1, 10, result.size()/10);
         } catch (Exception e) {
             return ApiResult.error("获取问卷列表失败: " + e.getMessage());
         }
@@ -180,7 +178,7 @@ public class QuestionCreateController {
     public ApiResult toggleQuestionnaireStatus(@RequestBody Map<String, Object> request) {
         try {
             Integer id = (Integer) request.get("id");
-            Boolean status = (Boolean) request.get("status");
+            Integer status = (Integer) request.get("status");
             boolean result = questionCreateServiceImpl.toggleQuestionnaireStatus(id, status);
             return ApiResult.success(result);
         } catch (Exception e) {
@@ -196,7 +194,7 @@ public class QuestionCreateController {
         try {
             @SuppressWarnings("unchecked")
             List<Integer> ids = (List<Integer>) request.get("ids");
-            Boolean status = (Boolean) request.get("status");
+            Integer status = (Integer) request.get("status");
             boolean result = questionCreateServiceImpl.batchToggleQuestionnaireStatus(ids, status);
             return ApiResult.success(result);
         } catch (Exception e) {
@@ -237,10 +235,10 @@ public class QuestionCreateController {
      * 获取问卷统计信息
      */
     @GetMapping("/statistics")
-    public ApiResult getQuestionnaireStatistics(@RequestParam(required = false) Integer creatorId) {
+    public ApiResult getQuestionnaireStatistics(HttpServletRequest request) {
         try {
-            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireStatistics(creatorId);
-            return ApiResult.success(result);
+//            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireStatistics();
+            return ApiResult.success(null);
         } catch (Exception e) {
             return ApiResult.error("获取统计信息失败: " + e.getMessage());
         }

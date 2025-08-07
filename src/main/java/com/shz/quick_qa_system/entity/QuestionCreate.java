@@ -58,9 +58,9 @@ public class QuestionCreate implements Serializable {
     private Integer submissionLimit;
 
     /**
-     * 问卷状态：0=禁用，1=启用
+     * 问卷状态：0=禁用，1=启用,2=草稿
      */
-    private Boolean status;
+    private Integer status;
 
     /**
      * 创建者用户ID

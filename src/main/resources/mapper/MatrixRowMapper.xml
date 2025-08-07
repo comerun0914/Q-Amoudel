@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shz.quick_qa_system.dao.MatrixRowMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.shz.quick_qa_system.entity.MatrixRow">
+        <id column="id" property="id" />
+        <result column="matrix_id" property="matrixId" />
+        <result column="row_content" property="rowContent" />
+        <result column="sort_num" property="sortNum" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, matrix_id, row_content, sort_num
+    </sql>
+
+</mapper>

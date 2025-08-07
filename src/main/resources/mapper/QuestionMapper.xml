@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shz.quick_qa_system.dao.QuestionMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.shz.quick_qa_system.entity.Question">
+        <id column="id" property="id" />
+        <result column="questionnaire_id" property="questionnaireId" />
+        <result column="content" property="content" />
+        <result column="question_type" property="questionType" />
+        <result column="sort_num" property="sortNum" />
+        <result column="is_required" property="isRequired" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, questionnaire_id, content, question_type, sort_num, is_required, created_time, updated_time
+    </sql>
+
+</mapper>

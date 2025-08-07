@@ -1,6 +1,9 @@
 package com.shz.quick_qa_system.Costant;
 
+import com.shz.quick_qa_system.entity.QuestionCreate;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class ApiResult {
@@ -10,7 +13,16 @@ public class ApiResult {
     private int returnCode; // 响应编号
     private String userToken; // Token
     private String userInfo; // 用户信息
-
+    
+    // 分页相关变量
+    private int currentPage; // 当前页码
+    private int pageSize; // 每页大小
+    private int totalPages; // 总页数
+    private long totalCount; // 总记录数
+    private boolean hasNext; // 是否有下一页
+    private boolean hasPrevious; // 是否有上一页
+    private int startIndex; // 起始索引
+    private int endIndex; // 结束索引
 
 
     // 成功响应静态方法
@@ -61,6 +73,25 @@ public class ApiResult {
         result.setMessage("成功");
         result.setData(questionnaire);
         result.setUserInfo(creatorName);
+        return result;
+    }
+
+    // 分页成功响应静态方法
+    public static ApiResult successWithPagination(Object data, int currentPage, int pageSize, long totalCount) {
+        ApiResult result = new ApiResult();
+        result.setCode(200);
+        result.setMessage("成功");
+        result.setData(data);
+        // 设置分页信息
+        result.setCurrentPage(currentPage);
+        result.setPageSize(pageSize);
+        result.setTotalCount(totalCount);
+        result.setTotalPages((int) Math.ceil((double) totalCount / pageSize));
+        result.setHasNext(currentPage < result.getTotalPages());
+        result.setHasPrevious(currentPage > 1);
+        result.setStartIndex((currentPage - 1) * pageSize + 1);
+        result.setEndIndex(Math.min(currentPage * pageSize, (int) totalCount));
+        
         return result;
     }
 

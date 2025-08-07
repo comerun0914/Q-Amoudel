@@ -23,7 +23,7 @@ let currentPage = 1;
 let pageSize = 10;
 let totalPages = 0;
 let totalCount = 0;
-let questionnaireData = [];
+let questionnaireData = []; // 当前显示的数据
 let selectedIds = [];
 let searchKeyword = '';
 let statusFilter = '';
@@ -51,6 +51,7 @@ function initUserInfo() {
     if (userInfo) {
         const userInfoElement = document.getElementById('userInfo');
         const userNameElement = document.getElementById('userName');
+        const userAvatarElement = document.getElementById('userAvatar');
         const loginBtn = document.getElementById('loginBtn');
         
         if (userInfoElement && userNameElement) {
@@ -58,9 +59,24 @@ function initUserInfo() {
             userNameElement.textContent = userInfo.username || '用户';
         }
         
+        // 设置用户头像
+        if (userAvatarElement) {
+            if (userInfo.avatar) {
+                userAvatarElement.src = userInfo.avatar;
+                userAvatarElement.alt = userInfo.username || '用户头像';
+            } else {
+                // 使用默认头像
+                userAvatarElement.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM5Q0E2RkYiLz4KPHBhdGggZD0iTTIwIDEwQzIyLjIwOTEgMTAgMjQgMTEuNzkwOSAyNCAxNEMyNCAxNi4yMDkxIDIyLjIwOTEgMTggMjAgMThDMTcuNzkwOSAxOCAxNiAxNi4yMDkxIDE2IDE0QzE2IDExLjc5MDkgMTcuNzkwOSAxMCAyMCAxMFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yOCAyNkMyOCAyOS4zMTM3IDI0LjQxODMgMzIgMjAgMzJDMjUuNTgxNyAzMiAyMCAyOS4zMTM3IDIwIDI2QzIwIDI5LjMxMzcgMTQuNDE4MyAzMiAxMCAzMkM1LjU4MTcyIDMyIDIgMjkuMzEzNyAyIDI2QzIgMjIuNjg2MyA1LjU4MTcyIDIwIDEwIDIwQzE0LjQxODMgMjAgMTggMjIuNjg2MyAxOCAyNkMxOCAyMi42ODYzIDIxLjU4MTcgMjAgMjYgMjBDMzAuNDE4MyAyMCAzNCAyMi42ODYzIDM0IDI2QzM0IDI5LjMxMzcgMzAuNDE4MyAzMiAyNiAzMkMyMS41ODE3IDMyIDE4IDI5LjMxMzcgMTggMjZaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
+                userAvatarElement.alt = '默认头像';
+            }
+        }
+        
         if (loginBtn) {
             loginBtn.style.display = 'none';
         }
+        
+        // 绑定用户下拉菜单事件
+        UTILS.bindUserDropdown();
     }
 }
 
@@ -192,15 +208,6 @@ function bindEvents() {
 function loadQuestionnaireData() {
     showLoading();
     
-    // 构建请求参数
-    const params = new URLSearchParams({
-        page: currentPage,
-        size: pageSize,
-        keyword: searchKeyword,
-        status: statusFilter,
-        dateFilter: dateFilter
-    });
-    
     // 获取用户信息
     const userInfo = UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
     if (!userInfo || !userInfo.id) {
@@ -209,13 +216,11 @@ function loadQuestionnaireData() {
         return;
     }
     
-    // 发送请求到后端
-    fetch(`${UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST)}?${params}`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            // 'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_TOKEN)}`
-        }
+    // 发送请求到后端 - 支持分页参数
+    const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST, false) + 
+                `?creatorId=${userInfo.id}&page=${currentPage}&size=${pageSize}`;
+    fetch(url, {
+        method: 'GET'
     })
     .then(response => {
         if (!response.ok) {
@@ -227,9 +232,14 @@ function loadQuestionnaireData() {
         hideLoading();
         
         if (data.code === 200) {
-            questionnaireData = data.data.list || [];
-            totalCount = data.data.total || 0;
-            totalPages = Math.ceil(totalCount / pageSize);
+            // 使用后端返回的分页数据
+            questionnaireData = data.data || [];
+            
+            // 使用后端返回的分页信息更新全局变量
+            currentPage = data.currentPage || 1;
+            pageSize = data.pageSize || 10;
+            totalPages = data.totalPages || 1;
+            totalCount = data.totalCount || 0;
             
             // 更新表格
             renderQuestionnaireTable();
@@ -237,7 +247,7 @@ function loadQuestionnaireData() {
             // 更新统计信息
             updateStatistics();
             
-            // 更新分页
+            // 使用后端分页信息更新分页控件
             updatePagination();
             
             // 更新批量操作按钮状态
@@ -294,33 +304,33 @@ function renderQuestionnaireTable() {
             <td>
                 <div class="action-buttons">
                     <button class="btn-action btn-edit" onclick="editQuestionnaire(${questionnaire.id})" title="编辑问卷">
-                        <i class="iconfont icon-edit"></i>
+                        <i class="fas fa-edit"></i>
                         编辑
                     </button>
                     <button class="btn-action btn-preview" onclick="previewQuestionnaire(${questionnaire.id})" title="预览问卷">
-                        <i class="iconfont icon-eye"></i>
+                        <i class="fas fa-eye"></i>
                         预览
                     </button>
                     <button class="btn-action btn-test" onclick="testQuestionnaire(${questionnaire.id})" title="测试问卷">
-                        <i class="iconfont icon-test"></i>
+                        <i class="fas fa-vial"></i>
                         测试
                     </button>
                     <button class="btn-action btn-copy" onclick="copyQuestionnaire(${questionnaire.id})" title="复制问卷">
-                        <i class="iconfont icon-copy"></i>
+                        <i class="fas fa-copy"></i>
                         复制
                     </button>
-                    ${questionnaire.status ? 
+                    ${(questionnaire.status === 0 || questionnaire.status === 1 || questionnaire.status === 2) ? 
                         `<button class="btn-action btn-disable" onclick="toggleQuestionnaireStatus(${questionnaire.id}, false)" title="禁用问卷">
-                            <i class="iconfont icon-disable"></i>
+                            <i class="fas fa-ban"></i>
                             禁用
                         </button>` :
                         `<button class="btn-action btn-enable" onclick="toggleQuestionnaireStatus(${questionnaire.id}, true)" title="启用问卷">
-                            <i class="iconfont icon-enable"></i>
+                            <i class="fas fa-check"></i>
                             启用
                         </button>`
                     }
                     <button class="btn-action btn-delete" onclick="deleteQuestionnaire(${questionnaire.id})" title="删除问卷">
-                        <i class="iconfont icon-delete"></i>
+                        <i class="fas fa-trash"></i>
                         删除
                     </button>
                 </div>
@@ -348,11 +358,11 @@ function showEmptyState() {
         <tr>
             <td colspan="8">
                 <div class="empty-state">
-                    <i class="iconfont icon-empty"></i>
+                    <i class="fas fa-inbox"></i>
                     <h3>暂无问卷数据</h3>
                     <p>您还没有创建任何问卷，点击"创建问卷"开始您的第一个问卷吧！</p>
                     <button class="btn-create" onclick="window.location.href='manual-create-questionnaire.html'">
-                        <i class="iconfont icon-plus"></i>
+                        <i class="fas fa-plus"></i>
                         创建问卷
                     </button>
                 </div>
@@ -365,16 +375,15 @@ function showEmptyState() {
  * 更新统计信息
  */
 function updateStatistics() {
-    // 这里可以根据实际数据计算统计信息
-    // 暂时使用模拟数据
+    // 使用当前页面数据计算统计信息（简化版本）
     const totalElement = document.getElementById('totalQuestionnaires');
     const activeElement = document.getElementById('activeQuestionnaires');
     const draftElement = document.getElementById('draftQuestionnaires');
     const expiredElement = document.getElementById('expiredQuestionnaires');
     
     if (totalElement) totalElement.textContent = totalCount;
-    if (activeElement) activeElement.textContent = questionnaireData.filter(q => q.status).length;
-    if (draftElement) draftElement.textContent = questionnaireData.filter(q => !q.status).length;
+    if (activeElement) activeElement.textContent = questionnaireData.filter(q => q.status === true || q.status === 1).length;
+    if (draftElement) draftElement.textContent = questionnaireData.filter(q => q.status === 2).length;
     if (expiredElement) expiredElement.textContent = questionnaireData.filter(q => isExpired(q.endDate)).length;
 }
 
@@ -396,18 +405,23 @@ function updatePagination() {
     const nextPageBtn = document.getElementById('nextPage');
     const pageNumbersElement = document.getElementById('pageNumbers');
     
+    // 使用后端返回的分页信息
     if (startIndexElement) {
         startIndexElement.textContent = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
     }
     
     if (endIndexElement) {
-        endIndexElement.textContent = Math.min(currentPage * pageSize, totalCount);
+        // 修正：使用当前页面实际显示的数据数量
+        const actualEndIndex = totalCount > 0 ? Math.min((currentPage - 1) * pageSize + questionnaireData.length, totalCount) : 0;
+        console.log(actualEndIndex)
+        endIndexElement.textContent = actualEndIndex;
     }
     
     if (totalCountElement) {
         totalCountElement.textContent = totalCount;
     }
     
+    // 使用后端返回的分页状态
     if (prevPageBtn) {
         prevPageBtn.disabled = currentPage <= 1;
     }
@@ -427,6 +441,7 @@ function updatePagination() {
 function renderPageNumbers(container) {
     container.innerHTML = '';
     
+    // 使用后端返回的分页信息
     const maxVisiblePages = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
@@ -450,7 +465,9 @@ function renderPageNumbers(container) {
 function changePage(page) {
     if (page < 1 || page > totalPages) return;
     
+    // 使用传入的分页参数
     currentPage = page;
+    // 重新加载数据，后端会返回对应页面的分页信息
     loadQuestionnaireData();
 }
 
@@ -477,6 +494,7 @@ function handleSearch() {
     if (searchInput) {
         searchKeyword = searchInput.value.trim();
         currentPage = 1; // 重置到第一页
+        // 重新加载数据
         loadQuestionnaireData();
     }
 }
@@ -497,6 +515,7 @@ function handleFilterChange() {
     }
     
     currentPage = 1; // 重置到第一页
+    // 重新加载数据
     loadQuestionnaireData();
 }
 
@@ -517,6 +536,7 @@ function clearFilters() {
     dateFilter = '';
     
     currentPage = 1;
+    // 重新加载数据
     loadQuestionnaireData();
 }
 
@@ -920,6 +940,8 @@ function getStatusClass(status) {
         return 'status-active';
     } else if (status === false || status === 0) {
         return 'status-inactive';
+    } else if (status === 2) {
+        return 'status-draft';
     } else {
         return 'status-draft';
     }
@@ -933,6 +955,8 @@ function getStatusText(status) {
         return '已启用';
     } else if (status === false || status === 0) {
         return '已禁用';
+    } else if (status === 2) {
+        return '草稿';
     } else {
         return '草稿';
     }

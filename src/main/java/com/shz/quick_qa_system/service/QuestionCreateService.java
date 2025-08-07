@@ -78,7 +78,7 @@ public interface QuestionCreateService extends IService<QuestionCreate> {
      * @param status 状态
      * @return
      */
-    public Boolean toggleQuestionnaireStatus(Integer id, Boolean status);
+    public Boolean toggleQuestionnaireStatus(Integer id, Integer status);
 
     /**
      * 批量切换问卷状态
@@ -86,7 +86,7 @@ public interface QuestionCreateService extends IService<QuestionCreate> {
      * @param status 状态
      * @return
      */
-    public Boolean batchToggleQuestionnaireStatus(List<Integer> ids, Boolean status);
+    public Boolean batchToggleQuestionnaireStatus(List<Integer> ids, Integer status);
 
     /**
      * 复制问卷

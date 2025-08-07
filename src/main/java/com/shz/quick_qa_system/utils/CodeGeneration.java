@@ -68,6 +68,6 @@ public class CodeGeneration {
     }
 
     public static void main(String[] args) {
-        Generation("q-asystem","question_create");
+        Generation("q-asystem","matrix_column","matrix_question","matrix_row","multiple_choice_option","question","rating_question","single_choice_option","text_question");
     }
 }
