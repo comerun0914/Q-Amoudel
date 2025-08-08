@@ -22,4 +22,25 @@ public interface QuestionService extends IService<Question> {
      * @return 问题列表
      */
     List<QuestionDto> getQuestionsByQuestionnaireId(Integer questionnaireId);
-} 
+
+    /**
+     * 返回处理好的问题存储
+     * @param questionDto
+     * @return 返回处理结果
+     */
+    Integer saveQuestion(QuestionDto questionDto);
+
+    /**
+     * 更新问题
+     * @param questionDto 问题数据
+     * @return 更新结果
+     */
+    Integer updateQuestion(QuestionDto questionDto);
+
+    /**
+     * 删除问题
+     * @param id 问题ID
+     * @return 删除结果
+     */
+    Integer deleteQuestion(Integer id);
+}

@@ -6,11 +6,250 @@ let questionCount = 0;
 let autoSaveTimer = null;
 let lastSavedState = null;
 let isAutoSaving = false;
-let questionnaireId = null;
+let questionnaireId = localStorage.getItem('current_questionnaire_id');
+
+// 用户操作监控相关变量
+let userActivityTimer = null;
+let lastUserActivity = Date.now();
+let hasUnsavedChanges = false;
 
 // 自动保存配置
-const AUTO_SAVE_INTERVAL = 5000; // 5秒
+const USER_INACTIVITY_TIMEOUT = 30000; // 30秒无操作后自动保存
 const AUTO_SAVE_ENABLED = true;
+
+// 题目类型保存处理器
+const QuestionTypeHandler = {
+    // 单选题和多选题保存
+    choice: async function(questionId, questionType, questionElement) {
+        const options = this.collectOptions(questionElement);
+        return await UTILS.saveQuestionByType(questionType, questionId, { options });
+    },
+
+    // 问答题保存
+    text: async function(questionId, questionType, questionElement) {
+        const config = this.collectTextConfig(questionElement);
+        return await UTILS.saveQuestionByType(questionType, questionId, config);
+    },
+
+    // 评分题保存
+    rating: async function(questionId, questionType, questionElement) {
+        const config = this.collectRatingConfig(questionElement);
+        return await UTILS.saveQuestionByType(questionType, questionId, config);
+    },
+
+    // 矩阵题保存
+    matrix: async function(questionId, questionType, questionElement) {
+        const config = this.collectMatrixConfig(questionElement);
+        return await UTILS.saveQuestionByType(questionType, questionId, config);
+    },
+
+    // 收集选项数据
+    collectOptions: function(questionElement) {
+        const options = [];
+        const optionElements = questionElement.querySelectorAll('.option-item');
+        
+        optionElements.forEach((optionElement, index) => {
+            const optionText = optionElement.querySelector('.option-text')?.value || '';
+            if (optionText.trim()) {
+                options.push({
+                    optionContent: optionText,
+                    sortNum: index + 1,
+                    isDefault: 0
+                });
+            }
+        });
+        
+        return options;
+    },
+
+    // 收集问答题配置
+    collectTextConfig: function(questionElement) {
+        return {
+            hintText: questionElement.querySelector('.hint-text')?.value || '',
+            maxLength: parseInt(questionElement.querySelector('.max-length')?.value) || 500,
+            inputType: parseInt(questionElement.querySelector('.input-type')?.value) || 1
+        };
+    },
+
+    // 收集评分题配置
+    collectRatingConfig: function(questionElement) {
+        return {
+            minScore: parseInt(questionElement.querySelector('.min-score')?.value) || 1,
+            maxScore: parseInt(questionElement.querySelector('.max-score')?.value) || 5,
+            stepValue: parseInt(questionElement.querySelector('.step-value')?.value) || 1
+        };
+    },
+
+    // 收集矩阵题配置
+    collectMatrixConfig: function(questionElement) {
+        const rows = [];
+        const columns = [];
+        
+        // 收集行数据
+        const rowElements = questionElement.querySelectorAll('.matrix-row');
+        rowElements.forEach((rowElement, index) => {
+            const rowText = rowElement.querySelector('.row-text')?.value || '';
+            if (rowText.trim()) {
+                rows.push({
+                    rowContent: rowText,
+                    sortNum: index + 1
+                });
+            }
+        });
+
+        // 收集列数据
+        const columnElements = questionElement.querySelectorAll('.matrix-column');
+        columnElements.forEach((columnElement, index) => {
+            const columnText = columnElement.querySelector('.column-text')?.value || '';
+            if (columnText.trim()) {
+                columns.push({
+                    columnContent: columnText,
+                    sortNum: index + 1
+                });
+            }
+        });
+
+        return { rows, columns };
+    }
+};
+
+// 用户操作监控函数
+function resetUserActivityTimer() {
+    lastUserActivity = Date.now();
+    hasUnsavedChanges = true;
+    
+    // 清除之前的定时器
+    if (userActivityTimer) {
+        clearTimeout(userActivityTimer);
+    }
+    
+    // 设置新的定时器，在用户停止操作30秒后自动保存
+    userActivityTimer = setTimeout(() => {
+        if (hasUnsavedChanges && !isAutoSaving) {
+            console.log('用户30秒无操作，触发自动保存...');
+            performAutoSave();
+        }
+    }, USER_INACTIVITY_TIMEOUT);
+    
+    // 立即更新状态显示
+    updateAutoSaveStatus();
+}
+
+// 绑定用户操作事件
+function bindUserActivityEvents() {
+    const events = [
+        'input', 'change', 'keydown', 'keyup', 'click', 'mousedown', 'mouseup',
+        'dragstart', 'dragend', 'drop', 'paste', 'cut', 'focus', 'blur'
+    ];
+    
+    events.forEach(eventType => {
+        document.addEventListener(eventType, (e) => {
+            // 排除一些不需要触发保存的事件
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('delete-question')) {
+                return; // 删除按钮不触发保存
+            }
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('btn-delete-option')) {
+                return; // 删除选项按钮不触发保存
+            }
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('add-option-btn')) {
+                return; // 添加选项按钮不触发保存
+            }
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('drag-handle')) {
+                return; // 拖拽手柄不触发保存
+            }
+            
+            // 检查是否是有效的用户操作
+            if (isValidUserActivity(e)) {
+                resetUserActivityTimer();
+            }
+        }, true);
+    });
+    
+    console.log('用户操作监控已启动，30秒无操作将自动保存');
+}
+
+// 检查是否是有效的用户操作
+function isValidUserActivity(event) {
+    const target = event.target;
+    
+    // 检查是否在问卷编辑区域内
+    const isInEditor = target.closest('.main-content') || 
+                      target.closest('.question-item') || 
+                      target.closest('.questionnaire-info');
+    
+    if (!isInEditor) {
+        return false;
+    }
+    
+    // 检查是否是内容编辑相关的操作
+    const isContentEdit = target.classList.contains('question-text') ||
+                         target.classList.contains('option-text') ||
+                         target.classList.contains('questionnaire-title') ||
+                         target.classList.contains('questionnaire-description') ||
+                         target.tagName === 'TEXTAREA' ||
+                         target.tagName === 'INPUT';
+    
+    // 检查是否是拖拽操作
+    const isDragOperation = event.type.includes('drag') || event.type.includes('drop');
+    
+    // 检查是否是键盘输入
+    const isKeyboardInput = event.type.includes('key') && 
+                           (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+    
+    return isContentEdit || isDragOperation || isKeyboardInput;
+}
+
+// 手动触发保存（用于页面卸载等场景）
+function triggerManualSave() {
+    if (hasUnsavedChanges && !isAutoSaving) {
+        console.log('手动触发保存...');
+        performAutoSave();
+    }
+}
+
+// 页面卸载前保存
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        // 尝试同步保存（如果可能）
+        try {
+            // 这里可以添加同步保存逻辑，但通常异步保存无法在beforeunload中完成
+            console.log('页面即将卸载，有未保存的更改');
+        } catch (error) {
+            console.error('页面卸载保存失败:', error);
+        }
+    }
+});
+
+// 页面可见性变化时保存
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && hasUnsavedChanges) {
+        console.log('页面隐藏，触发保存...');
+        triggerManualSave();
+    }
+});
+
+// 更新自动保存状态显示
+function updateAutoSaveStatus() {
+    const statusElement = document.getElementById('auto-save-status');
+    if (!statusElement) return;
+    
+    if (isAutoSaving) {
+        statusElement.textContent = '正在保存...';
+        statusElement.className = 'auto-save-status saving';
+    } else if (hasUnsavedChanges) {
+        const timeSinceLastActivity = Date.now() - lastUserActivity;
+        const remainingTime = Math.max(0, USER_INACTIVITY_TIMEOUT - timeSinceLastActivity);
+        const seconds = Math.ceil(remainingTime / 1000);
+        statusElement.textContent = `${seconds}秒后自动保存`;
+        statusElement.className = 'auto-save-status pending';
+    } else {
+        statusElement.textContent = '已保存';
+        statusElement.className = 'auto-save-status saved';
+    }
+}
+
+// 定期更新状态显示
+setInterval(updateAutoSaveStatus, 1000);
 
 // 全局函数定义
 function getQuestionTemplate(type) {
@@ -1107,25 +1346,23 @@ async function saveNewQuestion(questionElement) {
         const questionType = questionElement.getAttribute('data-type');
         const questionContent = questionElement.querySelector('.question-text')?.value || '';
         
-        // 确定题目类型ID
-        let questionTypeId;
-        switch (questionType) {
-            case 'single': questionTypeId = 1; break;
-            case 'multiple': questionTypeId = 2; break;
-            case 'text': questionTypeId = 3; break;
-            case 'rating': questionTypeId = 4; break;
-            case 'matrix': questionTypeId = 5; break;
-            default: questionTypeId = 1;
-        }
+        // 使用全局配置获取题目类型ID
+        const questionTypeId = UTILS.getQuestionTypeId(questionType);
         
         // 保存题目基本信息
         const questionData = {
-            questionnaireId: questionnaireId,
+            id: null,
+            questionnaireId: parseInt(questionnaireId), // 转换为数字
             content: questionContent,
             questionType: questionTypeId,
             sortNum: Array.from(document.querySelectorAll('.question-item')).indexOf(questionElement) + 1,
-            isRequired: 1
+            isRequired: 1,
+            // 移除时间字段，让后端自动处理
+            options: [] // 暂时为空数组，后续通过QuestionTypeHandler处理
         };
+        
+        console.log('发送保存请求到:', `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`);
+        console.log('请求数据:', questionData);
         
         const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`, {
             method: 'POST',
@@ -1135,15 +1372,35 @@ async function saveNewQuestion(questionElement) {
             body: JSON.stringify(questionData)
         });
         
+        console.log('响应状态:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+        }
+        
         const result = await response.json();
+        console.log('响应数据:', result);
+        
         if (result.code === 200 && result.data) {
             const savedQuestion = result.data;
             questionElement.dataset.questionId = savedQuestion.id;
             console.log('新题目保存成功:', savedQuestion);
             
-            // 如果是选择题，保存选项
-            if (questionType === 'single' || questionType === 'multiple') {
-                await saveQuestionOptions(savedQuestion.id, questionType, questionElement);
+            // 根据题目类型调用对应的保存处理器
+            try {
+                const questionTypeCode = UTILS.getQuestionTypeCode(questionType);
+                if (questionTypeCode === 'single' || questionTypeCode === 'multiple') {
+                    await QuestionTypeHandler.choice(savedQuestion.id, questionTypeCode, questionElement);
+                } else if (questionTypeCode === 'text') {
+                    await QuestionTypeHandler.text(savedQuestion.id, questionTypeCode, questionElement);
+                } else if (questionTypeCode === 'rating') {
+                    await QuestionTypeHandler.rating(savedQuestion.id, questionTypeCode, questionElement);
+                } else if (questionTypeCode === 'matrix') {
+                    await QuestionTypeHandler.matrix(savedQuestion.id, questionTypeCode, questionElement);
+                }
+                console.log(`${UTILS.getQuestionTypeName(questionTypeCode)}配置保存成功`);
+            } catch (error) {
+                console.error(`${UTILS.getQuestionTypeName(questionType)}配置保存失败:`, error);
             }
         } else {
             console.error('新题目保存失败:', result.message);
@@ -1187,9 +1444,20 @@ async function updateExistingQuestion(questionElement) {
         if (result.code === 200) {
             console.log('题目更新成功');
             
-            // 如果是选择题，更新选项
-            if (questionType === 'single' || questionType === 'multiple') {
-                await saveQuestionOptions(parseInt(questionId), questionType, questionElement);
+            // 根据题目类型调用对应的保存处理器
+            try {
+                if (questionType === 'single' || questionType === 'multiple') {
+                    await QuestionTypeHandler.choice(parseInt(questionId), questionType, questionElement);
+                } else if (questionType === 'text') {
+                    await QuestionTypeHandler.text(parseInt(questionId), questionType, questionElement);
+                } else if (questionType === 'rating') {
+                    await QuestionTypeHandler.rating(parseInt(questionId), questionType, questionElement);
+                } else if (questionType === 'matrix') {
+                    await QuestionTypeHandler.matrix(parseInt(questionId), questionType, questionElement);
+                }
+                console.log(`${UTILS.getQuestionTypeName(questionType)}配置更新成功`);
+            } catch (error) {
+                console.error(`${UTILS.getQuestionTypeName(questionType)}配置更新失败:`, error);
             }
         } else {
             console.error('题目更新失败:', result.message);
@@ -1245,6 +1513,7 @@ async function performAutoSave() {
         
         // 更新保存状态
         lastSavedState = getCurrentPageState();
+        hasUnsavedChanges = false;
         console.log('自动保存完成');
         
     } catch (error) {
@@ -1258,26 +1527,32 @@ async function performAutoSave() {
  * 启动自动保存
  */
 function startAutoSave() {
-    if (autoSaveTimer) {
-        clearInterval(autoSaveTimer);
+    // 清除之前的定时器
+    if (userActivityTimer) {
+        clearTimeout(userActivityTimer);
     }
     
-    autoSaveTimer = setInterval(() => {
-        performAutoSave();
-    }, AUTO_SAVE_INTERVAL);
+    // 绑定用户操作事件
+    bindUserActivityEvents();
     
-    console.log('自动保存已启动，间隔:', AUTO_SAVE_INTERVAL, 'ms');
+    // 初始化用户活动时间
+    lastUserActivity = Date.now();
+    hasUnsavedChanges = false;
+    
+    console.log('智能自动保存已启动，30秒无操作将自动保存');
 }
 
 /**
  * 停止自动保存
  */
 function stopAutoSave() {
-    if (autoSaveTimer) {
-        clearInterval(autoSaveTimer);
-        autoSaveTimer = null;
-        console.log('自动保存已停止');
+    if (userActivityTimer) {
+        clearTimeout(userActivityTimer);
+        userActivityTimer = null;
     }
+    
+    // 移除事件监听器（可选，因为页面卸载时会自动清理）
+    console.log('智能自动保存已停止');
 }
 
 /**

@@ -58,6 +58,61 @@ const CONFIG = {
         UPLOAD_FILE: '/api/upload/file'
     },
 
+    // 题目类型配置
+    QUESTION_TYPES: {
+        // 题目类型ID映射
+        TYPE_IDS: {
+            SINGLE: 1,      // 单选题
+            MULTIPLE: 2,    // 多选题
+            TEXT: 3,        // 问答题
+            RATING: 4,      // 评分题
+            MATRIX: 5       // 矩阵题
+        },
+        
+        // 题目类型名称映射
+        TYPE_NAMES: {
+            single: '单选题',
+            multiple: '多选题',
+            text: '问答题',
+            rating: '评分题',
+            matrix: '矩阵题'
+        },
+        
+        // 题目类型接口映射
+        TYPE_ENDPOINTS: {
+            single: {
+                save: '/singleChoiceOption/batchSave',
+                list: '/singleChoiceOption/listByQuestionId',
+                update: '/singleChoiceOption/update',
+                delete: '/singleChoiceOption/delete'
+            },
+            multiple: {
+                save: '/multipleChoiceOption/batchSave',
+                list: '/multipleChoiceOption/listByQuestionId',
+                update: '/multipleChoiceOption/update',
+                delete: '/multipleChoiceOption/delete'
+            },
+            text: {
+                save: '/textQuestion/save',
+                list: '/textQuestion/listByQuestionId',
+                update: '/textQuestion/update',
+                delete: '/textQuestion/delete'
+            },
+            rating: {
+                save: '/ratingQuestion/save',
+                list: '/ratingQuestion/listByQuestionId',
+                update: '/ratingQuestion/update',
+                delete: '/ratingQuestion/delete'
+            },
+            matrix: {
+                save: '/matrixQuestion/save',
+                list: '/matrixQuestion/listByQuestionId',
+                update: '/matrixQuestion/update',
+                delete: '/matrixQuestion/delete'
+            }
+        }
+    },
+
     // 页面路由配置
     ROUTES: {
         LOGIN: 'login.html',
@@ -74,7 +129,7 @@ const CONFIG = {
     },
 
     // 问题类型配置
-    QUESTION_TYPES: {
+    QUESTION_TYPES_OLD: {
         RADIO: 'radio',
         CHECKBOX: 'checkbox',
         TEXT: 'text',
@@ -571,6 +626,82 @@ const UTILS = {
     // 获取用户信息
     getUserInfo: function() {
         return this.getStorage(CONFIG.STORAGE_KEYS.USER_INFO);
+    },
+
+    // 题目类型相关工具函数
+    // 根据题目类型获取类型ID
+    getQuestionTypeId: function(questionType) {
+        const typeMap = {
+            'single': CONFIG.QUESTION_TYPES.TYPE_IDS.SINGLE,
+            'multiple': CONFIG.QUESTION_TYPES.TYPE_IDS.MULTIPLE,
+            'text': CONFIG.QUESTION_TYPES.TYPE_IDS.TEXT,
+            'rating': CONFIG.QUESTION_TYPES.TYPE_IDS.RATING,
+            'matrix': CONFIG.QUESTION_TYPES.TYPE_IDS.MATRIX
+        };
+        return typeMap[questionType] || CONFIG.QUESTION_TYPES.TYPE_IDS.SINGLE;
+    },
+
+    // 根据类型ID获取题目类型
+    getQuestionTypeById: function(typeId) {
+        const idMap = {
+            [CONFIG.QUESTION_TYPES.TYPE_IDS.SINGLE]: 'single',
+            [CONFIG.QUESTION_TYPES.TYPE_IDS.MULTIPLE]: 'multiple',
+            [CONFIG.QUESTION_TYPES.TYPE_IDS.TEXT]: 'text',
+            [CONFIG.QUESTION_TYPES.TYPE_IDS.RATING]: 'rating',
+            [CONFIG.QUESTION_TYPES.TYPE_IDS.MATRIX]: 'matrix'
+        };
+        return idMap[typeId] || 'single';
+    },
+
+    // 获取题目类型名称
+    getQuestionTypeName: function(questionType) {
+        return CONFIG.QUESTION_TYPES.TYPE_NAMES[questionType] || '未知类型';
+    },
+
+    // 获取题目类型对应的接口端点
+    getQuestionTypeEndpoint: function(questionType, operation) {
+        const endpoints = CONFIG.QUESTION_TYPES.TYPE_ENDPOINTS[questionType];
+        return endpoints ? endpoints[operation] : null;
+    },
+
+    // 根据题目类型调用对应的保存接口
+    saveQuestionByType: async function(questionType, questionId, data) {
+        const endpoint = this.getQuestionTypeEndpoint(questionType, 'save');
+        if (!endpoint) {
+            throw new Error(`未找到题目类型 ${questionType} 的保存接口`);
+        }
+
+        const url = this.getApiUrl(endpoint);
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                questionId: questionId,
+                ...data
+            })
+        });
+
+        return await response.json();
+    },
+
+    // 根据题目类型调用对应的查询接口
+    getQuestionByType: async function(questionType, questionId) {
+        const endpoint = this.getQuestionTypeEndpoint(questionType, 'list');
+        if (!endpoint) {
+            throw new Error(`未找到题目类型 ${questionType} 的查询接口`);
+        }
+
+        const url = this.getApiUrl(endpoint) + `&questionId=${questionId}`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        return await response.json();
     }
 };
 

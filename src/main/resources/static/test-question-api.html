@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题目保存接口测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>题目保存接口测试</h1>
+    
+    <div class="test-section">
+        <h2>测试题目保存接口</h2>
+        <form id="saveForm">
+            <div class="form-group">
+                <label for="questionnaireId">问卷ID:</label>
+                <input type="number" id="questionnaireId" value="1" required>
+            </div>
+            <div class="form-group">
+                <label for="content">题目内容:</label>
+                <textarea id="content" rows="3" placeholder="请输入题目内容" required>这是一个测试题目</textarea>
+            </div>
+            <div class="form-group">
+                <label for="questionType">题目类型:</label>
+                <select id="questionType" required>
+                    <option value="1">单选题</option>
+                    <option value="2">多选题</option>
+                    <option value="3">问答题</option>
+                    <option value="4">评分题</option>
+                    <option value="5">矩阵题</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sortNum">排序号:</label>
+                <input type="number" id="sortNum" value="1" required>
+            </div>
+            <div class="form-group">
+                <label for="isRequired">是否必填:</label>
+                <select id="isRequired">
+                    <option value="1">是</option>
+                    <option value="0">否</option>
+                </select>
+            </div>
+            <button type="submit">保存题目</button>
+        </form>
+        <div id="saveResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试获取题目类型列表</h2>
+        <button onclick="getQuestionTypes()">获取题目类型列表</button>
+        <div id="typesResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            BACKEND_BASE_URL: 'http://localhost:7070/api',
+            API_ENDPOINTS: {
+                QUESTION_SAVE: '/question/save',
+                QUESTION_TYPES: '/question/types'
+            }
+        };
+
+        // 保存题目
+        document.getElementById('saveForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                id: null,
+                questionnaireId: parseInt(document.getElementById('questionnaireId').value),
+                content: document.getElementById('content').value,
+                questionType: parseInt(document.getElementById('questionType').value),
+                sortNum: parseInt(document.getElementById('sortNum').value),
+                isRequired: parseInt(document.getElementById('isRequired').value),
+                options: []
+            };
+
+            try {
+                console.log('发送保存请求:', formData);
+                
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('响应数据:', result);
+
+                const resultDiv = document.getElementById('saveResult');
+                resultDiv.style.display = 'block';
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `保存成功！\n题目ID: ${result.data}\n响应: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `保存失败！\n错误信息: ${result.message}\n响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                console.error('保存失败:', error);
+                const resultDiv = document.getElementById('saveResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `请求失败！\n错误信息: ${error.message}`;
+            }
+        });
+
+        // 获取题目类型列表
+        async function getQuestionTypes() {
+            try {
+                console.log('获取题目类型列表...');
+                
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_TYPES}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                console.log('响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('响应数据:', result);
+
+                const resultDiv = document.getElementById('typesResult');
+                resultDiv.style.display = 'block';
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `获取成功！\n题目类型列表:\n${JSON.stringify(result.data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `获取失败！\n错误信息: ${result.message}\n响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                console.error('获取题目类型失败:', error);
+                const resultDiv = document.getElementById('typesResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `请求失败！\n错误信息: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

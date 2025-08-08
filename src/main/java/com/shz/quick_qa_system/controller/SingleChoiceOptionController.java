@@ -31,6 +31,7 @@ public class SingleChoiceOptionController {
     @PostMapping("/save")
     public ApiResult saveOption(@RequestBody SingleChoiceOption option) {
         try {
+
             boolean success = singleChoiceOptionService.save(option);
             if (success) {
                 return ApiResult.success(option);
@@ -91,8 +92,8 @@ public class SingleChoiceOptionController {
     /**
      * 删除选项
      */
-    @DeleteMapping("/delete/{id}")
-    public ApiResult deleteOption(@PathVariable Integer id) {
+    @DeleteMapping("/delete")
+    public ApiResult deleteOption(@RequestParam(value = "id") Integer id) {
         try {
             boolean success = singleChoiceOptionService.removeById(id);
             if (success) {
