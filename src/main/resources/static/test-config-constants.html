@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试CONFIG常量配置</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .endpoint-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .endpoint-url {
+            color: #666;
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CONFIG常量配置测试</h1>
+        
+        <div class="section">
+            <h2>基础配置</h2>
+            <div class="endpoint">
+                <div class="endpoint-name">后端基础URL</div>
+                <div class="endpoint-url" id="baseUrl"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>问卷相关API端点</h2>
+            <div id="questionnaireEndpoints"></div>
+        </div>
+
+        <div class="section">
+            <h2>题目相关API端点</h2>
+            <div id="questionEndpoints"></div>
+        </div>
+
+        <div class="section">
+            <h2>选项相关API端点</h2>
+            <div id="optionEndpoints"></div>
+        </div>
+
+        <div class="section">
+            <h2>测试功能</h2>
+            <button class="test-button" onclick="testAllEndpoints()">测试所有端点</button>
+            <button class="test-button" onclick="clearLog()">清除日志</button>
+            <div class="log" id="log"></div>
+        </div>
+    </div>
+
+    <!-- 引入配置文件 -->
+    <script src="js/config.js"></script>
+    <script>
+        // 等待页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            displayConfig();
+        });
+
+        function displayConfig() {
+            // 显示基础URL
+            document.getElementById('baseUrl').textContent = CONFIG.BACKEND_BASE_URL;
+
+            // 显示问卷相关端点
+            const questionnaireEndpoints = [
+                'QUESTIONNAIRE_LIST',
+                'QUESTIONNAIRE_DETAIL',
+                'QUESTIONNAIRE_GETINFOBYID',
+                'QUESTIONNAIRE_QUESTIONS',
+                'QUESTIONNAIRE_CREATE',
+                'QUESTIONNAIRE_UPDATE',
+                'QUESTIONNAIRE_DELETE',
+                'QUESTIONNAIRE_BATCH_DELETE',
+                'QUESTIONNAIRE_TOGGLE_STATUS',
+                'QUESTIONNAIRE_BATCH_TOGGLE_STATUS',
+                'QUESTIONNAIRE_COPY',
+                'QUESTIONNAIRE_IMPORT',
+                'QUESTIONNAIRE_STATISTICS',
+                'QUESTIONNAIRE_FILL',
+                'QUESTIONNAIRE_SUBMIT',
+                'QUESTIONNAIRE_RESULT',
+                'QUESTIONNAIRE_RESULTS'
+            ];
+
+            const questionnaireContainer = document.getElementById('questionnaireEndpoints');
+            questionnaireEndpoints.forEach(endpoint => {
+                if (CONFIG.API_ENDPOINTS[endpoint]) {
+                    const div = document.createElement('div');
+                    div.className = 'endpoint';
+                    div.innerHTML = `
+                        <div class="endpoint-name">${endpoint}</div>
+                        <div class="endpoint-url">${CONFIG.API_ENDPOINTS[endpoint]}</div>
+                    `;
+                    questionnaireContainer.appendChild(div);
+                }
+            });
+
+            // 显示题目相关端点
+            const questionEndpoints = [
+                'QUESTION_SAVE',
+                'QUESTION_UPDATE',
+                'QUESTION_DELETE',
+                'QUESTION_UPDATE_ORDER'
+            ];
+
+            const questionContainer = document.getElementById('questionEndpoints');
+            questionEndpoints.forEach(endpoint => {
+                if (CONFIG.API_ENDPOINTS[endpoint]) {
+                    const div = document.createElement('div');
+                    div.className = 'endpoint';
+                    div.innerHTML = `
+                        <div class="endpoint-name">${endpoint}</div>
+                        <div class="endpoint-url">${CONFIG.API_ENDPOINTS[endpoint]}</div>
+                    `;
+                    questionContainer.appendChild(div);
+                }
+            });
+
+            // 显示选项相关端点
+            const optionEndpoints = [
+                'SINGLE_CHOICE_OPTION_SAVE',
+                'SINGLE_CHOICE_OPTION_BATCH_SAVE',
+                'SINGLE_CHOICE_OPTION_LIST',
+                'SINGLE_CHOICE_OPTION_UPDATE',
+                'SINGLE_CHOICE_OPTION_DELETE',
+                'SINGLE_CHOICE_OPTION_DELETE_BY_QUESTION',
+                'MULTIPLE_CHOICE_OPTION_SAVE',
+                'MULTIPLE_CHOICE_OPTION_BATCH_SAVE',
+                'MULTIPLE_CHOICE_OPTION_LIST',
+                'MULTIPLE_CHOICE_OPTION_UPDATE',
+                'MULTIPLE_CHOICE_OPTION_DELETE',
+                'MULTIPLE_CHOICE_OPTION_DELETE_BY_QUESTION'
+            ];
+
+            const optionContainer = document.getElementById('optionEndpoints');
+            optionEndpoints.forEach(endpoint => {
+                if (CONFIG.API_ENDPOINTS[endpoint]) {
+                    const div = document.createElement('div');
+                    div.className = 'endpoint';
+                    div.innerHTML = `
+                        <div class="endpoint-name">${endpoint}</div>
+                        <div class="endpoint-url">${CONFIG.API_ENDPOINTS[endpoint]}</div>
+                    `;
+                    optionContainer.appendChild(div);
+                }
+            });
+        }
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function testAllEndpoints() {
+            log('开始测试所有API端点...', 'info');
+            
+            const endpoints = [
+                { name: '问卷列表', url: CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST },
+                { name: '题目保存', url: CONFIG.API_ENDPOINTS.QUESTION_SAVE },
+                { name: '单选题选项保存', url: CONFIG.API_ENDPOINTS.SINGLE_CHOICE_OPTION_SAVE },
+                { name: '多选题选项保存', url: CONFIG.API_ENDPOINTS.MULTIPLE_CHOICE_OPTION_SAVE }
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    log(`测试端点: ${endpoint.name}`, 'info');
+                    const fullUrl = CONFIG.BACKEND_BASE_URL + endpoint.url;
+                    log(`完整URL: ${fullUrl}`, 'info');
+                    
+                    // 这里只是测试URL格式，不实际发送请求
+                    if (fullUrl.includes('localhost:7070/api')) {
+                        log(`✓ ${endpoint.name} - URL格式正确`, 'success');
+                    } else {
+                        log(`✗ ${endpoint.name} - URL格式错误`, 'error');
+                    }
+                } catch (error) {
+                    log(`✗ ${endpoint.name} - 测试失败: ${error.message}`, 'error');
+                }
+            }
+            
+            log('端点测试完成', 'info');
+        }
+    </script>
+</body>
+</html> 

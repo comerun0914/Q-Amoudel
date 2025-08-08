@@ -62,11 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // 准备请求数据
         const questionnaireData = {
             title: titleInput.value.trim(),
-            description: descriptionInput.value.trim(),
+            description: descriptionInput.value.trim() || '', // 确保不为null
             startDate: startDateInput.value,
             endDate: endDateInput.value,
             submissionLimit: parseInt(maxSubmissionsInput.value) || 1,
-            status: true,
+            status: 0, // 改为Integer类型：1=启用
             creatorId: getCurrentUserId() // 从localStorage或session获取当前用户ID
         };
 
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // simulateAsyncSteps();
 
             // 发送创建请求
-            const response = await fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE), {
+            const response = await fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(questionnaireData)
             });
 
-            console.log('请求URL:', UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE));
+            console.log('请求URL:', UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false));
             console.log('请求数据:', questionnaireData);
 
             const result = await response.json();

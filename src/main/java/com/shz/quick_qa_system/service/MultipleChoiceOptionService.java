@@ -1,7 +1,10 @@
 package com.shz.quick_qa_system.service;
 
-import com.shz.quick_qa_system.entity.MultipleChoiceOption;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.shz.quick_qa_system.entity.MultipleChoiceOption;
+import com.shz.quick_qa_system.dto.QuestionOptionDto;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,25 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface MultipleChoiceOptionService extends IService<MultipleChoiceOption> {
 
+    /**
+     * 批量保存选项
+     * @param questionId 问题ID
+     * @param options 选项列表
+     * @return 保存后的选项列表
+     */
+    List<MultipleChoiceOption> batchSaveOptions(Integer questionId, List<QuestionOptionDto.OptionItem> options);
+
+    /**
+     * 根据问题ID查询选项列表
+     * @param questionId 问题ID
+     * @return 选项列表
+     */
+    List<MultipleChoiceOption> getOptionsByQuestionId(Integer questionId);
+
+    /**
+     * 根据问题ID删除所有选项
+     * @param questionId 问题ID
+     * @return 是否删除成功
+     */
+    boolean deleteOptionsByQuestionId(Integer questionId);
 }

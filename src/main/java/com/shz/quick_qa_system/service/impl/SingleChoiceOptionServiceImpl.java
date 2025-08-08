@@ -1,10 +1,16 @@
 package com.shz.quick_qa_system.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.shz.quick_qa_system.entity.SingleChoiceOption;
 import com.shz.quick_qa_system.dao.SingleChoiceOptionMapper;
 import com.shz.quick_qa_system.service.SingleChoiceOptionService;
+import com.shz.quick_qa_system.dto.QuestionOptionDto;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +23,42 @@ import org.springframework.stereotype.Service;
 @Service
 public class SingleChoiceOptionServiceImpl extends ServiceImpl<SingleChoiceOptionMapper, SingleChoiceOption> implements SingleChoiceOptionService {
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<SingleChoiceOption> batchSaveOptions(Integer questionId, List<QuestionOptionDto.OptionItem> options) {
+        // 先删除该问题的所有现有选项
+        deleteOptionsByQuestionId(questionId);
+        
+        // 批量保存新选项
+        List<SingleChoiceOption> optionList = new ArrayList<>();
+        for (int i = 0; i < options.size(); i++) {
+            QuestionOptionDto.OptionItem item = options.get(i);
+            SingleChoiceOption option = new SingleChoiceOption();
+            option.setQuestionId(questionId);
+            option.setOptionContent(item.getOptionContent());
+            option.setSortNum(item.getSortNum() != null ? item.getSortNum() : i + 1);
+            option.setIsDefault(item.getIsDefault() != null ? item.getIsDefault() : 0);
+            optionList.add(option);
+        }
+        
+        // 批量保存
+        saveBatch(optionList);
+        return optionList;
+    }
+
+    @Override
+    public List<SingleChoiceOption> getOptionsByQuestionId(Integer questionId) {
+        QueryWrapper<SingleChoiceOption> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("question_id", questionId)
+                   .orderByAsc("sort_num");
+        return list(queryWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteOptionsByQuestionId(Integer questionId) {
+        QueryWrapper<SingleChoiceOption> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("question_id", questionId);
+        return remove(queryWrapper);
+    }
 }

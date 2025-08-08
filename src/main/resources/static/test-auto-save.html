@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自动保存功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.auto-save {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .question-item {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .question-text {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .option-item {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .option-text {
+            width: 80%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>自动保存功能测试</h1>
+        
+        <div id="status" class="status auto-save">
+            自动保存状态: 已启动 (每5秒检查一次)
+        </div>
+        
+        <div>
+            <button class="btn btn-primary" onclick="addQuestion()">添加题目</button>
+            <button class="btn btn-success" onclick="toggleAutoSave()">切换自动保存</button>
+            <button class="btn btn-danger" onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div id="question-container">
+            <div class="question-item" data-question-id="1">
+                <h3>示例题目 1</h3>
+                <textarea class="question-text" placeholder="请输入问题内容">您对当前服务的满意度如何？</textarea>
+                <div class="options-container">
+                    <div class="option-item">
+                        <input type="radio" name="q1" value="1" checked>
+                        <input type="text" class="option-text" value="非常满意">
+                    </div>
+                    <div class="option-item">
+                        <input type="radio" name="q1" value="2">
+                        <input type="text" class="option-text" value="满意">
+                    </div>
+                    <div class="option-item">
+                        <input type="radio" name="q1" value="3">
+                        <input type="text" class="option-text" value="一般">
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="deleteQuestion(this)">删除题目</button>
+            </div>
+        </div>
+        
+        <h3>自动保存日志</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        // 模拟配置
+        window.CONFIG = {
+            BACKEND_BASE_URL: 'http://localhost:8080'
+        };
+        
+        let questionCounter = 2;
+        let autoSaveEnabled = true;
+        let lastSavedState = null;
+        let autoSaveTimer = null;
+        
+        // 模拟自动保存功能
+        function getCurrentPageState() {
+            const questions = document.querySelectorAll('.question-item');
+            const state = {
+                questionCount: questions.length,
+                questions: []
+            };
+            
+            questions.forEach((question, index) => {
+                const questionData = {
+                    index: index,
+                    questionId: question.dataset.questionId || null,
+                    content: question.querySelector('.question-text')?.value || '',
+                    options: []
+                };
+                
+                const optionElements = question.querySelectorAll('.option-item');
+                optionElements.forEach((optionElement, optionIndex) => {
+                    const optionText = optionElement.querySelector('.option-text');
+                    const radioCheckbox = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
+                    
+                    if (optionText && optionText.value.trim()) {
+                        questionData.options.push({
+                            content: optionText.value.trim(),
+                            isDefault: radioCheckbox && radioCheckbox.checked ? 1 : 0,
+                            sortNum: optionIndex + 1
+                        });
+                    }
+                });
+                
+                state.questions.push(questionData);
+            });
+            
+            return state;
+        }
+        
+        function hasPageChanged() {
+            const currentState = getCurrentPageState();
+            
+            if (!lastSavedState) {
+                lastSavedState = currentState;
+                return false;
+            }
+            
+            return JSON.stringify(currentState) !== JSON.stringify(lastSavedState);
+        }
+        
+        function performAutoSave() {
+            if (!autoSaveEnabled) return;
+            
+            if (hasPageChanged()) {
+                log('检测到页面变化，开始自动保存...');
+                
+                // 模拟保存过程
+                setTimeout(() => {
+                    lastSavedState = getCurrentPageState();
+                    log('自动保存完成');
+                    updateStatus('自动保存完成', 'auto-save');
+                }, 1000);
+            }
+        }
+        
+        function startAutoSave() {
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+            }
+            
+            autoSaveTimer = setInterval(() => {
+                performAutoSave();
+            }, 5000);
+            
+            log('自动保存已启动，间隔: 5000ms');
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+                log('自动保存已停止');
+            }
+        }
+        
+        function addQuestion() {
+            const container = document.getElementById('question-container');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
+            questionDiv.dataset.questionId = questionCounter++;
+            
+            questionDiv.innerHTML = `
+                <h3>示例题目 ${questionCounter - 1}</h3>
+                <textarea class="question-text" placeholder="请输入问题内容">新题目内容</textarea>
+                <div class="options-container">
+                    <div class="option-item">
+                        <input type="radio" name="q${questionCounter - 1}" value="1" checked>
+                        <input type="text" class="option-text" value="选项1">
+                    </div>
+                    <div class="option-item">
+                        <input type="radio" name="q${questionCounter - 1}" value="2">
+                        <input type="text" class="option-text" value="选项2">
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="deleteQuestion(this)">删除题目</button>
+            `;
+            
+            container.appendChild(questionDiv);
+            log(`添加了新题目 ${questionCounter - 1}`);
+        }
+        
+        function deleteQuestion(button) {
+            const questionElement = button.closest('.question-item');
+            const questionId = questionElement.dataset.questionId;
+            
+            if (confirm('确定要删除这个题目吗？')) {
+                questionElement.remove();
+                log(`删除了题目 ${questionId}`);
+            }
+        }
+        
+        function toggleAutoSave() {
+            autoSaveEnabled = !autoSaveEnabled;
+            
+            if (autoSaveEnabled) {
+                startAutoSave();
+                updateStatus('自动保存状态: 已启动 (每5秒检查一次)', 'auto-save');
+            } else {
+                stopAutoSave();
+                updateStatus('自动保存状态: 已停止', 'error');
+            }
+        }
+        
+        function updateStatus(message, className) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${className}`;
+        }
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 设置输入变化监听器
+        function setupInputChangeListeners() {
+            document.addEventListener('input', function(e) {
+                if (e.target.matches('.question-text, .option-text')) {
+                    if (autoSaveEnabled) {
+                        clearTimeout(window.inputChangeTimer);
+                        window.inputChangeTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                }
+            });
+            
+            document.addEventListener('change', function(e) {
+                if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
+                    if (autoSaveEnabled) {
+                        clearTimeout(window.optionChangeTimer);
+                        window.optionChangeTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 1000);
+                    }
+                }
+            });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupInputChangeListeners();
+            startAutoSave();
+            log('页面加载完成，自动保存功能已启动');
+        });
+        
+        // 页面卸载时停止自动保存
+        window.addEventListener('beforeunload', function() {
+            stopAutoSave();
+        });
+    </script>
+</body>
+</html> 

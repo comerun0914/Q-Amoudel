@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>问卷管理 - 幼儿星</title>
     <link rel="stylesheet" href="css/questionnaire-management.css">
-    <!-- 使用Font Awesome图标库 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
 </head>
 <body>
     <header>
@@ -39,11 +38,11 @@
                 </div>
                 <div class="header-actions">
                     <button class="btn-create" id="createQuestionnaire">
-                        <i class="fas fa-plus"></i>
+                        <i class="iconfont icon-plus"></i>
                         创建问卷
                     </button>
                     <button class="btn-import" id="importQuestionnaire">
-                        <i class="fas fa-upload"></i>
+                        <i class="iconfont icon-upload"></i>
                         导入问卷
                     </button>
                 </div>
@@ -54,7 +53,7 @@
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="搜索问卷标题或描述...">
                     <button class="search-btn" id="searchBtn">
-                        <i class="fas fa-search"></i>
+                        <i class="iconfont icon-search"></i>
                     </button>
                 </div>
                 <div class="filter-group">
@@ -79,7 +78,7 @@
             <div class="stats-section">
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-clipboard-list"></i>
+                        <i class="iconfont icon-questionnaire"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number" id="totalQuestionnaires">0</div>
@@ -88,7 +87,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon active">
-                        <i class="fas fa-check-circle"></i>
+                        <i class="iconfont icon-active"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number" id="activeQuestionnaires">0</div>
@@ -97,7 +96,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon draft">
-                        <i class="fas fa-edit"></i>
+                        <i class="iconfont icon-draft"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number" id="draftQuestionnaires">0</div>
@@ -106,7 +105,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon expired">
-                        <i class="fas fa-clock"></i>
+                        <i class="iconfont icon-expired"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number" id="expiredQuestionnaires">0</div>
@@ -121,15 +120,15 @@
                     <div class="list-title">问卷列表</div>
                     <div class="list-actions">
                         <button class="btn-batch-action" id="batchDelete" disabled>
-                            <i class="fas fa-trash"></i>
+                            <i class="iconfont icon-delete"></i>
                             批量删除
                         </button>
                         <button class="btn-batch-action" id="batchEnable" disabled>
-                            <i class="fas fa-check"></i>
+                            <i class="iconfont icon-enable"></i>
                             批量启用
                         </button>
                         <button class="btn-batch-action" id="batchDisable" disabled>
-                            <i class="fas fa-ban"></i>
+                            <i class="iconfont icon-disable"></i>
                             批量禁用
                         </button>
                     </div>
@@ -164,13 +163,13 @@
                     </div>
                     <div class="pagination-controls">
                         <button class="btn-page" id="prevPage" disabled>
-                            <i class="fas fa-chevron-left"></i>
+                            <i class="iconfont icon-arrow-left"></i>
                         </button>
                         <div class="page-numbers" id="pageNumbers">
                             <!-- 页码将通过JavaScript动态生成 -->
                         </div>
                         <button class="btn-page" id="nextPage" disabled>
-                            <i class="fas fa-chevron-right"></i>
+                            <i class="iconfont icon-arrow-right"></i>
                         </button>
                     </div>
                 </div>
@@ -184,7 +183,7 @@
             <div class="modal-header">
                 <h3>确认删除</h3>
                 <button class="modal-close" id="closeDeleteModal">
-                    <i class="fas fa-times"></i>
+                    <i class="iconfont icon-close"></i>
                 </button>
             </div>
             <div class="modal-body">

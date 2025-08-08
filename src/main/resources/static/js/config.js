@@ -30,6 +30,27 @@ const CONFIG = {
         QUESTIONNAIRE_RESULT: '/questionCreate/result',
         QUESTIONNAIRE_RESULTS: '/questionCreate/results',
 
+        // 题目相关
+        QUESTION_SAVE: '/question/save',
+        QUESTION_UPDATE: '/question/update',
+        QUESTION_DELETE: '/question/delete',
+        QUESTION_UPDATE_ORDER: '/question/updateOrder',
+
+        // 选项相关
+        SINGLE_CHOICE_OPTION_SAVE: '/singleChoiceOption/save',
+        SINGLE_CHOICE_OPTION_BATCH_SAVE: '/singleChoiceOption/batchSave',
+        SINGLE_CHOICE_OPTION_LIST: '/singleChoiceOption/listByQuestionId',
+        SINGLE_CHOICE_OPTION_UPDATE: '/singleChoiceOption/update',
+        SINGLE_CHOICE_OPTION_DELETE: '/singleChoiceOption/delete',
+        SINGLE_CHOICE_OPTION_DELETE_BY_QUESTION: '/singleChoiceOption/deleteByQuestionId',
+        
+        MULTIPLE_CHOICE_OPTION_SAVE: '/multipleChoiceOption/save',
+        MULTIPLE_CHOICE_OPTION_BATCH_SAVE: '/multipleChoiceOption/batchSave',
+        MULTIPLE_CHOICE_OPTION_LIST: '/multipleChoiceOption/listByQuestionId',
+        MULTIPLE_CHOICE_OPTION_UPDATE: '/multipleChoiceOption/update',
+        MULTIPLE_CHOICE_OPTION_DELETE: '/multipleChoiceOption/delete',
+        MULTIPLE_CHOICE_OPTION_DELETE_BY_QUESTION: '/multipleChoiceOption/deleteByQuestionId',
+
         // 登录历史
         LOGIN_HISTORY: '/api/login-history',
 

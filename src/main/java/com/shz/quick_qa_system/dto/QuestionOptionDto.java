@@ -1,6 +1,7 @@
 package com.shz.quick_qa_system.dto;
 
 import lombok.Data;
+import java.util.List;
 
 /**
  * <p>
@@ -37,4 +38,30 @@ public class QuestionOptionDto {
      * 是否默认选项
      */
     private Integer isDefault;
+
+    /**
+     * 选项列表（用于批量操作）
+     */
+    private List<OptionItem> options;
+
+    /**
+     * 选项项内部类
+     */
+    @Data
+    public static class OptionItem {
+        /**
+         * 选项内容
+         */
+        private String optionContent;
+
+        /**
+         * 选项排序号
+         */
+        private Integer sortNum;
+
+        /**
+         * 是否默认选项
+         */
+        private Integer isDefault;
+    }
 } 
