@@ -73,14 +73,14 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('=== 开始创建问卷 ===');
             // 显示加载动画卡片
-            // showLoadingCard();
+            showLoadingCard();
 
             // 显示加载状态
             createBtn.disabled = true;
             createBtn.textContent = '创建中...';
 
             // 开始动画流程
-            // simulateAsyncSteps();
+            simulateAsyncSteps();
 
             // 发送创建请求
             const response = await fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, false), {
@@ -117,11 +117,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // 更新加载文本为成功状态
-                // updateLoadingText('问卷创建成功！');
-                // updateProgressText('100%');
+                updateLoadingText('问卷创建成功！');
+                updateProgressText('100%');
 
                 // 等待动画完成后再跳转
-                // await sleep(1000); // 等待1秒让用户看到成功状态
+                await sleep(1000); // 等待1秒让用户看到成功状态
 
                 // 使用类似Vue Router的跳转方式
                 console.log('准备跳转...');

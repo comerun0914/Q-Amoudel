@@ -6,9 +6,11 @@ import com.shz.quick_qa_system.dao.SingleChoiceOptionMapper;
 import com.shz.quick_qa_system.service.SingleChoiceOptionService;
 import com.shz.quick_qa_system.dto.QuestionOptionDto;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shz.quick_qa_system.utils.CodeGenerator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,21 @@ import java.util.List;
 @Service
 public class SingleChoiceOptionServiceImpl extends ServiceImpl<SingleChoiceOptionMapper, SingleChoiceOption> implements SingleChoiceOptionService {
 
+    @Resource
+    private SingleChoiceOptionMapper singleChoiceOptionMapper;
+
+    @Override
+    public boolean save(SingleChoiceOption entity) {
+        if (entity.getId() == null) {
+            int id = CodeGenerator.generateFormId();
+            while(singleChoiceOptionMapper.exists(new QueryWrapper<SingleChoiceOption>().eq("id", id))){
+                id = CodeGenerator.generateFormId();
+            }
+            entity.setId(id);
+        }
+        return super.save(entity);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<SingleChoiceOption> batchSaveOptions(Integer questionId, List<QuestionOptionDto.OptionItem> options) {
@@ -32,8 +49,14 @@ public class SingleChoiceOptionServiceImpl extends ServiceImpl<SingleChoiceOptio
         // 批量保存新选项
         List<SingleChoiceOption> optionList = new ArrayList<>();
         for (int i = 0; i < options.size(); i++) {
+            // 创建id
+            int id = CodeGenerator.generateFormId();
+            while(singleChoiceOptionMapper.exists(new QueryWrapper<SingleChoiceOption>().eq("id", id))){
+                id = CodeGenerator.generateFormId();
+            };
             QuestionOptionDto.OptionItem item = options.get(i);
             SingleChoiceOption option = new SingleChoiceOption();
+            option.setId(id);
             option.setQuestionId(questionId);
             option.setOptionContent(item.getOptionContent());
             option.setSortNum(item.getSortNum() != null ? item.getSortNum() : i + 1);

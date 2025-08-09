@@ -6,6 +6,7 @@ import com.shz.quick_qa_system.dao.MultipleChoiceOptionMapper;
 import com.shz.quick_qa_system.service.MultipleChoiceOptionService;
 import com.shz.quick_qa_system.dto.QuestionOptionDto;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shz.quick_qa_system.utils.CodeGenerator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,21 @@ import java.util.List;
 @Service
 public class MultipleChoiceOptionServiceImpl extends ServiceImpl<MultipleChoiceOptionMapper, MultipleChoiceOption> implements MultipleChoiceOptionService {
 
+    @javax.annotation.Resource
+    private MultipleChoiceOptionMapper multipleChoiceOptionMapper;
+
+    @Override
+    public boolean save(MultipleChoiceOption entity) {
+        if (entity.getId() == null) {
+            int id = CodeGenerator.generateFormId();
+            while (multipleChoiceOptionMapper.exists(new QueryWrapper<MultipleChoiceOption>().eq("id", id))) {
+                id = CodeGenerator.generateFormId();
+            }
+            entity.setId(id);
+        }
+        return super.save(entity);
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<MultipleChoiceOption> batchSaveOptions(Integer questionId, List<QuestionOptionDto.OptionItem> options) {
@@ -34,6 +50,12 @@ public class MultipleChoiceOptionServiceImpl extends ServiceImpl<MultipleChoiceO
         for (int i = 0; i < options.size(); i++) {
             QuestionOptionDto.OptionItem item = options.get(i);
             MultipleChoiceOption option = new MultipleChoiceOption();
+            // 生成唯一ID
+            int id = CodeGenerator.generateFormId();
+            while (multipleChoiceOptionMapper.exists(new QueryWrapper<MultipleChoiceOption>().eq("id", id))) {
+                id = CodeGenerator.generateFormId();
+            }
+            option.setId(id);
             option.setQuestionId(questionId);
             option.setOptionContent(item.getOptionContent());
             option.setSortNum(item.getSortNum() != null ? item.getSortNum() : i + 1);

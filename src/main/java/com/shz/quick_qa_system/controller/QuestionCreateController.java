@@ -2,23 +2,24 @@ package com.shz.quick_qa_system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.shz.quick_qa_system.Costant.ApiResult;
+import com.shz.quick_qa_system.dao.*;
 import com.shz.quick_qa_system.dto.QuestionCreateDto;
 import com.shz.quick_qa_system.dto.QuestionDto;
-import com.shz.quick_qa_system.entity.QuestionCreate;
-import com.shz.quick_qa_system.entity.Users;
+import com.shz.quick_qa_system.entity.*;
 import com.shz.quick_qa_system.service.QuestionCreateService;
+import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
+import com.shz.quick_qa_system.service.impl.QuestionServiceImpl;
+import com.shz.quick_qa_system.service.SingleChoiceOptionService;
 import com.shz.quick_qa_system.service.impl.QuestionCreateServiceImpl;
 import com.shz.quick_qa_system.service.impl.UsersServiceImpl;
 import com.shz.quick_qa_system.utils.CodeGenerator;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>
@@ -35,6 +36,23 @@ public class QuestionCreateController {
     private QuestionCreateServiceImpl questionCreateServiceImpl;
     @Resource
     private UsersServiceImpl usersServiceImpl;
+
+    @Resource
+    private SingleChoiceOptionMapper singleChoiceOptionMapper;
+    @Resource
+    private MultipleChoiceOptionMapper multipleChoiceOptionMapper;
+    @Resource
+    private TextQuestionMapper  textQuestionMapper;
+    @Resource
+    private MatrixQuestionMapper matrixQuestionMapper;
+    @Resource
+    private RatingQuestionMapper ratingQuestionMapper;
+    @Resource
+    private QuestionMapper questionMapper;
+    @Resource
+    private QuestionServiceImpl questionServiceImpl;
+
+
 
     /**
      * 创建问卷（包含问题）
@@ -264,6 +282,41 @@ public class QuestionCreateController {
             }
         } catch (Exception e) {
             return ApiResult.error("获取问卷信息失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取问卷的问题ID与排序号对照
+     * 注意：路径避免与 getQuestionnaireQuestions 冲突
+     */
+    @GetMapping("/questionOrder")
+    public ApiResult getQuestions(@RequestParam(value = "questionnaireId") Integer questionnaireId) {
+//        List<String[]> list = new ArrayList<>();
+//
+//        List<SingleChoiceOption> singleChoiceList = singleChoiceOptionMapper.selectList(new QueryWrapper<SingleChoiceOption>().eq("question_id", questionnaireId));
+//        List<MultipleChoiceOption> multipleChoiceList = multipleChoiceOptionMapper.selectList(new QueryWrapper<MultipleChoiceOption>().eq("question_id", questionnaireId));
+//        List<TextQuestion> textQuestionList = textQuestionMapper.selectList(new QueryWrapper<TextQuestion>().eq("question_id", questionnaireId));
+//        List<MatrixQuestion> matrixQuestionList = matrixQuestionMapper.selectList(new QueryWrapper<MatrixQuestion>().eq("question_id", questionnaireId));
+//        List<RatingQuestion> ratingQuestionList = ratingQuestionMapper.selectList(new QueryWrapper<RatingQuestion>().eq("question_id", questionnaireId));
+        // 获取问题id
+        List<Question> questionList = questionMapper.selectList(new QueryWrapper<Question>().eq("questionnaire_id", questionnaireId));
+        List<String[]> questionListId = new ArrayList<>();
+        questionList.forEach(question -> {
+            questionListId.add(new String[]{question.getId().toString(),question.getContent(),question.getQuestionType().toString(),question.getSortNum().toString()});
+        });
+        return ApiResult.success(questionListId);
+    }
+
+    /**
+     * 更新问卷的问题排序（别名接口，便于前端沿用 questionOrder 路径）
+     */
+    @PutMapping("/questionOrder")
+    public ApiResult updateQuestionOrder(@RequestBody QuestionOrderUpdateDto request) {
+        try {
+            boolean ok = questionServiceImpl.updateQuestionOrder(request);
+            return ok ? ApiResult.success(true) : ApiResult.error("更新序号失败");
+        } catch (Exception e) {
+            return ApiResult.error("更新序号时发生错误: " + e.getMessage());
         }
     }
 }

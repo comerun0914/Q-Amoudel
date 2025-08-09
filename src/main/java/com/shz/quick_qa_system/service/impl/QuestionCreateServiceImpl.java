@@ -205,6 +205,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             question.setCreatedTime(LocalDateTime.now());
             question.setUpdatedTime(LocalDateTime.now());
 
+            // 生成唯一问题ID
+            Integer qid = CodeGenerator.generateFormId();
+            while (questionMapper.exists(new QueryWrapper<Question>().eq("id", qid))) {
+                qid = CodeGenerator.generateFormId();
+            }
+            question.setId(qid);
             // 保存问题
             int insertResult = questionMapper.insert(question);
             System.out.println("问题保存结果: " + insertResult + ", 问题ID: " + question.getId());
@@ -237,6 +243,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
             if (questionType == 1) { // 单选题
                 SingleChoiceOption option = new SingleChoiceOption();
+                // 生成唯一ID
+                Integer sid = CodeGenerator.generateFormId();
+                while (singleChoiceOptionMapper.exists(new QueryWrapper<SingleChoiceOption>().eq("id", sid))) {
+                    sid = CodeGenerator.generateFormId();
+                }
+                option.setId(sid);
                 option.setQuestionId(questionId);
                 option.setOptionContent((String) optionData.get("optionContent"));
                 option.setSortNum((Integer) optionData.get("sortNum"));
@@ -244,6 +256,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 singleChoiceOptionMapper.insert(option);
             } else if (questionType == 2) { // 多选题
                 MultipleChoiceOption option = new MultipleChoiceOption();
+                // 生成唯一ID
+                Integer mid = CodeGenerator.generateFormId();
+                while (multipleChoiceOptionMapper.exists(new QueryWrapper<MultipleChoiceOption>().eq("id", mid))) {
+                    mid = CodeGenerator.generateFormId();
+                }
+                option.setId(mid);
                 option.setQuestionId(questionId);
                 option.setOptionContent((String) optionData.get("optionContent"));
                 option.setSortNum((Integer) optionData.get("sortNum"));
@@ -270,7 +288,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         if (textQuestion.getInputType() == null) {
             textQuestion.setInputType(1); // 默认单行输入
         }
-        
+        // 生成唯一ID
+        Integer tid = CodeGenerator.generateFormId();
+        while (textQuestionMapper.exists(new QueryWrapper<TextQuestion>().eq("id", tid))) {
+            tid = CodeGenerator.generateFormId();
+        }
+        textQuestion.setId(tid);
         textQuestionMapper.insert(textQuestion);
         System.out.println("问答题配置保存成功，问题ID: " + questionId);
     }
@@ -303,7 +326,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         if (ratingQuestion.getStep() == null) {
             ratingQuestion.setStep(1); // 默认步长
         }
-        
+        // 生成唯一ID
+        Integer rid = CodeGenerator.generateFormId();
+        while (ratingQuestionMapper.exists(new QueryWrapper<RatingQuestion>().eq("id", rid))) {
+            rid = CodeGenerator.generateFormId();
+        }
+        ratingQuestion.setId(rid);
         ratingQuestionMapper.insert(ratingQuestion);
         System.out.println("评分题配置保存成功，问题ID: " + questionId);
     }
@@ -320,7 +348,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             matrixQuestion.setSubQuestionType(1); // 默认单选矩阵
         }
         matrixQuestion.setDescription((String) questionData.get("description"));
-        
+        // 生成唯一矩阵题ID
+        Integer mid = CodeGenerator.generateFormId();
+        while (matrixQuestionMapper.exists(new QueryWrapper<MatrixQuestion>().eq("id", mid))) {
+            mid = CodeGenerator.generateFormId();
+        }
+        matrixQuestion.setId(mid);
         matrixQuestionMapper.insert(matrixQuestion);
         System.out.println("矩阵题主体保存成功，问题ID: " + questionId + ", 矩阵ID: " + matrixQuestion.getId());
         
@@ -333,6 +366,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 matrixRow.setMatrixId(matrixQuestion.getId());
                 matrixRow.setRowContent(rows.get(i));
                 matrixRow.setSortNum(i + 1);
+                // 生成唯一ID
+                Integer rowId = CodeGenerator.generateFormId();
+                while (matrixRowMapper.exists(new QueryWrapper<MatrixRow>().eq("id", rowId))) {
+                    rowId = CodeGenerator.generateFormId();
+                }
+                matrixRow.setId(rowId);
                 matrixRowMapper.insert(matrixRow);
             }
             System.out.println("矩阵行保存成功，共 " + rows.size() + " 行");
@@ -348,6 +387,12 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 matrixColumn.setColumnContent(columns.get(i));
                 matrixColumn.setSortNum(i + 1);
                 matrixColumn.setScore((Integer) questionData.get("score"));
+                // 生成唯一ID
+                Integer colId = CodeGenerator.generateFormId();
+                while (matrixColumnMapper.exists(new QueryWrapper<MatrixColumn>().eq("id", colId))) {
+                    colId = CodeGenerator.generateFormId();
+                }
+                matrixColumn.setId(colId);
                 matrixColumnMapper.insert(matrixColumn);
             }
             System.out.println("矩阵列保存成功，共 " + columns.size() + " 列");

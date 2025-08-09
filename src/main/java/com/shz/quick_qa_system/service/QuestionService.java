@@ -3,6 +3,7 @@ package com.shz.quick_qa_system.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.entity.Question;
+import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 
 import java.util.List;
 
@@ -43,4 +44,9 @@ public interface QuestionService extends IService<Question> {
      * @return 删除结果
      */
     Integer deleteQuestion(Integer id);
+
+    /**
+     * 批量更新题目排序
+     */
+    boolean updateQuestionOrder(QuestionOrderUpdateDto request);
 }

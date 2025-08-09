@@ -6,6 +6,7 @@ import com.shz.quick_qa_system.dao.QuestionMapper;
 import com.shz.quick_qa_system.dao.SingleChoiceOptionMapper;
 import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.dto.QuestionOptionDto;
+import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 import com.shz.quick_qa_system.entity.Question;
 import com.shz.quick_qa_system.entity.SingleChoiceOption;
 import com.shz.quick_qa_system.service.QuestionService;
@@ -142,4 +143,18 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         }
     }
 
+    @Override
+    public boolean updateQuestionOrder(QuestionOrderUpdateDto request) {
+        if (request == null || request.getQuestionOrder() == null || request.getQuestionOrder().isEmpty()) {
+            return false;
+        }
+        for (QuestionOrderUpdateDto.OrderItem item : request.getQuestionOrder()) {
+            if (item.getId() == null) continue;
+            Question q = new Question();
+            q.setId(item.getId());
+            q.setSortNum(item.getSortNum());
+            questionMapper.updateById(q);
+        }
+        return true;
+    }
 }

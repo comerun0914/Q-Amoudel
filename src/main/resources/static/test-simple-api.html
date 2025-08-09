@@ -1,181 +1,255 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>简单API测试</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>简单API测试（题目保存/选项分离 + 本地映射）</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .test-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .result {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        .success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
+    body { font-family: Arial, sans-serif; background: #f6f7f9; margin: 0; }
+    .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.06);}    
+    .test-section { border: 1px solid #e5e7eb; padding: 16px; border-radius: 6px; margin-bottom: 16px; }
+    .row { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+    input, select, textarea { padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+    input[type="number"] { width: 140px; }
+    textarea { width: 100%; min-height: 70px; }
+    button { background: #2563eb; color: #fff; border: 0; padding: 8px 14px; border-radius: 4px; cursor: pointer; margin-right: 8px; }
+    button.secondary { background: #6b7280; }
+    button.danger { background: #dc2626; }
+    .result { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; border-radius: 6px; padding: 10px; border: 1px solid #e5e7eb; margin-top: 10px; }
+    .success { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+    .error { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .options { margin-top: 8px; }
+    .opt-row { display: grid; grid-template-columns: 32px 1fr 100px 80px; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .opt-row .remove { background: #dc2626; }
+    code { background:#f3f4f6; padding:2px 4px; border-radius:4px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>简单API测试</h1>
+    <h1>简单API测试（验证“题目保存与选项分开”逻辑 + 本地映射）</h1>
         
         <div class="test-section">
-            <h3>1. 测试基本连接</h3>
-            <button onclick="testBasicConnection()">测试连接</button>
-            <div id="basicResult" class="result"></div>
+      <h3>0. 全局配置</h3>
+      <div class="row">
+        <label>问卷ID</label>
+        <input type="number" id="qid" value="1" />
+        <button class="secondary" onclick="showMap()">查看本地映射</button>
+        <button class="secondary" onclick="clearMap()">清空本地映射</button>
+      </div>
+      <div id="mapBox" class="result" style="display:none"></div>
         </div>
 
         <div class="test-section">
-            <h3>2. 测试问卷列表API</h3>
-            <button onclick="testQuestionnaireList()">测试问卷列表</button>
-            <div id="listResult" class="result"></div>
+      <h3>1. 题目保存（创建/更新，仅题目本体）</h3>
+      <div class="row">
+        <label>局部键 localKey</label>
+        <input type="text" id="localKey" style="width:320px" placeholder="为空将自动生成" />
+        <button class="secondary" onclick="genLocalKey()">生成</button>
+      </div>
+      <div class="row">
+        <label>题目内容</label>
+        <textarea id="content">示例题目内容</textarea>
+      </div>
+      <div class="row">
+        <label>题目类型</label>
+        <select id="questionType">
+          <option value="1">单选题</option>
+          <option value="2">多选题</option>
+          <option value="3">问答题</option>
+          <option value="4">评分题</option>
+          <option value="5">矩阵题</option>
+        </select>
+        <label>排序号</label>
+        <input type="number" id="sortNum" value="1" />
+        <label>必填</label>
+        <select id="isRequired"><option value="1">是</option><option value="0">否</option></select>
+      </div>
+      <div>
+        <button onclick="saveOrUpdateQuestionAPI()">保存/更新题目</button>
+        <button class="danger" onclick="deleteQuestionAPI()">删除题目</button>
+      </div>
+      <div id="saveResult" class="result" style="display:none"></div>
         </div>
 
         <div class="test-section">
-            <h3>3. 测试问卷详情API</h3>
-            <input type="number" id="questionnaireId" value="1" placeholder="问卷ID">
-            <button onclick="testQuestionnaireDetail()">测试问卷详情</button>
-            <div id="detailResult" class="result"></div>
+      <h3>2. 题目选项（以单选为例，批量保存）</h3>
+      <div class="row">
+        <button class="secondary" onclick="addOpt()">新增选项</button>
+        <button onclick="saveOptions()">批量保存选项</button>
+        <button class="secondary" onclick="loadOptions()">查询已保存选项</button>
+      </div>
+      <div class="opt-row" style="font-weight:600">
+        <div>#</div>
+        <div>选项内容</div>
+        <div style="text-align:center;">默认</div>
+        <div>操作</div>
+      </div>
+      <div id="options" class="options"></div>
+      <div id="optResult" class="result" style="display:none"></div>
         </div>
 
         <div class="test-section">
-            <h3>4. 测试问卷题目API</h3>
-            <input type="number" id="questionnaireIdForQuestions" value="1" placeholder="问卷ID">
-            <button onclick="testQuestionnaireQuestions()">测试问卷题目</button>
-            <div id="questionsResult" class="result"></div>
+      <h3>3. 后台校验</h3>
+      <div class="row">
+        <button class="secondary" onclick="fetchQuestions()">按问卷ID获取所有题目</button>
+      </div>
+      <div id="fetchResult" class="result" style="display:none"></div>
         </div>
     </div>
 
     <script>
-        // 测试基本连接
-        async function testBasicConnection() {
-            const resultDiv = document.getElementById('basicResult');
-            resultDiv.textContent = '正在测试连接...';
-            resultDiv.className = 'result';
-            
-            try {
-                const response = await fetch('http://localhost:7070/questionCreate/list?page=1&size=1');
-                const result = await response.json();
-                
-                resultDiv.className = 'result success';
-                resultDiv.textContent = `✅ 连接成功!\n状态码: ${response.status}\n响应数据: ${JSON.stringify(result, null, 2)}`;
-            } catch (error) {
-                resultDiv.className = 'result error';
-                resultDiv.textContent = `❌ 连接失败!\n错误信息: ${error.message}\n错误详情: ${error}`;
-            }
-        }
+    const CFG = {
+      BASE: 'http://localhost:7070/api',
+      SAVE: '/question/save',
+      UPDATE: '/question/update',
+      DELETE: '/question/delete',
+      LIST_QUESTIONS: '/questionCreate/questionOrder',
+      SINGLE_BATCH_SAVE: '/singleChoiceOption/batchSave',
+      SINGLE_LIST: '/singleChoiceOption/listByQuestionId',
+    };
 
-        // 测试问卷列表API
-        async function testQuestionnaireList() {
-            const resultDiv = document.getElementById('listResult');
-            resultDiv.textContent = '正在测试问卷列表API...';
-            resultDiv.className = 'result';
-            
-            try {
-                const response = await fetch('http://localhost:7070/questionCreate/list?page=1&size=5');
-                const result = await response.json();
-                
-                if (result.code === 200) {
-                    resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ 问卷列表API测试成功!\n问卷总数: ${result.data.total}\n当前页问卷数: ${result.data.list.length}\n完整响应: ${JSON.stringify(result, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ 问卷列表API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result error';
-                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
-            }
-        }
+    const mapKey = () => `question_id_map_${document.getElementById('qid').value || 0}`;
+    const readMap = () => JSON.parse(localStorage.getItem(mapKey()) || '{}');
+    const writeMap = (m) => localStorage.setItem(mapKey(), JSON.stringify(m || {}));
 
-        // 测试问卷详情API
-        async function testQuestionnaireDetail() {
-            const questionnaireId = document.getElementById('questionnaireId').value;
-            const resultDiv = document.getElementById('detailResult');
-            resultDiv.textContent = '正在测试问卷详情API...';
-            resultDiv.className = 'result';
-            
-            try {
-                const response = await fetch(`http://localhost:7070/questionCreate/getInfoById?id=${questionnaireId}`);
-                const result = await response.json();
-                
-                if (result.code === 200) {
-                    resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ 问卷详情API测试成功!\n问卷ID: ${result.data.id}\n标题: ${result.data.title}\n描述: ${result.data.description}\n创建人: ${result.userInfo}\n完整响应: ${JSON.stringify(result, null, 2)}`;
-                } else {
-                    resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ 问卷详情API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result error';
-                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
-            }
-        }
+    function genLocalKey() {
+      document.getElementById('localKey').value = `q_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    }
+    function showMap() {
+      const box = document.getElementById('mapBox');
+      box.style.display = 'block';
+      box.className = 'result';
+      box.textContent = JSON.stringify(readMap(), null, 2);
+    }
+    function clearMap() { writeMap({}); showMap(); }
 
-        // 测试问卷题目API
-        async function testQuestionnaireQuestions() {
-            const questionnaireId = document.getElementById('questionnaireIdForQuestions').value;
-            const resultDiv = document.getElementById('questionsResult');
-            resultDiv.textContent = '正在测试问卷题目API...';
-            resultDiv.className = 'result';
-            
-            try {
-                const response = await fetch(`http://localhost:7070/questionCreate/questions?questionnaireId=${questionnaireId}`);
-                const result = await response.json();
-                
-                if (result.code === 200) {
-                    resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ 问卷题目API测试成功!\n题目数量: ${result.data.length}\n完整响应: ${JSON.stringify(result, null, 2)}`;
+    function ensureLocalKey() {
+      const el = document.getElementById('localKey');
+      if (!el.value) genLocalKey();
+      return document.getElementById('localKey').value;
+    }
+
+    async function saveOrUpdateQuestionAPI() {
+      const qid = parseInt(document.getElementById('qid').value, 10);
+      const localKey = ensureLocalKey();
+      const content = document.getElementById('content').value.trim();
+      const questionType = parseInt(document.getElementById('questionType').value, 10);
+      const sortNum = parseInt(document.getElementById('sortNum').value, 10) || 1;
+      const isRequired = parseInt(document.getElementById('isRequired').value, 10) || 1;
+      const map = readMap();
+      const existedId = map[localKey];
+
+      if (!content) { return show('#saveResult', '请先填写题目内容', true); }
+
+      try {
+        if (!existedId) {
+          const body = { id: null, questionnaireId: qid, content, questionType, sortNum, isRequired, options: [] };
+          const resp = await fetch(CFG.BASE + CFG.SAVE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const result = await resp.json();
+          if (resp.ok && result.code === 200 && result.data) {
+            map[localKey] = result.data; writeMap(map); showMap();
+            show('#saveResult', `创建成功，questionId=${result.data}\n${JSON.stringify(result, null, 2)}`);
+          } else { show('#saveResult', `创建失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
                 } else {
-                    resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ 问卷题目API测试失败!\n错误代码: ${result.code}\n错误信息: ${result.message}\n完整响应: ${JSON.stringify(result, null, 2)}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result error';
-                resultDiv.textContent = `❌ 网络错误!\n错误信息: ${error.message}\n错误详情: ${error}`;
-            }
+          const body = { id: existedId, content };
+          const resp = await fetch(CFG.BASE + CFG.UPDATE, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+          const result = await resp.json();
+          if (resp.ok && result.code === 200) {
+            show('#saveResult', `更新成功，questionId=${existedId}\n${JSON.stringify(result, null, 2)}`);
+          } else { show('#saveResult', `更新失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
         }
+      } catch (e) {
+        show('#saveResult', `请求异常: ${e.message}`, true);
+      }
+    }
+
+    async function deleteQuestionAPI() {
+      const localKey = ensureLocalKey();
+      const map = readMap();
+      const id = map[localKey];
+      if (!id) { return show('#saveResult', '本地无映射ID，无法删除（请先创建或映射）', true); }
+      try {
+        const resp = await fetch(CFG.BASE + CFG.DELETE + '/' + id, { method: 'DELETE' });
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          delete map[localKey]; writeMap(map); showMap();
+          show('#saveResult', `删除成功，questionId=${id}\n${JSON.stringify(result, null, 2)}`);
+        } else { show('#saveResult', `删除失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
+      } catch (e) { show('#saveResult', `请求异常: ${e.message}`, true); }
+    }
+
+    function addOpt(text = '', def = false) {
+      const list = document.getElementById('options');
+      const idx = list.children.length + 1;
+      const row = document.createElement('div');
+      row.className = 'opt-row';
+      row.innerHTML = `
+        <div>${idx}</div>
+        <input type="text" class="opt-text" placeholder="选项内容" value="${text.replace(/"/g, '&quot;')}" />
+        <label style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <input type="radio" name="def" ${def ? 'checked' : ''}/> 默认
+        </label>
+        <button class="remove" type="button">删除</button>`;
+      row.querySelector('.remove').addEventListener('click', () => row.remove());
+      list.appendChild(row);
+    }
+
+    async function saveOptions() {
+      const localKey = ensureLocalKey();
+      const map = readMap();
+      const questionId = map[localKey];
+      if (!questionId) { return show('#optResult', '请先保存/映射题目以获得 questionId', true); }
+      const rows = Array.from(document.querySelectorAll('#options .opt-row'));
+      const options = rows.map((row, i) => ({
+        optionContent: row.querySelector('.opt-text').value.trim(),
+        sortNum: i + 1,
+        isDefault: row.querySelector('input[type="radio"]').checked ? 1 : 0
+      })).filter(o => o.optionContent.length > 0);
+      if (options.length === 0) { return show('#optResult', '请至少添加一个有效选项', true); }
+      try {
+        const body = { questionId, options };
+        const resp = await fetch(CFG.BASE + CFG.SINGLE_BATCH_SAVE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          show('#optResult', `选项保存成功\n${JSON.stringify(result, null, 2)}`);
+        } else { show('#optResult', `选项保存失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
+      } catch (e) { show('#optResult', `请求异常: ${e.message}`, true); }
+    }
+
+    async function loadOptions() {
+      const localKey = ensureLocalKey();
+      const map = readMap();
+      const questionId = map[localKey];
+      if (!questionId) { return show('#optResult', '请先保存/映射题目以获得 questionId', true); }
+      try {
+        const url = `${CFG.BASE}${CFG.SINGLE_LIST}?questionId=${questionId}`;
+        const resp = await fetch(url);
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          document.getElementById('options').innerHTML = '';
+          (result.data || []).forEach((o, i) => addOpt(o.optionContent || '', o.isDefault === 1));
+          show('#optResult', `查询成功\n${JSON.stringify(result, null, 2)}`);
+        } else { show('#optResult', `查询失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
+      } catch (e) { show('#optResult', `请求异常: ${e.message}`, true); }
+    }
+
+    async function fetchQuestions() {
+      const qid = parseInt(document.getElementById('qid').value, 10);
+      try {
+        const url = `${CFG.BASE}${CFG.LIST_QUESTIONS}?questionnaireId=${qid}`;
+        const resp = await fetch(url);
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          show('#fetchResult', JSON.stringify(result, null, 2));
+        } else { show('#fetchResult', `获取失败: ${result.message || resp.statusText}\n${JSON.stringify(result, null, 2)}`, true); }
+      } catch (e) { show('#fetchResult', `请求异常: ${e.message}`, true); }
+    }
+
+    function show(sel, text, isErr = false) {
+      const box = document.querySelector(sel); box.style.display = 'block'; box.className = `result ${isErr ? 'error':'success'}`; box.textContent = text; }
+
+    // 预置两行选项
+    document.addEventListener('DOMContentLoaded', () => { addOpt('选项A', true); addOpt('选项B', false); });
     </script>
 </body>
 </html> 

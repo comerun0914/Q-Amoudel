@@ -105,10 +105,11 @@ const CONFIG = {
                 delete: '/ratingQuestion/delete'
             },
             matrix: {
-                save: '/matrixQuestion/save',
-                list: '/matrixQuestion/listByQuestionId',
+                // 使用新的聚合保存/查询接口
+                save: '/matrixQuestion/saveAll',
+                list: '/matrixQuestion/getDetailByQuestionId',
                 update: '/matrixQuestion/update',
-                delete: '/matrixQuestion/delete'
+                delete: '/matrixQuestion/deleteByQuestionId'
             }
         }
     },

@@ -7,6 +7,8 @@ let autoSaveTimer = null;
 let lastSavedState = null;
 let isAutoSaving = false;
 let questionnaireId = localStorage.getItem('current_questionnaire_id');
+// 全局问题容器引用，供拖拽/排序使用
+let questionContainer = null;
 
 // 用户操作监控相关变量
 let userActivityTimer = null;
@@ -17,12 +19,83 @@ let hasUnsavedChanges = false;
 const USER_INACTIVITY_TIMEOUT = 30000; // 30秒无操作后自动保存
 const AUTO_SAVE_ENABLED = true;
 
+// 本地存储：按问卷维度维护 问题局部键 -> questionId 的映射
+const LOCAL_STORAGE_KEYS = {
+    questionIdMap: (qid) => `question_id_map_${qid}`
+};
+
+function getQuestionIdMap() {
+    // 兜底：若全局 questionnaireId 还未初始化，尝试从本地再取一次
+    if (!questionnaireId) {
+        questionnaireId = localStorage.getItem('current_questionnaire_id');
+    }
+    const key = LOCAL_STORAGE_KEYS.questionIdMap(questionnaireId);
+    return UTILS.getStorage(key) || {};
+}
+
+function setQuestionIdMap(map) {
+    if (!questionnaireId) {
+        questionnaireId = localStorage.getItem('current_questionnaire_id');
+    }
+    const key = LOCAL_STORAGE_KEYS.questionIdMap(questionnaireId);
+    UTILS.setStorage(key, map || {});
+}
+
+function ensureLocalKey(questionElement) {
+    if (!questionElement.dataset.localKey) {
+        questionElement.dataset.localKey = `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+    return questionElement.dataset.localKey;
+}
+
+function getStoredQuestionIdForElement(questionElement) {
+    const localKey = ensureLocalKey(questionElement);
+    const map = getQuestionIdMap();
+    let id = map[localKey];
+    // 自愈：若映射缺失，但 DOM 上已有 questionId，则回灌
+    if (!id && questionElement.dataset.questionId) {
+        id = parseInt(questionElement.dataset.questionId);
+        if (id) {
+            map[localKey] = id;
+            setQuestionIdMap(map);
+        }
+    }
+    return id;
+}
+
+function storeQuestionIdForElement(questionElement, id) {
+    if (!id) return;
+    // 使用稳定的本地键：qid_{id}，避免随机键导致刷新后找不到映射
+    questionElement.dataset.localKey = `qid_${id}`;
+    const localKey = questionElement.dataset.localKey;
+    const map = getQuestionIdMap();
+    map[localKey] = id;
+    setQuestionIdMap(map);
+    questionElement.dataset.questionId = id;
+}
+
+function removeStoredQuestionIdForElement(questionElement) {
+    const localKey = questionElement.dataset.localKey;
+    if (!localKey) return;
+    const map = getQuestionIdMap();
+    if (map[localKey]) {
+        delete map[localKey];
+        setQuestionIdMap(map);
+    }
+}
+
 // 题目类型保存处理器
 const QuestionTypeHandler = {
-    // 单选题和多选题保存
-    choice: async function(questionId, questionType, questionElement) {
-        const options = this.collectOptions(questionElement);
-        return await UTILS.saveQuestionByType(questionType, questionId, { options });
+    // 单选题保存（包含默认项）
+    singleChoice: async function(questionId, questionElement) {
+        const options = this.collectSingleOptions(questionElement);
+        return await UTILS.saveQuestionByType('single', questionId, { options });
+    },
+
+    // 多选题保存（不包含默认项）
+    multipleChoice: async function(questionId, questionElement) {
+        const options = this.collectMultipleOptions(questionElement);
+        return await UTILS.saveQuestionByType('multiple', questionId, { options });
     },
 
     // 问答题保存
@@ -43,31 +116,48 @@ const QuestionTypeHandler = {
         return await UTILS.saveQuestionByType(questionType, questionId, config);
     },
 
-    // 收集选项数据
-    collectOptions: function(questionElement) {
+    // 收集单选题选项（识别默认项）
+    collectSingleOptions: function(questionElement) {
         const options = [];
         const optionElements = questionElement.querySelectorAll('.option-item');
-        
+        optionElements.forEach((optionElement, index) => {
+            const optionText = optionElement.querySelector('.option-text')?.value || '';
+            const radio = optionElement.querySelector('input[type="radio"]');
+            if (optionText.trim()) {
+                options.push({
+                    optionContent: optionText.trim(),
+                    sortNum: index + 1,
+                    isDefault: radio && radio.checked ? 1 : 0
+                });
+            }
+        });
+        return options;
+    },
+
+    // 收集多选题选项（不设置默认项）
+    collectMultipleOptions: function(questionElement) {
+        const options = [];
+        const optionElements = questionElement.querySelectorAll('.option-item');
         optionElements.forEach((optionElement, index) => {
             const optionText = optionElement.querySelector('.option-text')?.value || '';
             if (optionText.trim()) {
                 options.push({
-                    optionContent: optionText,
-                    sortNum: index + 1,
-                    isDefault: 0
+                    optionContent: optionText.trim(),
+                    sortNum: index + 1
                 });
             }
         });
-        
         return options;
     },
 
     // 收集问答题配置
     collectTextConfig: function(questionElement) {
+        const inputTypeRaw = (questionElement.querySelector('.input-type')?.value || 'single');
+        const inputType = inputTypeRaw === 'multiline' ? 2 : 1; // 1=单行，2=多行
         return {
             hintText: questionElement.querySelector('.hint-text')?.value || '',
             maxLength: parseInt(questionElement.querySelector('.max-length')?.value) || 500,
-            inputType: parseInt(questionElement.querySelector('.input-type')?.value) || 1
+            inputType
         };
     },
 
@@ -76,7 +166,9 @@ const QuestionTypeHandler = {
         return {
             minScore: parseInt(questionElement.querySelector('.min-score')?.value) || 1,
             maxScore: parseInt(questionElement.querySelector('.max-score')?.value) || 5,
-            stepValue: parseInt(questionElement.querySelector('.step-value')?.value) || 1
+            minLabel: questionElement.querySelector('.min-label')?.value || '非常不满意',
+            maxLabel: questionElement.querySelector('.max-label')?.value || '非常满意',
+            step: parseInt(questionElement.querySelector('.rating-step')?.value) || 1
         };
     },
 
@@ -109,7 +201,7 @@ const QuestionTypeHandler = {
             }
         });
 
-        return { rows, columns };
+        return { rows, columns, subQuestionType: 1 };
     }
 };
 
@@ -472,7 +564,7 @@ function createRatingQuestionTemplate() {
             </div>
             <div class="setting-group">
                 <label>步长:</label>
-                <input type="number" class="rating-step" value="1" min="0.5" max="2" step="0.5">
+                <input type="number" class="rating-step" value="1" min="1" max="5" step="1">
             </div>
         </div>
     `;
@@ -813,6 +905,10 @@ function displayQuestions(questions) {
         if (questionElement) {
             // 设置题目ID
             questionElement.dataset.questionId = question.id;
+            // 为后续映射设置稳定的本地键（以后端ID为基准）
+            questionElement.dataset.localKey = `qid_${question.id}`;
+            // 回灌本地映射，确保刷新后依旧能定位到 questionId
+            try { storeQuestionIdForElement(questionElement, question.id); } catch (e) { console.warn('本地映射写入失败:', e); }
             questionContainer.appendChild(questionElement);
             questionCount++;
         }
@@ -930,8 +1026,13 @@ function addOption(button, inputType) {
     const optionElement = document.createElement('div');
     optionElement.className = 'option-item';
     optionElement.innerHTML = `
-        <input type="${inputType}" name="${name}" disabled>
-        <input type="text" placeholder="选项${optionCount}" class="option-content">
+        <div class="option-content">
+            <input type="${inputType}" name="${name}">
+            <input type="text" placeholder="选项${optionCount}" class="option-text">
+        </div>
+        <div class="option-actions">
+            <button type="button" class="btn-delete-option" title="删除选项">✕</button>
+        </div>
     `;
     
     optionsContainer.appendChild(optionElement);
@@ -945,6 +1046,7 @@ function updateQuestionCount() {
         q.getAttribute('data-type') !== 'user-info'
     );
     questionCount = actualQuestions.length;
+    const questionCountElement = document.getElementById('question-count');
     if (questionCountElement) {
         questionCountElement.textContent = questionCount;
     }
@@ -956,6 +1058,7 @@ function updateEstimatedTime() {
     const timePerQuestion = 0.5; // 每个问题0.5分钟
     const estimatedMinutes = Math.ceil(baseTime + questionCount * timePerQuestion);
     
+    const estimatedTimeElement = document.getElementById('estimated-time');
     if (estimatedTimeElement) {
         estimatedTimeElement.textContent = `约 ${estimatedMinutes} 分钟`;
     }
@@ -1019,15 +1122,11 @@ function handleDragStart(e) {
     
     // 如果点击的是拖拽手柄，确保拖拽的是整个问题项
     const questionItem = e.target.closest('.question-item');
-    if (e.target.closest('.drag-handle')) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', questionItem.outerHTML);
-        questionItem.classList.add('dragging');
-    } else {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', e.target.outerHTML);
-        e.target.classList.add('dragging');
-    }
+    if (!questionItem) return;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    // 统一以整块 question-item 为拖拽对象
+    questionItem.classList.add('dragging');
 }
 
 // 拖拽悬停
@@ -1072,7 +1171,7 @@ function handleDrop(e) {
             (draggedType !== 'user-info' && targetType !== 'user-info')) {
             
             // 获取位置信息
-            const container = questionContainer;
+        const container = questionContainer || (targetElement && targetElement.parentElement);
             const draggedRect = draggedElement.getBoundingClientRect();
             const targetRect = targetElement.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
@@ -1336,7 +1435,8 @@ async function updateQuestionOrder() {
  * @param {HTMLElement} questionElement - 题目元素
  * @returns {Promise}
  */
-async function saveNewQuestion(questionElement) {
+// 合并保存：统一入口，自动判断新建或更新，仅处理题目本体；选项由 saveQuestionOptions 单独处理
+async function saveOrUpdateQuestion(questionElement) {
     if (!questionnaireId) {
         console.warn('没有问卷ID，跳过新题目保存');
         return;
@@ -1344,69 +1444,67 @@ async function saveNewQuestion(questionElement) {
     
     try {
         const questionType = questionElement.getAttribute('data-type');
-        const questionContent = questionElement.querySelector('.question-text')?.value || '';
-        
-        // 使用全局配置获取题目类型ID
-        const questionTypeId = UTILS.getQuestionTypeId(questionType);
-        
-        // 保存题目基本信息
-        const questionData = {
-            id: null,
-            questionnaireId: parseInt(questionnaireId), // 转换为数字
-            content: questionContent,
-            questionType: questionTypeId,
-            sortNum: Array.from(document.querySelectorAll('.question-item')).indexOf(questionElement) + 1,
-            isRequired: 1,
-            // 移除时间字段，让后端自动处理
-            options: [] // 暂时为空数组，后续通过QuestionTypeHandler处理
-        };
-        
-        console.log('发送保存请求到:', `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`);
-        console.log('请求数据:', questionData);
-        
-        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(questionData)
-        });
-        
-        console.log('响应状态:', response.status, response.statusText);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+        const questionTextEl = questionElement.querySelector('.question-text');
+        const questionContent = questionTextEl?.value?.trim() || '';
+
+        // 前置校验：问题内容必填
+        if (!questionContent) {
+            if (questionTextEl) {
+                questionTextEl.focus();
+                questionTextEl.placeholder = '请输入问题内容（必填）';
+                questionTextEl.classList.add('input-error');
+                setTimeout(() => questionTextEl.classList.remove('input-error'), 1500);
+            }
+            // console.warn('问题内容为空，已阻止保存');
+            // return;
         }
         
-        const result = await response.json();
-        console.log('响应数据:', result);
-        
-        if (result.code === 200 && result.data) {
-            const savedQuestion = result.data;
-            questionElement.dataset.questionId = savedQuestion.id;
-            console.log('新题目保存成功:', savedQuestion);
-            
-            // 根据题目类型调用对应的保存处理器
-            try {
-                const questionTypeCode = UTILS.getQuestionTypeCode(questionType);
-                if (questionTypeCode === 'single' || questionTypeCode === 'multiple') {
-                    await QuestionTypeHandler.choice(savedQuestion.id, questionTypeCode, questionElement);
-                } else if (questionTypeCode === 'text') {
-                    await QuestionTypeHandler.text(savedQuestion.id, questionTypeCode, questionElement);
-                } else if (questionTypeCode === 'rating') {
-                    await QuestionTypeHandler.rating(savedQuestion.id, questionTypeCode, questionElement);
-                } else if (questionTypeCode === 'matrix') {
-                    await QuestionTypeHandler.matrix(savedQuestion.id, questionTypeCode, questionElement);
-                }
-                console.log(`${UTILS.getQuestionTypeName(questionTypeCode)}配置保存成功`);
-            } catch (error) {
-                console.error(`${UTILS.getQuestionTypeName(questionType)}配置保存失败:`, error);
+        const questionTypeId = UTILS.getQuestionTypeId(questionType);
+        // 以 dataset.questionId 为主，保证后端返回的数据优先
+        const datasetId = questionElement.dataset.questionId ? parseInt(questionElement.dataset.questionId) : null;
+        const localExistingId = getStoredQuestionIdForElement(questionElement) || datasetId;
+        const isCreate = !localExistingId;
+
+        if (isCreate) {
+            const questionData = {
+                id: null,
+                questionnaireId: parseInt(questionnaireId),
+                content: questionContent,
+                questionType: questionTypeId,
+                sortNum: Array.from(document.querySelectorAll('.question-item')).indexOf(questionElement) + 1,
+                isRequired: 1,
+                options: []
+            };
+
+            const resp = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_SAVE}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(questionData)
+            });
+            const result = await resp.json();
+            if (resp.ok && result.code === 200 && result.data) {
+                const savedQuestionId = result.data;
+                storeQuestionIdForElement(questionElement, savedQuestionId);
+                console.log('题目创建成功，ID:', savedQuestionId);
+                return savedQuestionId;
+            } else {
+                throw new Error(result.message || '创建题目失败');
             }
         } else {
-            console.error('新题目保存失败:', result.message);
+            const questionId = localExistingId || parseInt(questionElement.dataset.questionId);
+            const questionData = { id: questionId, content: questionContent };
+            const resp = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_UPDATE}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(questionData)
+            });
+            const result = await resp.json();
+            if (resp.ok && result.code === 200) {
+                storeQuestionIdForElement(questionElement, questionId);
+                console.log('题目更新成功，ID:', questionId);
+                return questionId;
+            } else {
+                throw new Error(result.message || '更新题目失败');
+            }
         }
     } catch (error) {
-        console.error('保存新题目时发生错误:', error);
+        console.error('保存题目时发生错误:', error);
     }
 }
 
@@ -1415,6 +1513,35 @@ async function saveNewQuestion(questionElement) {
  * @param {HTMLElement} questionElement - 题目元素
  * @returns {Promise}
  */
+// 仅保存题目选项（题目本体已由 saveOrUpdateQuestion 处理）
+async function saveQuestionOptions(questionElement, questionTypeOverride) {
+    const questionId = getStoredQuestionIdForElement(questionElement) || questionElement.dataset.questionId;
+    if (!questionId) {
+        console.warn('无题目ID，跳过选项保存');
+        return;
+    }
+    const questionType = questionTypeOverride || questionElement.getAttribute('data-type');
+    const typeCode = typeof questionType === 'number' ? UTILS.getQuestionTypeById(questionType) : questionType;
+
+    try {
+        if (typeCode === 'single') {
+            await QuestionTypeHandler.singleChoice(parseInt(questionId), questionElement);
+        } else if (typeCode === 'multiple') {
+            await QuestionTypeHandler.multipleChoice(parseInt(questionId), questionElement);
+        } else if (typeCode === 'text') {
+            await QuestionTypeHandler.text(parseInt(questionId), typeCode, questionElement);
+        } else if (typeCode === 'rating') {
+            await QuestionTypeHandler.rating(parseInt(questionId), typeCode, questionElement);
+        } else if (typeCode === 'matrix') {
+            await QuestionTypeHandler.matrix(parseInt(questionId), typeCode, questionElement);
+        }
+        console.log('选项/配置保存成功，题目ID:', questionId);
+    } catch (error) {
+        console.error('保存选项/配置失败:', error);
+    }
+}
+
+// 兼容旧逻辑：更新现有题目（仅用于手动触发场景）
 async function updateExistingQuestion(questionElement) {
     const questionId = questionElement.dataset.questionId;
     if (!questionId) {
@@ -1445,20 +1572,8 @@ async function updateExistingQuestion(questionElement) {
             console.log('题目更新成功');
             
             // 根据题目类型调用对应的保存处理器
-            try {
-                if (questionType === 'single' || questionType === 'multiple') {
-                    await QuestionTypeHandler.choice(parseInt(questionId), questionType, questionElement);
-                } else if (questionType === 'text') {
-                    await QuestionTypeHandler.text(parseInt(questionId), questionType, questionElement);
-                } else if (questionType === 'rating') {
-                    await QuestionTypeHandler.rating(parseInt(questionId), questionType, questionElement);
-                } else if (questionType === 'matrix') {
-                    await QuestionTypeHandler.matrix(parseInt(questionId), questionType, questionElement);
-                }
-                console.log(`${UTILS.getQuestionTypeName(questionType)}配置更新成功`);
-            } catch (error) {
-                console.error(`${UTILS.getQuestionTypeName(questionType)}配置更新失败:`, error);
-            }
+            await saveQuestionOptions(questionElement, questionType);
+            console.log(`${UTILS.getQuestionTypeName(questionType)}配置更新成功`);
         } else {
             console.error('题目更新失败:', result.message);
         }
@@ -1492,23 +1607,10 @@ async function performAutoSave() {
         const questions = document.querySelectorAll('.question-item');
         for (let i = 0; i < questions.length; i++) {
             const questionElement = questions[i];
-            const questionId = questionElement.dataset.questionId;
-            
-            if (!questionId) {
-                // 新题目，需要保存
-                await saveNewQuestion(questionElement);
-            } else {
-                // 现有题目，检查是否需要更新
-                const currentQuestion = currentState.questions[i];
-                const lastQuestion = lastSavedState.questions[i];
-                
-                if (lastQuestion && (
-                    currentQuestion.content !== lastQuestion.content ||
-                    JSON.stringify(currentQuestion.options) !== JSON.stringify(lastQuestion.options)
-                )) {
-                    await updateExistingQuestion(questionElement);
-                }
-            }
+            // 先保存/更新题目本体，获取/刷新 questionId 映射
+            const savedId = await saveOrUpdateQuestion(questionElement);
+            // 再保存题目配置/选项
+            await saveQuestionOptions(questionElement);
         }
         
         // 更新保存状态
@@ -1570,6 +1672,7 @@ function deleteQuestion(button) {
             deleteQuestionFromBackend(questionId).then(() => {
                 // 删除成功后从页面移除
                 questionElement.remove();
+                removeStoredQuestionIdForElement(questionElement);
                 updateQuestionCount();
                 updateEstimatedTime();
                 updateQuestionNumbers();
@@ -1580,6 +1683,7 @@ function deleteQuestion(button) {
         }
     } else {
         // 新题目，直接从页面移除
+        removeStoredQuestionIdForElement(questionElement);
         questionElement.remove();
         updateQuestionCount();
         updateEstimatedTime();
@@ -1612,7 +1716,7 @@ async function deleteQuestionFromBackend(questionId) {
 }
 
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     // 检查用户登录状态
     checkUserLoginStatus();
     
@@ -1623,7 +1727,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 获取DOM元素
     const formatButtons = document.querySelectorAll('.format-btn');
-    const questionContainer = document.getElementById('question-container');
+    // 赋值全局容器，供拖拽/排序使用
+    questionContainer = document.getElementById('question-container');
     const questionCountElement = document.getElementById('question-count');
     const estimatedTimeElement = document.getElementById('estimated-time');
     

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>批量保存单选题选项 - 测试页</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 980px; margin: 0 auto; padding: 20px; }
+    h1 { margin: 0 0 16px; }
+    .test-section { margin: 16px 0; padding: 16px; border: 1px solid #ddd; border-radius: 6px; }
+    .row { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
+    label { font-weight: 600; }
+    input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%; }
+    input[type="radio"] { transform: translateY(1px); }
+    .options { margin-top: 8px; }
+    .opt-row { display: grid; grid-template-columns: 40px 1fr 100px 80px; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .opt-row input[type="text"] { width: 100%; }
+    .opt-row .remove { background: #dc3545; color: #fff; border: 0; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+    .toolbar button { margin-right: 8px; }
+    button { background: #007bff; color: #fff; border: 0; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
+    button.secondary { background: #6c757d; }
+    button.success { background: #28a745; }
+    .result { white-space: pre-wrap; border-radius: 4px; padding: 10px; margin-top: 10px; border: 1px solid #ddd; }
+    .success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    .table-head { display: grid; grid-template-columns: 40px 1fr 100px 80px; gap: 8px; font-weight: 600; margin-top: 8px; }
+  </style>
+  <script>
+    const CONFIG = {
+      BACKEND_BASE_URL: 'http://localhost:7070/api',
+      API_ENDPOINTS: {
+        SINGLE_CHOICE_BATCH_SAVE: '/singleChoiceOption/batchSave',
+        SINGLE_CHOICE_LIST: '/singleChoiceOption/listByQuestionId'
+      }
+    };
+
+    function $(sel, root = document) { return root.querySelector(sel); }
+    function $all(sel, root = document) { return Array.from(root.querySelectorAll(sel)); }
+
+    function addOptionRow(text = '', isDefault = false) {
+      const list = $('#optionsList');
+      const index = list.children.length + 1;
+      const row = document.createElement('div');
+      row.className = 'opt-row';
+      row.innerHTML = `
+        <div>#<span class="idx">${index}</span></div>
+        <input type="text" class="opt-text" placeholder="选项内容" value="${text.replace(/"/g, '&quot;')}" />
+        <label style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <input type="radio" name="defaultOpt" class="opt-default" ${isDefault ? 'checked' : ''}/> 默认
+        </label>
+        <button type="button" class="remove">删除</button>
+      `;
+      row.querySelector('.remove').addEventListener('click', () => { row.remove(); refreshIndexes(); });
+      list.appendChild(row);
+      refreshIndexes();
+    }
+
+    function refreshIndexes() {
+      $all('.opt-row .idx').forEach((el, i) => { el.textContent = i + 1; });
+    }
+
+    async function saveBatch() {
+      const questionId = parseInt($('#questionId').value, 10);
+      if (!questionId) { return showError('#saveResult', '请填写有效的问卷问题ID'); }
+
+      const rows = $all('.opt-row');
+      if (rows.length === 0) { return showError('#saveResult', '请至少添加一个选项'); }
+
+      const options = rows.map((row, i) => ({
+        optionContent: row.querySelector('.opt-text').value.trim(),
+        sortNum: i + 1,
+        isDefault: row.querySelector('.opt-default').checked ? 1 : 0
+      })).filter(o => o.optionContent.length > 0);
+
+      if (options.length === 0) { return showError('#saveResult', '选项内容不能为空'); }
+
+      const body = { questionId, options };
+      try {
+        const resp = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SINGLE_CHOICE_BATCH_SAVE}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+        });
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          showSuccess('#saveResult', `保存成功\n响应: ${JSON.stringify(result, null, 2)}`);
+        } else {
+          showError('#saveResult', `保存失败: ${result.message || resp.statusText}\n响应: ${JSON.stringify(result, null, 2)}`);
+        }
+      } catch (e) {
+        showError('#saveResult', `请求异常: ${e.message}`);
+      }
+    }
+
+    async function loadOptions() {
+      const questionId = parseInt($('#questionId').value, 10);
+      if (!questionId) { return showError('#listResult', '请填写有效的问卷问题ID'); }
+      try {
+        const url = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SINGLE_CHOICE_LIST}?questionId=${questionId}`;
+        const resp = await fetch(url);
+        const result = await resp.json();
+        if (resp.ok && result.code === 200) {
+          // 渲染到输入区
+          $('#optionsList').innerHTML = '';
+          (result.data || []).forEach((opt, idx) => addOptionRow(opt.optionContent || '', idx === 0 && (opt.isDefault === 1)));
+          refreshIndexes();
+          showSuccess('#listResult', `查询成功\n响应: ${JSON.stringify(result, null, 2)}`);
+        } else {
+          showError('#listResult', `查询失败: ${result.message || resp.statusText}\n响应: ${JSON.stringify(result, null, 2)}`);
+        }
+      } catch (e) {
+        showError('#listResult', `请求异常: ${e.message}`);
+      }
+    }
+
+    function showSuccess(selector, text) {
+      const box = $(selector); box.style.display = 'block'; box.className = 'result success'; box.textContent = text; }
+    function showError(selector, text) { const box = $(selector); box.style.display = 'block'; box.className = 'result error'; box.textContent = text; }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      $('#addOpt').addEventListener('click', () => addOptionRow(''));
+      $('#saveBtn').addEventListener('click', saveBatch);
+      $('#loadBtn').addEventListener('click', loadOptions);
+      // 初始两行
+      addOptionRow('选项A', true);
+      addOptionRow('选项B', false);
+    });
+  </script>
+</head>
+<body>
+  <h1>批量保存单选题选项 - 测试</h1>
+
+  <div class="test-section">
+    <div class="row">
+      <label for="questionId">问题ID:</label>
+      <input type="number" id="questionId" placeholder="请输入已存在的问题ID" />
+    </div>
+
+    <div class="toolbar">
+      <button id="addOpt" type="button">新增选项</button>
+      <button id="saveBtn" type="button" class="success">批量保存</button>
+      <button id="loadBtn" type="button" class="secondary">查询已保存选项</button>
+    </div>
+
+    <div class="table-head">
+      <div>#</div>
+      <div>选项内容</div>
+      <div style="text-align:center;">默认</div>
+      <div>操作</div>
+    </div>
+    <div id="optionsList" class="options"></div>
+
+    <div id="saveResult" class="result" style="display:none;"></div>
+    <div id="listResult" class="result" style="display:none;"></div>
+  </div>
+
+  <div class="test-section">
+    <p>说明：</p>
+    <ul>
+      <li>提交到 <code>/singleChoiceOption/batchSave</code>，请求体包含 <code>questionId</code> 与 <code>options</code> 数组。</li>
+      <li>每个 <code>options[i]</code> 含 <code>optionContent</code>、<code>sortNum</code>、<code>isDefault</code>（0/1）。</li>
+      <li>“查询已保存选项”调用 <code>/singleChoiceOption/listByQuestionId</code>。</li>
+    </ul>
+  </div>
+</body>
+</html>
+

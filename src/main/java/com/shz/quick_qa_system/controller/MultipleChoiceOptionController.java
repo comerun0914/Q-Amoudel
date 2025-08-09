@@ -19,7 +19,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/multipleChoiceOption")
-@CrossOrigin(origins = "*")
 public class MultipleChoiceOptionController {
 
     @Autowired

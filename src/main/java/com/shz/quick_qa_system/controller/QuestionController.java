@@ -4,6 +4,7 @@ import com.shz.quick_qa_system.Costant.ApiResult;
 import com.shz.quick_qa_system.Costant.QuestionConstant;
 import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.entity.SingleChoiceOption;
+import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 import com.shz.quick_qa_system.service.QuestionService;
 import com.shz.quick_qa_system.service.impl.QuestionServiceImpl;
 import com.shz.quick_qa_system.utils.CodeGenerator;
@@ -23,7 +24,7 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/question")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class QuestionController {
     
     private static final Logger logger = LoggerFactory.getLogger(QuestionController.class);
@@ -122,6 +123,19 @@ public class QuestionController {
         } catch (Exception e) {
             logger.error("删除题目时发生异常", e);
             return ApiResult.error("删除失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量更新题目序号
+     */
+    @PutMapping("/updateOrder")
+    public ApiResult updateOrder(@RequestBody QuestionOrderUpdateDto request) {
+        try {
+            boolean ok = questionServiceImpl.updateQuestionOrder(request);
+            return ok ? ApiResult.success(true) : ApiResult.error("更新序号失败");
+        } catch (Exception e) {
+            return ApiResult.error("更新序号时发生错误: " + e.getMessage());
         }
     }
 

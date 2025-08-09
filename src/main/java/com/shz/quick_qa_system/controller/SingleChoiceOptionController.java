@@ -19,7 +19,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/singleChoiceOption")
-@CrossOrigin(origins = "*")
+// @CrossOrigin(origins = "*")
 public class SingleChoiceOptionController {
 
     @Autowired
