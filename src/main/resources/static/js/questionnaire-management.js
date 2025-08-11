@@ -1,9 +1,14 @@
 // 问卷管理界面JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('questionnaire-management.js loaded successfully');
+    
     // 页面保护 - 校验登录状态并初始化用户信息
     if (!UTILS.protectPage()) {
+        console.log('Page protection failed, stopping execution');
         return; // 如果未登录，停止执行后续代码
     }
+    
+    console.log('Page protection passed, initializing...');
     
     // 启动自动校验（每5秒检查一次）
     UTILS.startAutoAuthCheck();
@@ -33,6 +38,7 @@ let dateFilter = '';
  * 初始化页面
  */
 function initPage() {
+    console.log('Initializing page...');
     // 初始化用户信息显示
     initUserInfo();
     
@@ -84,6 +90,8 @@ function initUserInfo() {
  * 绑定事件
  */
 function bindEvents() {
+    console.log('Binding events...');
+    
     // 创建问卷按钮
     const createBtn = document.getElementById('createQuestionnaire');
     if (createBtn) {
@@ -206,6 +214,7 @@ function bindEvents() {
  * 加载问卷数据
  */
 function loadQuestionnaireData() {
+    console.log('Loading questionnaire data...');
     showLoading();
     
     // 获取用户信息
@@ -216,9 +225,15 @@ function loadQuestionnaireData() {
         return;
     }
     
-    // 发送请求到后端 - 支持分页参数
-    const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST, false) + 
-                `?creatorId=${userInfo.id}&page=${currentPage}&size=${pageSize}`;
+    // 发送请求到后端 - 支持分页和筛选参数
+    let url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST, false) +
+        `?creatorId=${userInfo.id}&page=${currentPage}&size=${pageSize}`;
+    if (searchKeyword) url += `&keyword=${encodeURIComponent(searchKeyword)}`;
+    if (statusFilter) url += `&status=${encodeURIComponent(statusFilter)}`;
+    if (dateFilter) url += `&dateFilter=${encodeURIComponent(dateFilter)}`;
+    
+    console.log('Requesting URL:', url);
+    
     fetch(url, {
         method: 'GET'
     })
@@ -230,27 +245,35 @@ function loadQuestionnaireData() {
     })
     .then(data => {
         hideLoading();
+        console.log('Received data:', data);
         
+        // 兼容后端 data 既可能是数组，也可能是对象（含 list 字段）
         if (data.code === 200) {
-            // 使用后端返回的分页数据
-            questionnaireData = data.data || [];
+            if (Array.isArray(data.data)) {
+                questionnaireData = data.data;
+                currentPage = 1;
+                pageSize = data.data.length;
+                totalPages = 1;
+                totalCount = data.data.length;
+            } else {
+                questionnaireData = data.data && data.data.list ? data.data.list : [];
+                currentPage = data.data && data.data.currentPage ? data.data.currentPage : 1;
+                pageSize = data.data && data.data.pageSize ? data.data.pageSize : 10;
+                totalPages = data.data && data.data.totalPages ? data.data.totalPages : 1;
+                totalCount = data.data && data.data.totalCount ? data.data.totalCount : 0;
+            }
             
-            // 使用后端返回的分页信息更新全局变量
-            currentPage = data.currentPage || 1;
-            pageSize = data.pageSize || 10;
-            totalPages = data.totalPages || 1;
-            totalCount = data.totalCount || 0;
+            console.log('Processed data:', {
+                questionnaireData: questionnaireData.length,
+                currentPage,
+                pageSize,
+                totalPages,
+                totalCount
+            });
             
-            // 更新表格
             renderQuestionnaireTable();
-            
-            // 更新统计信息
             updateStatistics();
-            
-            // 使用后端分页信息更新分页控件
             updatePagination();
-            
-            // 更新批量操作按钮状态
             updateBatchActionButtons();
         } else {
             UTILS.showToast(data.message || '加载问卷数据失败', 'error');
@@ -260,8 +283,6 @@ function loadQuestionnaireData() {
         hideLoading();
         console.error('加载问卷数据失败:', error);
         UTILS.showToast('网络错误，请检查网络连接后重试', 'error');
-        
-        // 显示空状态
         showEmptyState();
     });
 }
@@ -270,8 +291,12 @@ function loadQuestionnaireData() {
  * 渲染问卷表格
  */
 function renderQuestionnaireTable() {
+    console.log('Rendering questionnaire table...');
     const tableBody = document.getElementById('questionnaireTableBody');
-    if (!tableBody) return;
+    if (!tableBody) {
+        console.error('Table body element not found');
+        return;
+    }
     
     if (questionnaireData.length === 0) {
         showEmptyState();
@@ -413,7 +438,6 @@ function updatePagination() {
     if (endIndexElement) {
         // 修正：使用当前页面实际显示的数据数量
         const actualEndIndex = totalCount > 0 ? Math.min((currentPage - 1) * pageSize + questionnaireData.length, totalCount) : 0;
-        console.log(actualEndIndex)
         endIndexElement.textContent = actualEndIndex;
     }
     
@@ -591,6 +615,58 @@ function handleCheckboxChange(event) {
 }
 
 /**
+ * 编辑问卷
+ */
+function editQuestionnaire(id) {
+    window.location.href = `questionnaire-editor.html?id=${id}`;
+}
+
+/**
+ * 预览问卷
+ */
+function previewQuestionnaire(id) {
+    window.open(`questionnaire-preview.html?id=${id}`, '_blank');
+}
+
+/**
+ * 测试问卷
+ */
+function testQuestionnaire(id) {
+    window.open(`questionnaire-test.html?id=${id}`, '_blank');
+}
+
+/**
+ * 复制问卷
+ */
+function copyQuestionnaire(id) {
+    if (confirm('确定要复制这个问卷吗？')) {
+        // TODO: 实现复制问卷的逻辑
+        UTILS.showToast('复制功能开发中...', 'info');
+    }
+}
+
+/**
+ * 切换问卷状态
+ */
+function toggleQuestionnaireStatus(id, enable) {
+    const action = enable ? '启用' : '禁用';
+    if (confirm(`确定要${action}这个问卷吗？`)) {
+        // TODO: 实现状态切换的逻辑
+        UTILS.showToast(`${action}功能开发中...`, 'info');
+    }
+}
+
+/**
+ * 删除问卷
+ */
+function deleteQuestionnaire(id) {
+    if (confirm('确定要删除这个问卷吗？此操作不可恢复！')) {
+        // TODO: 实现删除问卷的逻辑
+        UTILS.showToast('删除功能开发中...', 'info');
+    }
+}
+
+/**
  * 批量删除处理
  */
 function handleBatchDelete() {
@@ -612,7 +688,8 @@ function handleBatchEnable() {
     }
     
     if (confirm(`确定要启用选中的 ${selectedIds.length} 个问卷吗？`)) {
-        batchToggleStatus(true);
+        // TODO: 实现批量启用的逻辑
+        UTILS.showToast('批量启用功能开发中...', 'info');
     }
 }
 
@@ -626,27 +703,8 @@ function handleBatchDisable() {
     }
     
     if (confirm(`确定要禁用选中的 ${selectedIds.length} 个问卷吗？`)) {
-        batchToggleStatus(false);
-    }
-}
-
-/**
- * 显示删除确认模态框
- */
-function showDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    if (modal) {
-        modal.classList.add('show');
-    }
-}
-
-/**
- * 隐藏删除确认模态框
- */
-function hideDeleteModal() {
-    const modal = document.getElementById('deleteModal');
-    if (modal) {
-        modal.classList.remove('show');
+        // TODO: 实现批量禁用的逻辑
+        UTILS.showToast('批量禁用功能开发中...', 'info');
     }
 }
 
@@ -654,135 +712,45 @@ function hideDeleteModal() {
  * 确认批量删除
  */
 function confirmBatchDelete() {
-    if (selectedIds.length === 0) {
-        UTILS.showToast('没有选中的问卷', 'warning');
-        return;
-    }
-    
-    // 发送批量删除请求
-    fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_BATCH_DELETE), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            ids: selectedIds
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideDeleteModal();
-        
-        if (data.code === 200) {
-            UTILS.showToast(`成功删除 ${selectedIds.length} 个问卷`, 'success');
-            selectedIds = [];
-            loadQuestionnaireData();
-        } else {
-            UTILS.showToast(data.message || '删除失败', 'error');
-        }
-    })
-    .catch(error => {
-        hideDeleteModal();
-        console.error('批量删除失败:', error);
-        UTILS.showToast('网络错误，请重试', 'error');
-    });
+    // TODO: 实现批量删除的逻辑
+    UTILS.showToast('批量删除功能开发中...', 'info');
+    hideDeleteModal();
 }
 
 /**
- * 批量切换状态
+ * 显示删除确认模态框
  */
-function batchToggleStatus(status) {
-    fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_BATCH_TOGGLE_STATUS), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            ids: selectedIds,
-            status: status
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.code === 200) {
-            const action = status ? '启用' : '禁用';
-            UTILS.showToast(`成功${action} ${selectedIds.length} 个问卷`, 'success');
-            selectedIds = [];
-            loadQuestionnaireData();
-        } else {
-            UTILS.showToast(data.message || '操作失败', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('批量操作失败:', error);
-        UTILS.showToast('网络错误，请重试', 'error');
-    });
+function showDeleteModal() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.style.display = 'block';
+    }
+}
+
+/**
+ * 隐藏删除确认模态框
+ */
+function hideDeleteModal() {
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
+    }
 }
 
 /**
  * 导入问卷处理
  */
 function handleImportQuestionnaire() {
-    // 创建文件输入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.json,.txt';
-    fileInput.style.display = 'none';
-    
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const questionnaireData = JSON.parse(e.target.result);
-                    importQuestionnaire(questionnaireData);
-                } catch (error) {
-                    UTILS.showToast('文件格式错误，请选择正确的问卷文件', 'error');
-                }
-            };
-            reader.readAsText(file);
-        }
-    });
-    
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    document.body.removeChild(fileInput);
+    // TODO: 实现导入问卷的逻辑
+    UTILS.showToast('导入功能开发中...', 'info');
 }
 
 /**
- * 导入问卷
- */
-function importQuestionnaire(data) {
-    // 发送导入请求
-    fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_IMPORT), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.code === 200) {
-            UTILS.showToast('问卷导入成功', 'success');
-            loadQuestionnaireData();
-        } else {
-            UTILS.showToast(result.message || '导入失败', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('导入失败:', error);
-        UTILS.showToast('网络错误，请重试', 'error');
-    });
-}
-
-/**
- * 退出登录处理
+ * 登出处理
  */
 function handleLogout() {
     if (confirm('确定要退出登录吗？')) {
-        UTILS.logout();
+        UTILS.clearStorage();
         window.location.href = 'login.html';
     }
 }
@@ -791,14 +759,21 @@ function handleLogout() {
  * 显示加载状态
  */
 function showLoading() {
-    // 可以添加加载动画
+    const loadingElement = document.getElementById('loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'block';
+    }
+    
+    // 显示加载提示
     const tableBody = document.getElementById('questionnaireTableBody');
     if (tableBody) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 2rem;">
-                    <div class="loading"></div>
-                    <p style="margin-top: 1rem; color: #7f8c8d;">加载中...</p>
+                <td colspan="8">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>正在加载问卷数据...</p>
+                    </div>
                 </td>
             </tr>
         `;
@@ -809,141 +784,9 @@ function showLoading() {
  * 隐藏加载状态
  */
 function hideLoading() {
-    // 加载状态会在数据加载完成后自动清除
-}
-
-// ==================== 单个问卷操作函数 ====================
-
-/**
- * 编辑问卷
- */
-function editQuestionnaire(id) {
-    // 保存当前问卷ID到本地存储
-    UTILS.setStorage(CONFIG.STORAGE_KEYS.CURRENT_QUESTIONNAIRE_ID, id);
-    window.location.href = 'questionnaire-editor.html';
-}
-
-/**
- * 预览问卷
- */
-function previewQuestionnaire(id) {
-    // 保存当前问卷ID到本地存储
-    UTILS.setStorage(CONFIG.STORAGE_KEYS.CURRENT_QUESTIONNAIRE_ID, id);
-    window.location.href = 'questionnaire-preview.html';
-}
-
-/**
- * 测试问卷
- */
-function testQuestionnaire(id) {
-    // 保存当前问卷ID到本地存储
-    UTILS.setStorage(CONFIG.STORAGE_KEYS.CURRENT_QUESTIONNAIRE_ID, id);
-    // 跳转到问卷测试页面
-    window.location.href = CONFIG.ROUTES.QUESTIONNAIRE_TEST;
-}
-
-/**
- * 复制问卷
- */
-function copyQuestionnaire(id) {
-    if (confirm('确定要复制这个问卷吗？')) {
-        fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_COPY), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id: id })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code === 200) {
-                UTILS.showToast('问卷复制成功', 'success');
-                loadQuestionnaireData();
-            } else {
-                UTILS.showToast(data.message || '复制失败', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('复制失败:', error);
-            UTILS.showToast('网络错误，请重试', 'error');
-        });
-    }
-}
-
-/**
- * 切换问卷状态
- */
-function toggleQuestionnaireStatus(id, status) {
-    const action = status ? '启用' : '禁用';
-    if (confirm(`确定要${action}这个问卷吗？`)) {
-        fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_TOGGLE_STATUS), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                id: id, 
-                status: status 
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code === 200) {
-                UTILS.showToast(`问卷${action}成功`, 'success');
-                loadQuestionnaireData();
-            } else {
-                UTILS.showToast(data.message || `${action}失败`, 'error');
-            }
-        })
-        .catch(error => {
-            console.error(`${action}失败:`, error);
-            UTILS.showToast('网络错误，请重试', 'error');
-        });
-    }
-}
-
-/**
- * 删除问卷
- */
-function deleteQuestionnaire(id) {
-    if (confirm('确定要删除这个问卷吗？此操作不可恢复。')) {
-        fetch(UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_DELETE), {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id: id })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.code === 200) {
-                UTILS.showToast('问卷删除成功', 'success');
-                loadQuestionnaireData();
-            } else {
-                UTILS.showToast(data.message || '删除失败', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('删除失败:', error);
-            UTILS.showToast('网络错误，请重试', 'error');
-        });
-    }
-}
-
-// ==================== 工具函数 ====================
-
-/**
- * 获取状态样式类
- */
-function getStatusClass(status) {
-    if (status === true || status === 1) {
-        return 'status-active';
-    } else if (status === false || status === 0) {
-        return 'status-inactive';
-    } else if (status === 2) {
-        return 'status-draft';
-    } else {
-        return 'status-draft';
+    const loadingElement = document.getElementById('loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
     }
 }
 
@@ -951,14 +794,39 @@ function getStatusClass(status) {
  * 获取状态文本
  */
 function getStatusText(status) {
-    if (status === true || status === 1) {
-        return '已启用';
-    } else if (status === false || status === 0) {
-        return '已禁用';
-    } else if (status === 2) {
-        return '草稿';
-    } else {
-        return '草稿';
+    switch (status) {
+        case 0:
+        case false:
+            return '草稿';
+        case 1:
+        case true:
+            return '已发布';
+        case 2:
+            return '已暂停';
+        case 3:
+            return '已结束';
+        default:
+            return '未知';
+    }
+}
+
+/**
+ * 获取状态样式类
+ */
+function getStatusClass(status) {
+    switch (status) {
+        case 0:
+        case false:
+            return 'status-draft';
+        case 1:
+        case true:
+            return 'status-active';
+        case 2:
+            return 'status-paused';
+        case 3:
+            return 'status-expired';
+        default:
+            return 'status-unknown';
     }
 }
 
@@ -970,6 +838,8 @@ function formatDate(dateString) {
     
     try {
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        
         return date.toLocaleDateString('zh-CN', {
             year: 'numeric',
             month: '2-digit',
@@ -1006,40 +876,27 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-/**
- * 防抖函数
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-/**
- * 节流函数
- */
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-// 导出函数供全局使用
+// 导出函数到全局作用域，以便HTML中的onclick事件可以调用
+window.loadQuestionnaireData = loadQuestionnaireData;
 window.editQuestionnaire = editQuestionnaire;
 window.previewQuestionnaire = previewQuestionnaire;
+window.testQuestionnaire = testQuestionnaire;
 window.copyQuestionnaire = copyQuestionnaire;
 window.toggleQuestionnaireStatus = toggleQuestionnaireStatus;
-window.deleteQuestionnaire = deleteQuestionnaire; 
+window.deleteQuestionnaire = deleteQuestionnaire;
+
+// 确保所有函数都在全局作用域中可用
+window.handleSearch = handleSearch;
+window.handleFilterChange = handleFilterChange;
+window.clearFilters = clearFilters;
+window.handleSelectAll = handleSelectAll;
+window.handleCheckboxChange = handleCheckboxChange;
+window.handleBatchDelete = handleBatchDelete;
+window.handleBatchEnable = handleBatchEnable;
+window.handleBatchDisable = handleBatchDisable;
+window.confirmBatchDelete = confirmBatchDelete;
+window.showDeleteModal = showDeleteModal;
+window.hideDeleteModal = hideDeleteModal;
+window.handleImportQuestionnaire = handleImportQuestionnaire;
+window.handleLogout = handleLogout;
+window.changePage = changePage;

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分页功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .data-table th, .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .pagination button.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .pagination button:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .success {
+            text-align: center;
+            padding: 20px;
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 60px;
+        }
+        .status-draft { background: #ffc107; color: #000; }
+        .status-active { background: #28a745; color: white; }
+        .status-paused { background: #6c757d; color: white; }
+        .status-expired { background: #dc3545; color: white; }
+        .status-unknown { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 分页功能测试界面</h1>
+            <p>测试问卷管理系统的分页功能 - 每页显示10条数据</p>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="searchKeyword">搜索关键词:</label>
+                <input type="text" id="searchKeyword" placeholder="输入问卷标题或描述">
+            </div>
+            
+            <div class="control-group">
+                <label for="statusFilter">状态筛选:</label>
+                <select id="statusFilter">
+                    <option value="">全部状态</option>
+                    <option value="0">草稿</option>
+                    <option value="1">已发布</option>
+                    <option value="2">已暂停</option>
+                    <option value="3">已结束</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="dateFilter">日期筛选:</label>
+                <select id="dateFilter">
+                    <option value="">全部时间</option>
+                    <option value="today">今天</option>
+                    <option value="week">最近一周</option>
+                    <option value="month">最近一月</option>
+                    <option value="year">最近一年</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-success" onclick="searchData()">🔍 搜索</button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-secondary" onclick="clearFilters()">🔄 清除筛选</button>
+            </div>
+            
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn" onclick="refreshData()">🔄 刷新数据</button>
+            </div>
+        </div>
+
+        <!-- 分页信息显示 -->
+        <div class="pagination-info" id="paginationInfo">
+            正在加载数据...
+        </div>
+
+        <!-- 数据表格 -->
+        <table class="data-table" id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>描述</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>开始日期</th>
+                    <th>结束日期</th>
+                    <th>提交限制</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="8" class="loading">
+                        <i>⏳</i>
+                        正在加载数据...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 分页控件 -->
+        <div class="pagination" id="pagination">
+            <!-- 分页按钮将在这里动态生成 -->
+        </div>
+
+        <!-- 测试结果区域 -->
+        <div id="testResults" style="margin-top: 30px;"></div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentPage = 1;
+        let pageSize = 10; // 固定每页10条数据
+        let totalPages = 0;
+        let totalCount = 0;
+        let questionnaireData = [];
+        let searchKeyword = '';
+        let statusFilter = '';
+        let dateFilter = '';
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('分页测试页面加载完成');
+            loadData();
+        });
+
+        /**
+         * 加载数据
+         */
+        function loadData() {
+            showLoading();
+            
+            // 构建请求URL
+            let url = '/api/questionCreate/list?' +
+                'creatorId=1' + // 使用默认用户ID
+                '&page=' + currentPage +
+                '&size=' + pageSize;
+            
+            if (searchKeyword) url += '&keyword=' + encodeURIComponent(searchKeyword);
+            if (statusFilter) url += '&status=' + encodeURIComponent(statusFilter);
+            if (dateFilter) url += '&dateFilter=' + encodeURIComponent(dateFilter);
+            
+            console.log('请求URL:', url);
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    console.log('收到数据:', data);
+                    
+                    if (data.code === 200) {
+                        // 处理分页数据
+                        if (Array.isArray(data.data)) {
+                            questionnaireData = data.data;
+                            currentPage = 1;
+                            pageSize = data.data.length;
+                            totalPages = 1;
+                            totalCount = data.data.length;
+                        } else {
+                            questionnaireData = data.data && data.data.list ? data.data.list : [];
+                            currentPage = data.data && data.data.currentPage ? data.data.currentPage : 1;
+                            pageSize = data.data && data.data.pageSize ? data.data.pageSize : 10;
+                            totalPages = data.data && data.data.totalPages ? data.data.totalPages : 1;
+                            totalCount = data.data && data.data.totalCount ? data.data.totalCount : 0;
+                        }
+                        
+                        // 验证分页参数
+                        validatePagination();
+                        
+                        // 渲染数据
+                        renderTable();
+                        updatePaginationInfo();
+                        renderPagination();
+                        
+                        // 显示成功消息
+                        showSuccess(`成功加载数据！当前第${currentPage}页，共${totalPages}页，总计${totalCount}条记录`);
+                    } else {
+                        showError(data.message || '加载数据失败');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('加载数据失败:', error);
+                    showError('网络错误，请检查网络连接后重试');
+                });
+        }
+
+        /**
+         * 验证分页参数
+         */
+        function validatePagination() {
+            const results = [];
+            
+            // 验证每页大小
+            if (pageSize !== 10) {
+                results.push(`❌ 每页大小不正确：期望10，实际${pageSize}`);
+            } else {
+                results.push(`✅ 每页大小正确：${pageSize}`);
+            }
+            
+            // 验证数据数量
+            if (questionnaireData.length > 10) {
+                results.push(`❌ 当前页数据过多：期望≤10，实际${questionnaireData.length}`);
+            } else {
+                results.push(`✅ 当前页数据数量正确：${questionnaireData.length}`);
+            }
+            
+            // 验证分页信息
+            if (totalPages < 1) {
+                results.push(`❌ 总页数不正确：${totalPages}`);
+            } else {
+                results.push(`✅ 总页数正确：${totalPages}`);
+            }
+            
+            if (totalCount < 0) {
+                results.push(`❌ 总记录数不正确：${totalCount}`);
+            } else {
+                results.push(`✅ 总记录数正确：${totalCount}`);
+            }
+            
+            // 显示验证结果
+            const testResultsDiv = document.getElementById('testResults');
+            testResultsDiv.innerHTML = `
+                <div class="success">
+                    <h3>🧪 分页功能验证结果</h3>
+                    ${results.map(result => `<div>${result}</div>`).join('')}
+                </div>
+            `;
+        }
+
+        /**
+         * 渲染表格
+         */
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            
+            if (questionnaireData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
+                            📭 暂无数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+            
+            questionnaireData.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.id || '-'}</td>
+                    <td><strong>${escapeHtml(item.title || '无标题')}</strong></td>
+                    <td>${escapeHtml(item.description || '无描述')}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(item.status)}">
+                            ${getStatusText(item.status)}
+                        </span>
+                    </td>
+                    <td>${formatDate(item.createdTime)}</td>
+                    <td>${formatDate(item.startDate)}</td>
+                    <td>${formatDate(item.endDate)}</td>
+                    <td>${item.submissionLimit || '无限制'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * 更新分页信息
+         */
+        function updatePaginationInfo() {
+            const infoDiv = document.getElementById('paginationInfo');
+            const startIndex = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+            const endIndex = Math.min(currentPage * pageSize, totalCount);
+            
+            infoDiv.innerHTML = `
+                📊 分页信息：第 ${currentPage} 页 / 共 ${totalPages} 页 | 
+                显示第 ${startIndex} - ${endIndex} 条 / 共 ${totalCount} 条记录 | 
+                每页 ${pageSize} 条数据
+            `;
+        }
+
+        /**
+         * 渲染分页控件
+         */
+        function renderPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = '';
+            
+            // 上一页按钮
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← 上一页';
+            prevBtn.disabled = currentPage <= 1;
+            prevBtn.onclick = () => changePage(currentPage - 1);
+            paginationDiv.appendChild(prevBtn);
+            
+            // 页码按钮
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = i === currentPage ? 'active' : '';
+                pageBtn.onclick = () => changePage(i);
+                paginationDiv.appendChild(pageBtn);
+            }
+            
+            // 下一页按钮
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = '下一页 →';
+            nextBtn.disabled = currentPage >= totalPages;
+            nextBtn.onclick = () => changePage(currentPage + 1);
+            paginationDiv.appendChild(nextBtn);
+        }
+
+        /**
+         * 切换页面
+         */
+        function changePage(page) {
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            loadData();
+        }
+
+        /**
+         * 搜索数据
+         */
+        function searchData() {
+            const keywordInput = document.getElementById('searchKeyword');
+            const statusSelect = document.getElementById('statusFilter');
+            const dateSelect = document.getElementById('dateFilter');
+            
+            searchKeyword = keywordInput.value.trim();
+            statusFilter = statusSelect.value;
+            dateFilter = dateSelect.value;
+            
+            currentPage = 1; // 重置到第一页
+            loadData();
+        }
+
+        /**
+         * 清除筛选
+         */
+        function clearFilters() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            
+            searchKeyword = '';
+            statusFilter = '';
+            dateFilter = '';
+            
+            currentPage = 1;
+            loadData();
+        }
+
+        /**
+         * 刷新数据
+         */
+        function refreshData() {
+            loadData();
+        }
+
+        /**
+         * 显示加载状态
+         */
+        function showLoading() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="loading">
+                        <i>⏳</i>
+                        正在加载数据...
+                    </td>
+                </tr>
+            `;
+            
+            const infoDiv = document.getElementById('paginationInfo');
+            infoDiv.innerHTML = '正在加载数据...';
+        }
+
+        /**
+         * 隐藏加载状态
+         */
+        function hideLoading() {
+            // 加载状态会在renderTable中清除
+        }
+
+        /**
+         * 显示成功消息
+         */
+        function showSuccess(message) {
+            console.log('✅', message);
+        }
+
+        /**
+         * 显示错误消息
+         */
+        function showError(message) {
+            console.error('❌', message);
+            const testResultsDiv = document.getElementById('testResults');
+            testResultsDiv.innerHTML = `
+                <div class="error">
+                    <h3>❌ 错误信息</h3>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+
+        /**
+         * 获取状态文本
+         */
+        function getStatusText(status) {
+            switch (status) {
+                case 0: return '草稿';
+                case 1: return '已发布';
+                case 2: return '已暂停';
+                case 3: return '已结束';
+                default: return '未知';
+            }
+        }
+
+        /**
+         * 获取状态样式类
+         */
+        function getStatusClass(status) {
+            switch (status) {
+                case 0: return 'status-draft';
+                case 1: return 'status-active';
+                case 2: return 'status-paused';
+                case 3: return 'status-expired';
+                default: return 'status-unknown';
+            }
+        }
+
+        /**
+         * 格式化日期
+         */
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                return date.toLocaleDateString('zh-CN');
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        /**
+         * HTML转义
+         */
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
