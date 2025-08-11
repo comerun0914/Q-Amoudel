@@ -180,7 +180,6 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
             return questionCreate;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("创建问卷失败: " + e.getMessage());
         }
     }
@@ -462,6 +461,79 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         return response;
     }
 
+    public Map<String, Object> getQuestionnaireListWithPagination(Integer creatorId, Integer page, Integer size, String keyword, Integer status, String dateFilter) {
+        // 添加调试日志
+        System.out.println("=== 分页查询开始 ===");
+        System.out.println("接收到的参数：");
+        System.out.println("  creatorId: " + creatorId);
+        System.out.println("  page: " + page);
+        System.out.println("  size: " + size);
+        System.out.println("  keyword: " + keyword);
+        System.out.println("  status: " + status);
+        System.out.println("  dateFilter: " + dateFilter);
+        
+        Page<QuestionCreate> pageParam = new Page<>(page, size);
+        System.out.println("创建的分页对象：");
+        System.out.println("  pageParam.current: " + pageParam.getCurrent());
+        System.out.println("  pageParam.size: " + pageParam.getSize());
+        
+        QueryWrapper<QuestionCreate> queryWrapper = new QueryWrapper<>();
+        if (creatorId != null) {
+            queryWrapper.eq("creator_id", creatorId);
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            queryWrapper.and(wrapper -> wrapper.like("title", keyword).or().like("description", keyword));
+        }
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        }
+        if (dateFilter != null && !dateFilter.isEmpty()) {
+            LocalDate today = LocalDate.now();
+            switch (dateFilter) {
+                case "today":
+                    queryWrapper.eq("DATE(created_time)", today);
+                    break;
+                case "week":
+                    queryWrapper.ge("created_time", today.minusWeeks(1));
+                    break;
+                case "month":
+                    queryWrapper.ge("created_time", today.minusMonths(1));
+                    break;
+                case "year":
+                    queryWrapper.ge("created_time", today.minusYears(1));
+                    break;
+            }
+        }
+        queryWrapper.orderByDesc("created_time");
+        
+        System.out.println("执行分页查询...");
+        IPage<QuestionCreate> result = page(pageParam, queryWrapper);
+        
+        System.out.println("分页查询结果：");
+        System.out.println("  result.getRecords().size(): " + result.getRecords().size());
+        System.out.println("  result.getCurrent(): " + result.getCurrent());
+        System.out.println("  result.getSize(): " + result.getSize());
+        System.out.println("  result.getTotal(): " + result.getTotal());
+        System.out.println("  result.getPages(): " + result.getPages());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("list", result.getRecords());
+        response.put("currentPage", (int) result.getCurrent());
+        response.put("pageSize", (int) result.getSize());
+        response.put("totalCount", (int) result.getTotal());
+        response.put("totalPages", (int) result.getPages());
+        
+        System.out.println("返回的响应：");
+        System.out.println("  list.size(): " + ((List<?>) response.get("list")).size());
+        System.out.println("  currentPage: " + response.get("currentPage"));
+        System.out.println("  pageSize: " + response.get("pageSize"));
+        System.out.println("  totalCount: " + response.get("totalCount"));
+        System.out.println("  totalPages: " + response.get("totalPages"));
+        System.out.println("=== 分页查询结束 ===");
+        
+        return response;
+    }
+
     @Override
     public QuestionCreate getQuestionnaireDetail(Integer id) {
         try {
@@ -471,7 +543,6 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
             return questionnaire;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("获取问卷详情失败: " + e.getMessage());
         }
     }
@@ -500,7 +571,6 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("获取问卷详情失败: " + e.getMessage());
         }
     }
@@ -579,7 +649,6 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             System.out.println("返回问题DTO数量: " + questionDtos.size());
             return questionDtos;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("获取问卷问题失败: " + e.getMessage());
         }
     }
@@ -652,7 +721,6 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
             return existingQuestionnaire;
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("更新问卷失败: " + e.getMessage());
         }
     }
