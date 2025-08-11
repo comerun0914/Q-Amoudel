@@ -40,7 +40,7 @@ let dateFilter = '';
 function initPage() {
     console.log('Initializing page...');
     // 初始化用户信息显示
-    initUserInfo();
+    UTILS.displayUserInfo(UTILS.getStorage(CONFIG.STORAGE_KEYS.USER_INFO));
     
     // 初始化统计信息
     updateStatistics();
@@ -618,21 +618,199 @@ function handleCheckboxChange(event) {
  * 编辑问卷
  */
 function editQuestionnaire(id) {
-    window.location.href = `questionnaire-editor.html?id=${id}`;
+    console.log('=== 开始编辑功能 ===');
+    console.log('问卷ID:', id);
+    
+    if (!id) {
+        console.error('编辑失败：没有找到问卷ID');
+        alert('无法编辑：缺少问卷ID');
+        return;
+    }
+    
+    try {
+        // 构建编辑URL，使用与预览界面一致的逻辑
+        const baseUrl = window.location.origin;
+        const editUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_EDITOR}?id=${id}`;
+        
+        console.log('=== 构建编辑URL ===');
+        console.log('CONFIG.ROUTES.QUESTIONNAIRE_EDITOR:', CONFIG.ROUTES.QUESTIONNAIRE_EDITOR);
+        console.log('问卷ID:', id);
+        console.log('baseUrl:', baseUrl);
+        console.log('编辑页面完整URL:', editUrl);
+        
+        // 验证URL格式
+        try {
+            const testUrl = new URL(editUrl);
+            console.log('URL验证成功:', testUrl.href);
+            console.log('URL参数:', testUrl.searchParams.get('id'));
+        } catch (error) {
+            console.error('URL验证失败:', error);
+        }
+        
+        // 验证跳转URL是否包含参数
+        if (editUrl.includes('id=')) {
+            console.log('✅ URL包含id参数，准备跳转');
+            
+            // 直接跳转到编辑页面，替换当前窗口
+            try {
+                console.log('跳转到编辑页面');
+                window.location.href = editUrl;
+            } catch (error) {
+                console.error('跳转失败:', error);
+                alert('跳转失败，请重试');
+            }
+        } else {
+            console.error('❌ URL不包含id参数，跳转失败');
+            console.error('editUrl:', editUrl);
+            alert('跳转URL构建失败，请检查配置');
+        }
+        
+    } catch (error) {
+        console.error('准备编辑功能出现错误:', error);
+        alert('编辑功能出现错误，请重试');
+    }
 }
 
 /**
  * 预览问卷
  */
 function previewQuestionnaire(id) {
-    window.open(`questionnaire-preview.html?id=${id}`, '_blank');
+    console.log('=== 开始预览功能 ===');
+    console.log('问卷ID:', id);
+    
+    if (!id) {
+        console.error('预览失败：没有找到问卷ID');
+        alert('无法预览：缺少问卷ID');
+        return;
+    }
+    
+    try {
+        // 构建预览URL，使用与编辑界面一致的逻辑
+        const baseUrl = window.location.origin;
+        const previewUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?questionnaireId=${id}`;
+        
+        console.log('=== 构建预览URL ===');
+        console.log('CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW:', CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW);
+        console.log('问卷ID:', id);
+        console.log('baseUrl:', baseUrl);
+        console.log('预览页面完整URL:', previewUrl);
+        
+        // 验证URL格式
+        try {
+            const testUrl = new URL(previewUrl);
+            console.log('URL验证成功:', testUrl.href);
+            console.log('URL参数:', testUrl.searchParams.get('questionnaireId'));
+        } catch (error) {
+            console.error('URL验证失败:', error);
+        }
+        
+        // 验证跳转URL是否包含参数
+        if (previewUrl.includes('questionnaireId=')) {
+            console.log('✅ URL包含questionnaireId参数，准备跳转');
+            
+            // 使用新窗口打开预览页面，保持管理界面不关闭
+            try {
+                console.log('使用window.open打开预览页面');
+                const previewWindow = window.open(previewUrl, '_blank');
+                
+                // 检查是否成功打开新窗口
+                if (previewWindow) {
+                    console.log('预览页面打开成功');
+                } else {
+                    // 如果弹窗被阻止，尝试直接跳转
+                    console.log('弹窗被阻止，尝试直接跳转');
+                    window.location.href = previewUrl;
+                }
+            } catch (error) {
+                console.error('打开预览页面失败，尝试直接跳转:', error);
+                try {
+                    window.location.href = previewUrl;
+                } catch (error2) {
+                    console.error('直接跳转也失败:', error2);
+                    alert('预览功能出现错误，请重试');
+                }
+            }
+        } else {
+            console.error('❌ URL不包含questionnaireId参数，跳转失败');
+            console.error('previewUrl:', previewUrl);
+            alert('跳转URL构建失败，请检查配置');
+        }
+        
+    } catch (error) {
+        console.error('准备预览功能出现错误:', error);
+        alert('预览功能出现错误，请重试');
+    }
 }
 
 /**
  * 测试问卷
  */
 function testQuestionnaire(id) {
-    window.open(`questionnaire-test.html?id=${id}`, '_blank');
+    console.log('=== 开始测试功能 ===');
+    console.log('问卷ID:', id);
+    
+    if (!id) {
+        console.error('测试失败：没有找到问卷ID');
+        alert('无法测试：缺少问卷ID');
+        return;
+    }
+    
+    try {
+        // 构建测试URL，使用与预览界面一致的逻辑
+        const baseUrl = window.location.origin;
+        const testUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_TEST}?questionnaireId=${id}`;
+        
+        console.log('=== 构建测试URL ===');
+        console.log('CONFIG.ROUTES.QUESTIONNAIRE_TEST:', CONFIG.ROUTES.QUESTIONNAIRE_TEST);
+        console.log('问卷ID:', id);
+        console.log('baseUrl:', baseUrl);
+        console.log('测试页面完整URL:', testUrl);
+        
+        // 验证URL格式
+        try {
+            const testUrlObj = new URL(testUrl);
+            console.log('URL验证成功:', testUrlObj.href);
+            console.log('URL参数:', testUrlObj.searchParams.get('questionnaireId'));
+        } catch (error) {
+            console.error('URL验证失败:', error);
+        }
+        
+        // 验证跳转URL是否包含参数
+        if (testUrl.includes('questionnaireId=')) {
+            console.log('✅ URL包含questionnaireId参数，准备跳转');
+            
+            // 使用新窗口打开测试页面，保持管理界面不关闭
+            try {
+                console.log('使用window.open打开测试页面');
+                const testWindow = window.open(testUrl, '_blank');
+                
+                // 检查是否成功打开新窗口
+                if (testWindow) {
+                    console.log('测试页面打开成功');
+                } else {
+                    // 如果弹窗被阻止，尝试直接跳转
+                    console.log('弹窗被阻止，尝试直接跳转');
+                    window.location.href = testUrl;
+                }
+            } catch (error) {
+                console.error('打开测试页面失败，尝试直接跳转:', error);
+                try {
+                    window.location.href = testUrl;
+                } catch (error2) {
+                    console.error('直接跳转也失败:', error2);
+                    alert('测试功能出现错误，请重试');
+                }
+            }
+        } else {
+            console.error('❌ URL不包含questionnaireId参数，跳转失败');
+            console.error('testUrl:', testUrl);
+            alert('跳转URL构建失败，请检查配置');
+        }
+        
+    } catch (error) {
+        console.error('准备测试功能出现错误:', error);
+        alert('测试功能出现错误，请重试');
+    }
 }
 
 /**
@@ -797,16 +975,12 @@ function getStatusText(status) {
     switch (status) {
         case 0:
         case false:
-            return '草稿';
+            return '禁用';
         case 1:
         case true:
-            return '已发布';
+            return '启用';
         case 2:
-            return '已暂停';
-        case 3:
-            return '已结束';
-        default:
-            return '未知';
+            return '草稿';
     }
 }
 

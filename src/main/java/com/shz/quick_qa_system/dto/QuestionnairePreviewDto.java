@@ -49,6 +49,11 @@ public class QuestionnairePreviewDto {
          * 结束日期
          */
         private String endDate;
+
+        /**
+         * 创建时间
+         */
+        private String createDate;
         
         /**
          * 每人填写次数限制

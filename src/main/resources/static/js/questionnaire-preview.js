@@ -15,7 +15,10 @@
 let questionnaireData = {
   title: '',
   description: '',
-  questions: []
+  questions: [],
+  startDate: '',
+  endDate: '',
+  createdTime: ''
 };
 
 // 用户答案数据
@@ -31,9 +34,9 @@ let duration = 0;
  * 初始化预览页面
  */
 function initPreview() {
-  console.log('=== 开始初始化预览页面 ===');
-  console.log('当前页面URL:', window.location.href);
-  console.log('当前页面search:', window.location.search);
+  // console.log('=== 开始初始化预览页面 ===');
+  // console.log('当前页面URL:', window.location.href);
+  // console.log('当前页面search:', window.location.search);
   
   // 显示调试信息
   displayDebugInfo();
@@ -79,6 +82,76 @@ function initPreview() {
   
   // 绑定事件
   bindEvents();
+}
+
+/**
+ * 渲染问卷时间信息
+ */
+function renderQuestionnaireTimeInfo() {
+  console.log('渲染问卷时间信息:', {
+    startDate: questionnaireData.startDate,
+    endDate: questionnaireData.endDate,
+    createdTime: questionnaireData.createdTime
+  });
+  
+  // 格式化并显示开始时间
+  const startDateElement = document.getElementById('startDate');
+  if (startDateElement) {
+    if (questionnaireData.startDate) {
+      const startDate = new Date(questionnaireData.startDate);
+      if (!isNaN(startDate.getTime())) {
+        startDateElement.textContent = startDate.toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } else {
+        startDateElement.textContent = questionnaireData.startDate;
+      }
+    } else {
+      startDateElement.textContent = '未设置';
+    }
+  }
+  
+  // 格式化并显示结束时间
+  const endDateElement = document.getElementById('endDate');
+  if (endDateElement) {
+    if (questionnaireData.endDate) {
+      const endDate = new Date(questionnaireData.endDate);
+      if (!isNaN(endDate.getTime())) {
+        endDateElement.textContent = endDate.toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+      } else {
+        endDateElement.textContent = questionnaireData.endDate;
+      }
+    } else {
+      endDateElement.textContent = '未设置';
+    }
+  }
+  
+  // 格式化并显示创建时间
+  const createdTimeElement = document.getElementById('createdTime');
+  if (createdTimeElement) {
+    if (questionnaireData.createdTime) {
+      const createdTime = new Date(questionnaireData.createdTime);
+      if (!isNaN(createdTime.getTime())) {
+        createdTimeElement.textContent = createdTime.toLocaleDateString('zh-CN', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } else {
+        createdTimeElement.textContent = questionnaireData.createdTime;
+      }
+    } else {
+      createdTimeElement.textContent = '未知';
+    }
+  }
 }
 
 /**
@@ -272,7 +345,10 @@ function loadQuestionnaireFromAPI(questionnaireId) {
         questionnaireData = {
           title: apiData.questionnaireInfo?.title || '问卷预览',
           description: apiData.questionnaireInfo?.description || '问卷描述',
-          questions: convertApiQuestionsToFrontend(apiData.questions || [])
+          questions: convertApiQuestionsToFrontend(apiData.questions || []),
+          startDate: apiData.questionnaireInfo?.startDate || '',
+          endDate: apiData.questionnaireInfo?.endDate || '',
+          createdTime: apiData.questionnaireInfo?.createDate || ''
         };
         
         // 渲染问卷
@@ -459,6 +535,9 @@ function renderQuestionnaire() {
   // 设置问卷标题和描述
   document.getElementById('questionnaireTitle').textContent = questionnaireData.title;
   document.getElementById('questionnaireDescription').textContent = questionnaireData.description;
+  
+  // 设置问卷时间信息
+  renderQuestionnaireTimeInfo();
   
   // 如果有提交信息，更新页面标题和描述
   if (submitTime) {

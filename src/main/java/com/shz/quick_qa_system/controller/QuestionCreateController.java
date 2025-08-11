@@ -49,10 +49,6 @@ public class QuestionCreateController {
     private RatingQuestionMapper ratingQuestionMapper;
     @Resource
     private QuestionMapper questionMapper;
-    @Resource
-    private QuestionServiceImpl questionServiceImpl;
-
-
 
     /**
      * 创建问卷（包含问题）
@@ -113,23 +109,23 @@ public class QuestionCreateController {
             @RequestParam(value = "dateFilter", required = false) String dateFilter) {
         try {
             // 添加调试日志
-            System.out.println("=== 控制器接收分页请求 ===");
-            System.out.println("接收到的参数：");
-            System.out.println("  creatorId: " + creatorId);
-            System.out.println("  page: " + page);
-            System.out.println("  size: " + size);
-            System.out.println("  keyword: " + keyword);
-            System.out.println("  status: " + status);
-            System.out.println("  dateFilter: " + dateFilter);
-
+//            System.out.println("=== 控制器接收分页请求 ===");
+//            System.out.println("接收到的参数：");
+//            System.out.println("  creatorId: " + creatorId);
+//            System.out.println("  page: " + page);
+//            System.out.println("  size: " + size);
+//            System.out.println("  keyword: " + keyword);
+//            System.out.println("  status: " + status);
+//            System.out.println("  dateFilter: " + dateFilter);
+//
             Integer id = Integer.valueOf(creatorId);
-            System.out.println("转换后的 creatorId: " + id);
+//            System.out.println("转换后的 creatorId: " + id);
 
             // 调用分页查询方法，传递所有参数
             Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireListWithPagination(id, page, size, keyword, status, dateFilter);
 
-            System.out.println("服务层返回结果：");
-            System.out.println("  result: " + result);
+//            System.out.println("服务层返回结果：");
+//            System.out.println("  result: " + result);
 
             // result 应包含: list, currentPage, pageSize, totalCount, totalPages
             // ApiResult apiResult = ApiResult.successWithPagination(
@@ -361,19 +357,6 @@ public class QuestionCreateController {
             questionListId.add(new String[]{question.getId().toString(),question.getContent(),question.getQuestionType().toString(),question.getSortNum().toString()});
         });
         return ApiResult.success(questionListId);
-    }
-
-    /**
-     * 更新问卷的问题排序（别名接口，便于前端沿用 questionOrder 路径）
-     */
-    @PutMapping("/questionOrder")
-    public ApiResult updateQuestionOrder(@RequestBody QuestionOrderUpdateDto request) {
-        try {
-            boolean ok = questionServiceImpl.updateQuestionOrder(request);
-            return ok ? ApiResult.success(true) : ApiResult.error("更新序号失败");
-        } catch (Exception e) {
-            return ApiResult.error("更新序号时发生错误: " + e.getMessage());
-        }
     }
 }
 

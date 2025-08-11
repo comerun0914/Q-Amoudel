@@ -221,6 +221,10 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             if (questionnaire.getEndDate() != null) {
                 questionnaireInfo.setEndDate(questionnaire.getEndDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
+            if (questionnaire.getCreatedTime() != null) {
+                questionnaireInfo.setCreateDate(questionnaire.getCreatedTime().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            }
+
             
             previewDto.setQuestionnaireInfo(questionnaireInfo);
             

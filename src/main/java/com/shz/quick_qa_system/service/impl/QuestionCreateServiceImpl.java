@@ -463,19 +463,19 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
     public Map<String, Object> getQuestionnaireListWithPagination(Integer creatorId, Integer page, Integer size, String keyword, Integer status, String dateFilter) {
         // 添加调试日志
-        System.out.println("=== 分页查询开始 ===");
-        System.out.println("接收到的参数：");
-        System.out.println("  creatorId: " + creatorId);
-        System.out.println("  page: " + page);
-        System.out.println("  size: " + size);
-        System.out.println("  keyword: " + keyword);
-        System.out.println("  status: " + status);
-        System.out.println("  dateFilter: " + dateFilter);
+//        System.out.println("=== 分页查询开始 ===");
+//        System.out.println("接收到的参数：");
+//        System.out.println("  creatorId: " + creatorId);
+//        System.out.println("  page: " + page);
+//        System.out.println("  size: " + size);
+//        System.out.println("  keyword: " + keyword);
+//        System.out.println("  status: " + status);
+//        System.out.println("  dateFilter: " + dateFilter);
         
         Page<QuestionCreate> pageParam = new Page<>(page, size);
-        System.out.println("创建的分页对象：");
-        System.out.println("  pageParam.current: " + pageParam.getCurrent());
-        System.out.println("  pageParam.size: " + pageParam.getSize());
+//        System.out.println("创建的分页对象：");
+//        System.out.println("  pageParam.current: " + pageParam.getCurrent());
+//        System.out.println("  pageParam.size: " + pageParam.getSize());
         
         QueryWrapper<QuestionCreate> queryWrapper = new QueryWrapper<>();
         if (creatorId != null) {

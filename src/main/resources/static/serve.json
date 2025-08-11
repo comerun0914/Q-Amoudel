@@ -15,8 +15,56 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/index-user",
+      "destination": "/index-user.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/ask-user",
+      "destination": "/ask-user.html"
+    },
+    {
+      "source": "/questionnaire-editor",
+      "destination": "/questionnaire-editor.html"
+    },
+    {
+      "source": "/questionnaire-management",
+      "destination": "/questionnaire-management.html"
+    },
+    {
       "source": "/questionnaire-preview",
       "destination": "/questionnaire-preview.html"
+    },
+    {
+      "source": "/questionnaire-fill",
+      "destination": "/questionnaire-fill.html"
+    },
+    {
+      "source": "/questionnaire-result",
+      "destination": "/questionnaire-result.html"
+    },
+    {
+      "source": "/questionnaire-test",
+      "destination": "/questionnaire-test.html"
+    },
+    {
+      "source": "/manual-create-questionnaire",
+      "destination": "/manual-create-questionnaire.html"
+    },
+    {
+      "source": "/check-backend",
+      "destination": "/check-backend.html"
+    },
+    {
+      "source": "/protected-page-example",
+      "destination": "/protected-page-example.html"
     }
   ]
 } 

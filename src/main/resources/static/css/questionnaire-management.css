@@ -1,4 +1,21 @@
 /* 问卷管理界面样式 */
+:root {
+    --primary: #3b82f6;
+    --primary-light: #60a5fa;
+    --primary-dark: #2563eb;
+    --secondary: #10b981;
+    --neutral-100: #f3f4f6;
+    --neutral-200: #e5e7eb;
+    --neutral-700: #374151;
+    --neutral-800: #1f2937;
+    --neutral-900: #111827;
+    --white: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 8px;
+    --transition: all 0.3s ease;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -13,38 +30,46 @@ body {
 }
 
 /* 导航栏样式 */
+header {
+    background-color: var(--white);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
 .navbar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 70px;
 }
 
 .logo {
-    color: white;
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
+    color: #3b82f6;
 }
 
 .nav-links {
     display: flex;
+    gap: 30px;
     align-items: center;
-    gap: 2rem;
 }
 
 .nav-links a {
-    color: white;
     text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+    color: var(--neutral-700);
+    font-weight: 500;
+    transition: var(--transition);
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-    background-color: rgba(255,255,255,0.2);
+    color: var(--primary);
 }
 
 .user-info {
@@ -53,13 +78,13 @@ body {
     gap: 8px;
     cursor: pointer;
     padding: 8px 12px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius);
+    transition: var(--transition);
     position: relative;
 }
 
 .user-info:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--neutral-100);
 }
 
 .user-avatar {
@@ -67,12 +92,12 @@ body {
     height: 32px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--neutral-200);
 }
 
 .user-name {
     font-weight: 500;
-    color: white;
+    color: var(--neutral-700);
     font-size: 14px;
 }
 
@@ -81,14 +106,14 @@ body {
     top: 100%;
     right: 0;
     background-color: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--neutral-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     min-width: 150px;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: all 0.3s ease;
+    transition: var(--transition);
     z-index: 1000;
 }
 
@@ -101,11 +126,11 @@ body {
 .dropdown-item {
     display: block;
     padding: 12px 16px;
-    color: #374151;
+    color: var(--neutral-700);
     text-decoration: none;
     font-size: 14px;
-    transition: all 0.3s ease;
-    border-bottom: 1px solid #f3f4f6;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--neutral-100);
 }
 
 .dropdown-item:last-child {
@@ -113,22 +138,24 @@ body {
 }
 
 .dropdown-item:hover {
-    background-color: #f3f4f6;
-    color: #3b82f6;
+    background-color: var(--neutral-100);
+    color: var(--primary);
 }
 
 .btn-login {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    background-color: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-weight: 500;
     text-decoration: none;
-    transition: all 0.3s;
+    transition: var(--transition);
 }
 
 .btn-login:hover {
-    background: rgba(255,255,255,0.3);
+    background-color: var(--primary);
+    color: var(--white);
 }
 
 /* 主要内容区域 */
@@ -454,33 +481,190 @@ body {
 
 /* 状态标签 */
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
     text-align: center;
-    display: inline-block;
-    min-width: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
+.status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.status-badge:hover::before {
+    left: 100%;
+}
+
+.status-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* 活跃状态 */
 .status-active {
-    background: #d4edda;
-    color: #155724;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: 2px solid #10b981;
 }
 
+.status-active::after {
+    content: '●';
+    margin-left: 6px;
+    font-size: 0.7rem;
+    animation: pulse 2s infinite;
+}
+
+/* 非活跃状态 */
 .status-inactive {
-    background: #f8d7da;
-    color: #721c24;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border: 2px solid #ef4444;
 }
 
+.status-inactive::after {
+    content: '●';
+    margin-left: 6px;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* 草稿状态 */
 .status-draft {
-    background: #fff3cd;
-    color: #856404;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: 2px solid #f59e0b;
 }
 
+.status-draft::after {
+    content: '✏️';
+    margin-left: 6px;
+    font-size: 0.7rem;
+}
+
+/* 过期状态 */
 .status-expired {
-    background: #f8d7da;
-    color: #721c24;
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border: 2px solid #6b7280;
+}
+
+.status-expired::after {
+    content: '⏰';
+    margin-left: 6px;
+    font-size: 0.7rem;
+}
+
+/* 待审核状态 */
+.status-pending {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: 2px solid #3b82f6;
+}
+
+.status-pending::after {
+    content: '⏳';
+    margin-left: 6px;
+    font-size: 0.7rem;
+    animation: spin 2s linear infinite;
+}
+
+/* 已完成状态 */
+.status-completed {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border: 2px solid #8b5cf6;
+}
+
+.status-completed::after {
+    content: '✅';
+    margin-left: 6px;
+    font-size: 0.7rem;
+}
+
+/* 动画效果 */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 状态标签组样式 */
+.status-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* 状态标签尺寸变体 */
+.status-badge.small {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    min-width: 70px;
+}
+
+.status-badge.large {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    min-width: 110px;
+}
+
+/* 状态标签轮廓样式 */
+.status-badge.outline {
+    background: transparent;
+    color: inherit;
+}
+
+.status-badge.outline.status-active {
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.status-badge.outline.status-inactive {
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.status-badge.outline.status-draft {
+    color: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.status-badge.outline.status-expired {
+    color: #6b7280;
+    border-color: #6b7280;
+}
+
+.status-badge.outline.status-pending {
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.status-badge.outline.status-completed {
+    color: #8b5cf6;
+    border-color: #8b5cf6;
 }
 
 /* 操作按钮 */

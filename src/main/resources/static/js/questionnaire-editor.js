@@ -402,7 +402,7 @@ function createSingleChoiceTemplate() {
                     <button type="button" class="btn-edit-option" title="编辑选项">
                         <i class="iconfont icon-edit"></i>
                     </button>
-                    <button type="button" class="btn-delete-option" title="删除选项">
+                    <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
                         <i class="iconfont icon-delete"></i>
                     </button>
                 </div>
@@ -416,7 +416,7 @@ function createSingleChoiceTemplate() {
                     <button type="button" class="btn-edit-option" title="编辑选项">
                         <i class="iconfont icon-edit"></i>
                     </button>
-                    <button type="button" class="btn-delete-option" title="删除选项">
+                    <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
                         <i class="iconfont icon-delete"></i>
                     </button>
                 </div>
@@ -459,7 +459,7 @@ function createMultipleChoiceTemplate() {
                     <button type="button" class="btn-edit-option" title="编辑选项">
                         <i class="iconfont icon-edit"></i>
                     </button>
-                    <button type="button" class="btn-delete-option" title="删除选项">
+                    <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
                         <i class="iconfont icon-delete"></i>
                     </button>
                 </div>
@@ -473,7 +473,7 @@ function createMultipleChoiceTemplate() {
                     <button type="button" class="btn-edit-option" title="编辑选项">
                         <i class="iconfont icon-edit"></i>
                     </button>
-                    <button type="button" class="btn-delete-option" title="删除选项">
+                    <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
                         <i class="iconfont icon-delete"></i>
                     </button>
                 </div>
@@ -1005,13 +1005,16 @@ function loadQuestionOptions(questionElement, question) {
                 <button type="button" class="btn-edit-option" title="编辑选项">
                     <i class="iconfont icon-edit"></i>
                 </button>
-                <button type="button" class="btn-delete-option" title="删除选项">
+                <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
                     <i class="iconfont icon-delete"></i>
                 </button>
             </div>
         `;
         
         optionsContainer.appendChild(optionElement);
+        
+        // 绑定选项事件
+        bindOptionEvents(optionElement);
     });
     
     console.log('选项加载完成，共加载', question.options.length, '个选项');
@@ -1021,21 +1024,106 @@ function loadQuestionOptions(questionElement, question) {
 function addOption(button, inputType) {
     const optionsContainer = button.previousElementSibling;
     const optionCount = optionsContainer.children.length + 1;
-    const name = inputType === 'radio' ? `single_${questionCount}` : 'multiple';
+    const name = inputType === 'radio' ? `single_${Date.now()}` : `multiple_${Date.now()}`;
     
     const optionElement = document.createElement('div');
     optionElement.className = 'option-item';
     optionElement.innerHTML = `
         <div class="option-content">
-            <input type="${inputType}" name="${name}">
+            <input type="${inputType}" name="${name}" value="${optionCount}">
             <input type="text" placeholder="选项${optionCount}" class="option-text">
         </div>
         <div class="option-actions">
-            <button type="button" class="btn-delete-option" title="删除选项">✕</button>
+            <button type="button" class="btn-edit-option" title="编辑选项">
+                <i class="iconfont icon-edit"></i>
+            </button>
+            <button type="button" class="btn-delete-option" title="删除选项" onclick="deleteOption(this)">
+                <i class="iconfont icon-delete"></i>
+            </button>
         </div>
     `;
     
     optionsContainer.appendChild(optionElement);
+    
+    // 绑定新选项的事件
+    bindOptionEvents(optionElement);
+    
+    // 触发自动保存检查
+    if (AUTO_SAVE_ENABLED) {
+        setTimeout(() => {
+            performAutoSave();
+        }, 1000);
+    }
+}
+
+// 删除选项函数
+function deleteOption(button) {
+    const optionElement = button.closest('.option-item');
+    if (optionElement) {
+        // 检查是否至少保留2个选项
+        const optionsContainer = optionElement.parentElement;
+        if (optionsContainer.children.length > 2) {
+            optionElement.remove();
+            
+            // 重新编号选项
+            renumberOptions(optionsContainer);
+            
+            // 触发自动保存检查
+            if (AUTO_SAVE_ENABLED) {
+                setTimeout(() => {
+                    performAutoSave();
+                }, 1000);
+            }
+        } else {
+            alert('至少需要保留2个选项');
+        }
+    }
+}
+
+// 重新编号选项
+function renumberOptions(optionsContainer) {
+    const optionElements = optionsContainer.querySelectorAll('.option-item');
+    optionElements.forEach((optionElement, index) => {
+        const optionText = optionElement.querySelector('.option-text');
+        if (optionText) {
+            optionText.placeholder = `选项${index + 1}`;
+        }
+        
+        const input = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
+        if (input) {
+            input.value = index + 1;
+        }
+    });
+}
+
+// 绑定选项事件
+function bindOptionEvents(optionElement) {
+    // 绑定选项文本输入事件
+    const optionText = optionElement.querySelector('.option-text');
+    if (optionText) {
+        optionText.addEventListener('input', function() {
+            // 输入变化时触发自动保存检查
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.optionInputTimer);
+                window.optionInputTimer = setTimeout(() => {
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    // 绑定选项选中状态变化事件
+    const input = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
+    if (input) {
+        input.addEventListener('change', function() {
+            // 选项状态变化时触发自动保存检查
+            if (AUTO_SAVE_ENABLED) {
+                setTimeout(() => {
+                    performAutoSave();
+                }, 1000);
+            }
+        });
+    }
 }
 
 // 更新问题计数
@@ -1761,6 +1849,14 @@ async function deleteQuestionFromBackend(questionId) {
         // 绑定拖拽事件
         attachDragEvents(questionElement);
         
+        // 为选择题的现有选项绑定事件
+        if (type === 'single' || type === 'multiple') {
+            const optionElements = questionElement.querySelectorAll('.option-item');
+            optionElements.forEach(optionElement => {
+                bindOptionEvents(optionElement);
+            });
+        }
+        
         // 更新计数（填写人信息不算作问题）
         if (type !== 'user-info') {
             questionCount++;
@@ -1806,12 +1902,12 @@ async function deleteQuestionFromBackend(questionId) {
                 const baseUrl = window.location.origin;
                 const previewUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?questionnaireId=${currentQuestionnaireId}`;
                 
-                console.log('=== 构建预览URL ===');
-                console.log('CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW:', CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW);
-                console.log('currentQuestionnaireId:', currentQuestionnaireId);
-                console.log('baseUrl:', baseUrl);
-                console.log('预览页面完整URL:', previewUrl);
-                console.log('URL长度:', previewUrl.length);
+                // console.log('=== 构建预览URL ===');
+                // console.log('CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW:', CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW);
+                // console.log('currentQuestionnaireId:', currentQuestionnaireId);
+                // console.log('baseUrl:', baseUrl);
+                // console.log('预览页面完整URL:', previewUrl);
+                // console.log('URL长度:', previewUrl.length);
                 
                 // 验证URL格式
                 try {
@@ -1823,21 +1919,21 @@ async function deleteQuestionFromBackend(questionId) {
                 }
                 
                 // 使用页面跳转而不是弹窗，避免被浏览器阻止
-                console.log('正在跳转到预览页面...');
-                console.log('跳转前的当前URL:', window.location.href);
-                console.log('即将跳转到的URL:', previewUrl);
+                // console.log('正在跳转到预览页面...');
+                // console.log('跳转前的当前URL:', window.location.href);
+                // console.log('即将跳转到的URL:', previewUrl);
                 
                 // 验证跳转URL是否包含参数
                 if (previewUrl.includes('questionnaireId=')) {
-                    console.log('✅ URL包含questionnaireId参数，准备跳转');
+                    // console.log('✅ URL包含questionnaireId参数，准备跳转');
                     
                     // 尝试多种跳转方式，确保兼容性
                     try {
                         // 方式1: 使用完整的URL进行跳转
-                        console.log('使用方式1: window.location.href');
+                        // console.log('使用方式1: window.location.href');
                         window.location.href = previewUrl;
                     } catch (error) {
-                        console.error('方式1失败，尝试方式2:', error);
+                        // console.error('方式1失败，尝试方式2:', error);
                         try {
                             // 方式2: 使用location.replace
                             console.log('使用方式2: location.replace');
