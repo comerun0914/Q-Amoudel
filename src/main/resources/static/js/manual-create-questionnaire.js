@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
             startDate: startDateInput.value,
             endDate: endDateInput.value,
             submissionLimit: parseInt(maxSubmissionsInput.value) || 1,
-            status: 0, // 改为Integer类型：1=启用
+            status: 2, // 改为Integer类型：1=启用
             creatorId: getCurrentUserId() // 从localStorage或session获取当前用户ID
         };
 

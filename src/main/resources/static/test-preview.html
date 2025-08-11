@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试问卷预览功能 - Quick Q&A System</title>
+  <!-- 引入现代字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- 引入图标字体 -->
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_4444444_abcdefg.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #111827;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .test-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      overflow: hidden;
+    }
+
+    .test-header {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .test-header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .test-header p {
+      opacity: 0.9;
+    }
+
+    .test-content {
+      padding: 2rem;
+    }
+
+    .test-section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .test-section h3 {
+      color: #374151;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+
+    .test-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #4338ca;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .btn-success {
+      background: #10b981;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .test-result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f0f9ff;
+      border: 1px solid #0ea5e9;
+      border-radius: 6px;
+      color: #0c4a6e;
+    }
+
+    .test-error {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #7f1d1d;
+    }
+
+    .code-block {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgb(79 70 229 / 0.1);
+    }
+
+    .question-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background: white;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .question-number {
+      background: #4f46e5;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .question-type {
+      background: #f3f4f6;
+      color: #6b7280;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .question-text {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .options-container {
+      margin-top: 0.5rem;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .option-item input {
+      width: auto;
+      margin: 0;
+    }
+
+    .option-text {
+      font-size: 0.875rem;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-header">
+      <h1>测试问卷预览功能</h1>
+      <p>验证问卷编辑器到预览页面的数据传递和显示功能</p>
+    </div>
+
+    <div class="test-content">
+      <!-- 测试数据准备 -->
+      <div class="test-section">
+        <h3>1. 准备测试数据</h3>
+        <p>创建示例问卷数据，模拟从编辑器收集的数据结构</p>
+        
+        <div class="form-group">
+          <label for="questionnaireTitle">问卷标题:</label>
+          <input type="text" id="questionnaireTitle" value="客户满意度调查问卷" placeholder="输入问卷标题">
+        </div>
+        
+        <div class="form-group">
+          <label for="questionnaireDescription">问卷描述:</label>
+          <textarea id="questionnaireDescription" rows="3" placeholder="输入问卷描述">这是一份用于了解客户对我们产品和服务满意度的调查问卷，请认真填写。</textarea>
+        </div>
+
+        <div class="test-buttons">
+          <button class="btn" onclick="createTestData()">创建测试数据</button>
+          <button class="btn btn-secondary" onclick="clearTestData()">清除测试数据</button>
+        </div>
+
+        <div id="testDataResult" class="test-result" style="display: none;"></div>
+      </div>
+
+      <!-- 测试预览功能 -->
+      <div class="test-section">
+        <h3>2. 测试预览功能</h3>
+        <p>使用测试数据打开问卷预览页面</p>
+        
+        <div class="test-buttons">
+          <button class="btn btn-success" onclick="testPreview()">打开预览页面</button>
+          <button class="btn" onclick="testPreviewInNewTab()">新标签页预览</button>
+        </div>
+
+        <div id="previewResult" class="test-result" style="display: none;"></div>
+      </div>
+
+      <!-- 测试数据验证 -->
+      <div class="test-section">
+        <h3>3. 验证数据传递</h3>
+        <p>检查预览页面是否正确接收和显示数据</p>
+        
+        <div class="test-buttons">
+          <button class="btn" onclick="checkPreviewData()">检查预览数据</button>
+          <button class="btn btn-secondary" onclick="showStoredData()">显示存储的数据</button>
+        </div>
+
+        <div id="validationResult" class="test-result" style="display: none;"></div>
+      </div>
+
+      <!-- 示例问卷结构 -->
+      <div class="test-section">
+        <h3>4. 示例问卷结构</h3>
+        <p>展示测试数据的结构和格式</p>
+        
+        <div id="sampleStructure" class="code-block">
+          <pre><code>// 示例数据结构将在创建测试数据后显示</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    // 测试数据
+    let testQuestionnaireData = null;
+
+    /**
+     * 创建测试数据
+     */
+    function createTestData() {
+      const title = document.getElementById('questionnaireTitle').value || '客户满意度调查问卷';
+      const description = document.getElementById('questionnaireDescription').value || '这是一份用于了解客户对我们产品和服务满意度的调查问卷，请认真填写。';
+
+      testQuestionnaireData = {
+        questionnaire: {
+          title: title,
+          description: description,
+          questions: [
+            {
+              type: 'single-choice',
+              text: '您的性别是？',
+              required: true,
+              questionNumber: 1,
+              options: [
+                { text: '男', isDefault: false, order: 1 },
+                { text: '女', isDefault: false, order: 2 },
+                { text: '其他', isDefault: false, order: 3 }
+              ]
+            },
+            {
+              type: 'multiple-choice',
+              text: '您喜欢我们产品的哪些方面？（可多选）',
+              required: false,
+              questionNumber: 2,
+              options: [
+                { text: '界面设计', isDefault: false, order: 1 },
+                { text: '功能完整性', isDefault: false, order: 2 },
+                { text: '操作便捷性', isDefault: false, order: 3 },
+                { text: '响应速度', isDefault: false, order: 4 },
+                { text: '价格合理', isDefault: false, order: 5 }
+              ]
+            },
+            {
+              type: 'text',
+              text: '请简要描述您对我们产品的建议：',
+              required: false,
+              questionNumber: 3,
+              placeholder: '请输入您的建议...',
+              maxLength: 500
+            },
+            {
+              type: 'rating',
+              text: '请对我们的服务质量进行评分：',
+              required: true,
+              questionNumber: 4,
+              maxRating: 5,
+              ratingLabels: {
+                1: '非常不满意',
+                2: '不满意',
+                3: '一般',
+                4: '满意',
+                5: '非常满意'
+              }
+            },
+            {
+              type: 'matrix',
+              text: '请评价以下各项指标：',
+              required: false,
+              questionNumber: 5,
+              rows: [
+                { text: '产品质量', order: 1 },
+                { text: '服务态度', order: 2 },
+                { text: '价格合理性', order: 3 },
+                { text: '售后支持', order: 4 }
+              ],
+              columns: [
+                { text: '非常差', order: 1 },
+                { text: '差', order: 2 },
+                { text: '一般', order: 3 },
+                { text: '好', order: 4 },
+                { text: '非常好', order: 5 }
+              ]
+            },
+            {
+              type: 'date',
+              text: '您希望我们何时联系您进行回访？',
+              required: false,
+              questionNumber: 6,
+              dateFormat: 'YYYY-MM-DD'
+            },
+            {
+              type: 'file-upload',
+              text: '请上传您认为有问题的截图（可选）',
+              required: false,
+              questionNumber: 7,
+              maxFileSize: 5,
+              allowedTypes: 'jpg, png, gif'
+            },
+            {
+              type: 'user-info',
+              text: '填写人信息',
+              required: false,
+              questionNumber: 8,
+              fields: [
+                { type: 'text', label: '姓名', required: true, order: 1 },
+                { type: 'email', label: '邮箱', required: false, order: 2 },
+                { type: 'phone', label: '电话', required: false, order: 3 }
+              ]
+            }
+          ]
+        }
+      };
+
+      // 显示结果
+      const resultDiv = document.getElementById('testDataResult');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <strong>✅ 测试数据创建成功！</strong><br>
+        问卷标题: ${testQuestionnaireData.questionnaire.title}<br>
+        问题数量: ${testQuestionnaireData.questionnaire.questions.length}<br>
+        包含的问题类型: ${[...new Set(testQuestionnaireData.questionnaire.questions.map(q => q.type))].join(', ')}
+      `;
+
+      // 更新示例结构
+      updateSampleStructure();
+
+      console.log('测试数据已创建:', testQuestionnaireData);
+    }
+
+    /**
+     * 更新示例结构显示
+     */
+    function updateSampleStructure() {
+      if (!testQuestionnaireData) return;
+
+      const structureDiv = document.getElementById('sampleStructure');
+      structureDiv.innerHTML = `<pre><code>${JSON.stringify(testQuestionnaireData, null, 2)}</code></pre>`;
+    }
+
+    /**
+     * 清除测试数据
+     */
+    function clearTestData() {
+      testQuestionnaireData = null;
+      localStorage.removeItem('questionnaire_preview_data');
+      
+      const resultDiv = document.getElementById('testDataResult');
+      resultDiv.style.display = 'none';
+      
+      const structureDiv = document.getElementById('sampleStructure');
+      structureDiv.innerHTML = '<pre><code>// 示例数据结构将在创建测试数据后显示</code></pre>';
+      
+      console.log('测试数据已清除');
+    }
+
+    /**
+     * 测试预览功能
+     */
+    function testPreview() {
+      if (!testQuestionnaireData) {
+        alert('请先创建测试数据！');
+        return;
+      }
+
+      try {
+        // 将数据存储到localStorage
+        localStorage.setItem('questionnaire_preview_data', JSON.stringify(testQuestionnaireData));
+        
+        // 打开预览页面
+        window.open(CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW, '_blank');
+        
+        // 显示结果
+        const resultDiv = document.getElementById('previewResult');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+          <strong>✅ 预览页面已打开！</strong><br>
+          数据已成功传递到预览页面，请在新窗口中查看效果。
+        `;
+        
+        console.log('预览页面已打开，数据已传递');
+      } catch (error) {
+        console.error('打开预览页面失败:', error);
+        alert('打开预览页面失败: ' + error.message);
+      }
+    }
+
+    /**
+     * 新标签页预览
+     */
+    function testPreviewInNewTab() {
+      if (!testQuestionnaireData) {
+        alert('请先创建测试数据！');
+        return;
+      }
+
+      try {
+        // 将数据存储到localStorage
+        localStorage.setItem('questionnaire_preview_data', JSON.stringify(testQuestionnaireData));
+        
+        // 在当前标签页打开预览页面
+        window.location.href = CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW;
+        
+        console.log('正在跳转到预览页面');
+      } catch (error) {
+        console.error('跳转预览页面失败:', error);
+        alert('跳转预览页面失败: ' + error.message);
+      }
+    }
+
+    /**
+     * 检查预览数据
+     */
+    function checkPreviewData() {
+      const storedData = localStorage.getItem('questionnaire_preview_data');
+      
+      if (!storedData) {
+        const resultDiv = document.getElementById('validationResult');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'test-result test-error';
+        resultDiv.innerHTML = '<strong>❌ 未找到预览数据</strong><br>请先创建测试数据并打开预览页面。';
+        return;
+      }
+
+      try {
+        const data = JSON.parse(storedData);
+        const resultDiv = document.getElementById('validationResult');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'test-result';
+        resultDiv.innerHTML = `
+          <strong>✅ 预览数据验证成功！</strong><br>
+          问卷标题: ${data.questionnaire.title}<br>
+          问题数量: ${data.questionnaire.questions.length}<br>
+          数据大小: ${(storedData.length / 1024).toFixed(2)} KB
+        `;
+        
+        console.log('预览数据验证成功:', data);
+      } catch (error) {
+        console.error('验证预览数据失败:', error);
+        const resultDiv = document.getElementById('validationResult');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'test-result test-error';
+        resultDiv.innerHTML = `<strong>❌ 预览数据验证失败</strong><br>错误: ${error.message}`;
+      }
+    }
+
+    /**
+     * 显示存储的数据
+     */
+    function showStoredData() {
+      const storedData = localStorage.getItem('questionnaire_preview_data');
+      
+      if (!storedData) {
+        alert('未找到存储的预览数据');
+        return;
+      }
+
+      try {
+        const data = JSON.parse(storedData);
+        console.log('存储的预览数据:', data);
+        
+        // 在控制台显示数据
+        alert('数据已在控制台显示，请按F12查看');
+      } catch (error) {
+        console.error('解析存储数据失败:', error);
+        alert('解析存储数据失败: ' + error.message);
+      }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('问卷预览功能测试页面已加载');
+      
+      // 检查是否有存储的预览数据
+      const storedData = localStorage.getItem('questionnaire_preview_data');
+      if (storedData) {
+        try {
+          const data = JSON.parse(storedData);
+          testQuestionnaireData = data;
+          updateSampleStructure();
+          
+          const resultDiv = document.getElementById('testDataResult');
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `
+            <strong>📋 发现已存储的预览数据</strong><br>
+            问卷标题: ${data.questionnaire.title}<br>
+            问题数量: ${data.questionnaire.questions.length}
+          `;
+        } catch (error) {
+          console.error('解析存储数据失败:', error);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

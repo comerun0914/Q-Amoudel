@@ -60,4 +60,49 @@ public class QuestionDto {
      * 选项列表（仅用于单选题和多选题）
      */
     private List<QuestionOptionDto> options;
+    
+    /**
+     * 文本题配置
+     */
+    private QuestionnairePreviewDto.TextQuestionInfo textQuestionConfig;
+    
+    /**
+     * 评分题配置
+     */
+    private QuestionnairePreviewDto.RatingQuestionInfo ratingQuestionConfig;
+    
+    /**
+     * 矩阵题配置
+     */
+    private QuestionnairePreviewDto.MatrixQuestionInfo matrixQuestionConfig;
+    
+    /**
+     * 日期题配置
+     */
+    private QuestionnairePreviewDto.DateQuestionInfo dateQuestionConfig;
+    
+    /**
+     * 时间题配置
+     */
+    private QuestionnairePreviewDto.TimeQuestionInfo timeQuestionConfig;
+    
+    /**
+     * 文件上传题配置
+     */
+    private QuestionnairePreviewDto.FileUploadQuestionInfo fileUploadQuestionConfig;
+    
+    /**
+     * 位置题配置
+     */
+    private QuestionnairePreviewDto.LocationQuestionInfo locationQuestionConfig;
+    
+    /**
+     * 签名题配置
+     */
+    private QuestionnairePreviewDto.SignatureQuestionInfo signatureQuestionConfig;
+    
+    /**
+     * 用户信息题配置
+     */
+    private QuestionnairePreviewDto.UserInfoQuestionInfo userInfoQuestionConfig;
 } 

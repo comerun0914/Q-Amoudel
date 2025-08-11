@@ -35,6 +35,9 @@ const CONFIG = {
         QUESTION_UPDATE: '/question/update',
         QUESTION_DELETE: '/question/delete',
         QUESTION_UPDATE_ORDER: '/question/updateOrder',
+        QUESTION_PREVIEW: '/question/preview',
+        QUESTION_TYPES: '/question/types',
+        QUESTION_BY_ID: '/question/question',
 
         // 选项相关
         SINGLE_CHOICE_OPTION_SAVE: '/singleChoiceOption/save',
@@ -709,3 +712,21 @@ const UTILS = {
 // 导出到全局作用域
 window.CONFIG = CONFIG;
 window.UTILS = UTILS;
+
+/*
+ * API使用示例：
+ * 
+ * // 获取问卷预览数据
+ * fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_PREVIEW}?questionnaireId=123`)
+ *   .then(response => response.json())
+ *   .then(data => console.log(data));
+ * 
+ * // 获取题目类型列表
+ * fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_TYPES}`)
+ *   .then(response => response.json())
+ *   .then(data => console.log(data));
+ * 
+ * // 使用工具函数获取完整API URL（自动添加userId）
+ * const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTION_SAVE);
+ * fetch(url, { method: 'POST', body: JSON.stringify(data) });
+ */

@@ -1,0 +1,361 @@
+ <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试问卷预览功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .data-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 3px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试问卷预览功能</h1>
+    
+    <!-- 准备测试数据 -->
+    <div class="section">
+        <h3>1. 准备测试数据</h3>
+        <div>
+            <label>问卷标题:</label>
+            <input type="text" id="testTitle" value="测试问卷标题" placeholder="输入问卷标题">
+        </div>
+        <div>
+            <label>问卷描述:</label>
+            <textarea id="testDescription" rows="3" placeholder="输入问卷描述">这是一个用于测试预览功能的示例问卷</textarea>
+        </div>
+        <div>
+            <button onclick="createTestData()">创建测试数据</button>
+            <button class="btn-secondary" onclick="clearTestData()">清除测试数据</button>
+        </div>
+    </div>
+
+    <!-- 测试预览功能 -->
+    <div class="section">
+        <h3>2. 测试预览功能</h3>
+        <div>
+            <button class="btn-success" onclick="testPreview()">在新窗口打开预览</button>
+            <button class="btn-success" onclick="testPreviewTab()">在新标签页打开预览</button>
+        </div>
+    </div>
+
+    <!-- 验证数据传递 -->
+    <div class="section">
+        <h3>3. 验证数据传递</h3>
+        <div>
+            <button onclick="checkPreviewData()">检查localStorage数据</button>
+            <button onclick="checkCurrentData()">检查当前测试数据</button>
+        </div>
+        <div id="dataDisplay" class="data-display" style="display: none;"></div>
+    </div>
+
+    <!-- 示例数据结构 -->
+    <div class="section">
+        <h3>4. 示例数据结构</h3>
+        <div class="data-display">
+{
+  "questionnaire": {
+    "title": "测试问卷标题",
+    "description": "这是一个用于测试预览功能的示例问卷",
+    "questions": [
+      {
+        "type": "single-choice",
+        "text": "您的性别是？",
+        "required": true,
+        "questionNumber": 1,
+        "options": [
+          { "text": "男", "isDefault": false, "order": 1 },
+          { "text": "女", "isDefault": false, "order": 2 },
+          { "text": "其他", "isDefault": false, "order": 3 }
+        ]
+      },
+      {
+        "type": "multiple-choice",
+        "text": "您喜欢哪些运动？（可多选）",
+        "required": false,
+        "questionNumber": 2,
+        "options": [
+          { "text": "跑步", "isDefault": false, "order": 1 },
+          { "text": "游泳", "isDefault": false, "order": 2 },
+          { "text": "篮球", "isDefault": false, "order": 3 },
+          { "text": "足球", "isDefault": false, "order": 4 },
+          { "text": "网球", "isDefault": false, "order": 5 }
+        ]
+      },
+      {
+        "type": "text",
+        "text": "请描述您最喜欢的运动：",
+        "required": false,
+        "questionNumber": 3,
+        "maxLength": 200,
+        "placeholder": "请输入您的回答..."
+      },
+      {
+        "type": "rating",
+        "text": "请评价我们的服务：",
+        "required": true,
+        "questionNumber": 4,
+        "ratingLabels": ["非常不满意", "不满意", "一般", "满意", "非常满意"]
+      },
+      {
+        "type": "matrix",
+        "text": "请评价以下各项：",
+        "required": true,
+        "questionNumber": 5,
+        "rows": [
+          { "text": "服务质量", "order": 1 },
+          { "text": "响应速度", "order": 2 },
+          { "text": "专业程度", "order": 3 }
+        ],
+        "columns": [
+          { "text": "非常差", "order": 1 },
+          { "text": "差", "order": 2 },
+          { "text": "一般", "order": 3 },
+          { "text": "好", "order": 4 },
+          { "text": "非常好", "order": 5 }
+        ]
+      }
+    ]
+  }
+}
+        </div>
+    </div>
+
+    <script>
+        // 测试数据
+        let testQuestionnaireData = null;
+
+        // 创建测试数据
+        function createTestData() {
+            const title = document.getElementById('testTitle').value.trim() || '测试问卷标题';
+            const description = document.getElementById('testDescription').value.trim() || '这是一个用于测试预览功能的示例问卷';
+            
+            testQuestionnaireData = {
+                questionnaire: {
+                    title: title,
+                    description: description,
+                    questions: [
+                        {
+                            type: 'single-choice',
+                            text: '您的性别是？',
+                            required: true,
+                            questionNumber: 1,
+                            options: [
+                                { text: '男', isDefault: false, order: 1 },
+                                { text: '女', isDefault: false, order: 2 },
+                                { text: '其他', isDefault: false, order: 3 }
+                            ]
+                        },
+                        {
+                            type: 'multiple-choice',
+                            text: '您喜欢哪些运动？（可多选）',
+                            required: false,
+                            questionNumber: 2,
+                            options: [
+                                { text: '跑步', isDefault: false, order: 1 },
+                                { text: '游泳', isDefault: false, order: 2 },
+                                { text: '篮球', isDefault: false, order: 3 },
+                                { text: '足球', isDefault: false, order: 4 },
+                                { text: '网球', isDefault: false, order: 5 }
+                            ]
+                        },
+                        {
+                            type: 'text',
+                            text: '请描述您最喜欢的运动：',
+                            required: false,
+                            questionNumber: 3,
+                            maxLength: 200,
+                            placeholder: '请输入您的回答...'
+                        },
+                        {
+                            type: 'rating',
+                            text: '请评价我们的服务：',
+                            required: true,
+                            questionNumber: 4,
+                            ratingLabels: ['非常不满意', '不满意', '一般', '满意', '非常满意']
+                        },
+                        {
+                            type: 'matrix',
+                            text: '请评价以下各项：',
+                            required: true,
+                            questionNumber: 5,
+                            rows: [
+                                { text: '服务质量', order: 1 },
+                                { text: '响应速度', order: 2 },
+                                { text: '专业程度', order: 3 }
+                            ],
+                            columns: [
+                                { text: '非常差', order: 1 },
+                                { text: '差', order: 2 },
+                                { text: '一般', order: 3 },
+                                { text: '好', order: 4 },
+                                { text: '非常好', order: 5 }
+                            ]
+                        }
+                    ]
+                }
+            };
+
+            console.log('测试数据已创建:', testQuestionnaireData);
+            alert('测试数据已创建！');
+        }
+
+        // 清除测试数据
+        function clearTestData() {
+            testQuestionnaireData = null;
+            localStorage.removeItem('questionnaire_preview_data');
+            console.log('测试数据已清除');
+            alert('测试数据已清除！');
+        }
+
+        // 测试预览功能
+        function testPreview() {
+            if (!testQuestionnaireData) {
+                alert('请先创建测试数据！');
+                return;
+            }
+
+            try {
+                // 将数据存储到localStorage
+                localStorage.setItem('questionnaire_preview_data', JSON.stringify(testQuestionnaireData));
+                console.log('数据已存储到localStorage');
+
+                // 在新窗口打开预览页面
+                const previewUrl = './questionnaire-preview.html';
+                const newWindow = window.open(previewUrl, '_blank', 'width=1200,height=800');
+                
+                if (newWindow) {
+                    console.log('预览窗口已打开');
+                } else {
+                    alert('无法打开预览窗口，请检查弹窗设置');
+                }
+            } catch (error) {
+                console.error('测试预览失败:', error);
+                alert('测试预览失败: ' + error.message);
+            }
+        }
+
+        // 在新标签页测试预览
+        function testPreviewTab() {
+            if (!testQuestionnaireData) {
+                alert('请先创建测试数据！');
+                return;
+            }
+
+            try {
+                // 将数据存储到localStorage
+                localStorage.setItem('questionnaire_preview_data', JSON.stringify(testQuestionnaireData));
+                console.log('数据已存储到localStorage');
+
+                // 在新标签页打开预览页面
+                const previewUrl = './questionnaire-preview.html';
+                window.open(previewUrl, '_blank');
+                
+                console.log('预览标签页已打开');
+            } catch (error) {
+                console.error('测试预览失败:', error);
+                alert('测试预览失败: ' + error.message);
+            }
+        }
+
+        // 检查localStorage中的数据
+        function checkPreviewData() {
+            const data = localStorage.getItem('questionnaire_preview_data');
+            const display = document.getElementById('dataDisplay');
+            
+            if (data) {
+                try {
+                    const parsedData = JSON.parse(data);
+                    display.textContent = 'localStorage中的数据:\n' + JSON.stringify(parsedData, null, 2);
+                    display.style.display = 'block';
+                } catch (error) {
+                    display.textContent = 'localStorage中的数据格式错误: ' + error.message;
+                    display.style.display = 'block';
+                }
+            } else {
+                display.textContent = 'localStorage中没有找到questionnaire_preview_data';
+                display.style.display = 'block';
+            }
+        }
+
+        // 检查当前测试数据
+        function checkCurrentData() {
+            const display = document.getElementById('dataDisplay');
+            
+            if (testQuestionnaireData) {
+                display.textContent = '当前测试数据:\n' + JSON.stringify(testQuestionnaireData, null, 2);
+                display.style.display = 'block';
+            } else {
+                display.textContent = '当前没有测试数据';
+                display.style.display = 'block';
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('测试页面已加载');
+            
+            // 检查是否已有预览数据
+            const existingData = localStorage.getItem('questionnaire_preview_data');
+            if (existingData) {
+                console.log('发现已存在的预览数据:', existingData);
+            }
+        });
+    </script>
+</body>
+</html>

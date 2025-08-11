@@ -2,6 +2,7 @@ package com.shz.quick_qa_system.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.shz.quick_qa_system.dto.QuestionDto;
+import com.shz.quick_qa_system.dto.QuestionnairePreviewDto;
 import com.shz.quick_qa_system.entity.Question;
 import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 
@@ -49,4 +50,19 @@ public interface QuestionService extends IService<Question> {
      * 批量更新题目排序
      */
     boolean updateQuestionOrder(QuestionOrderUpdateDto request);
+    
+    /**
+     * 根据问卷ID获取问卷预览数据
+     *
+     * @param questionnaireId 问卷ID
+     * @return 问卷预览数据
+     */
+    QuestionnairePreviewDto getQuestionnairePreview(Integer questionnaireId);
+    
+    /**
+     * 根据问题ID获取问题数据（包含选项）
+     * @param questionId 问题ID
+     * @return 问题数据
+     */
+    QuestionDto getQuestionById(Integer questionId);
 }

@@ -43,6 +43,10 @@
 
       <!-- 操作按钮 -->
       <div class="submit-section">
+        <button class="btn-submit" id="btnBackToEditor">
+          <i class="iconfont icon-edit"></i>
+          返回编辑器
+        </button>
         <button class="btn-submit" id="btnBackToManagement">
           <i class="iconfont icon-submit"></i>
           返回问卷管理
@@ -53,6 +57,12 @@
   </div>
 
       <script src="js/config.js"></script>
-    <script src="js/questionnaire-preview.js"></script>
+      <script src="js/questionnaire-preview.js"></script>
+      <script>
+        // 页面加载完成后初始化预览功能
+        document.addEventListener('DOMContentLoaded', function() {
+          initPreview();
+        });
+      </script>
 </body>
 </html> 

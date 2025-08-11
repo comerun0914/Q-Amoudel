@@ -320,6 +320,20 @@ body {
   gap: 0.5rem;
   transition: all 0.2s ease;
   margin-bottom: 1rem;
+  margin-right: 1rem;
+}
+
+.btn-submit:last-child {
+  margin-right: 0;
+}
+
+/* 返回编辑器按钮样式 */
+#btnBackToEditor {
+  background: var(--secondary-color);
+}
+
+#btnBackToEditor:hover:not(:disabled) {
+  background: #5a6268;
 }
 
 .btn-submit:hover:not(:disabled) {

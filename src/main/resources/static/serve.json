@@ -1,5 +1,7 @@
 {
   "public": ".",
+  "cleanUrls": false,
+  "trailingSlash": false,
   "headers": [
     {
       "source": "**/*.@(js|css)",
@@ -9,6 +11,12 @@
           "value": "no-cache"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/questionnaire-preview",
+      "destination": "/questionnaire-preview.html"
     }
   ]
 } 

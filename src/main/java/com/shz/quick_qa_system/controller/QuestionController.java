@@ -3,6 +3,7 @@ package com.shz.quick_qa_system.controller;
 import com.shz.quick_qa_system.Costant.ApiResult;
 import com.shz.quick_qa_system.Costant.QuestionConstant;
 import com.shz.quick_qa_system.dto.QuestionDto;
+import com.shz.quick_qa_system.dto.QuestionnairePreviewDto;
 import com.shz.quick_qa_system.entity.SingleChoiceOption;
 import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 import com.shz.quick_qa_system.service.QuestionService;
@@ -165,6 +166,65 @@ public class QuestionController {
         } catch (Exception e) {
             logger.error("获取题目类型列表时发生异常", e);
             return ApiResult.error("获取题目类型列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据问题id返回所有问题以及选项
+     * @param id 问题ID
+     * @return 问题数据
+     */
+    @GetMapping("/question")
+    public ApiResult previewQuestion(@RequestParam(value="id") Integer id) {
+        try {
+            logger.info("收到问题预览请求，问题ID: {}", id);
+            
+            if (id == null) {
+                return ApiResult.error("问题ID不能为空");
+            }
+            
+            // 获取问题数据
+            QuestionDto questionData = questionServiceImpl.getQuestionById(id);
+            if (questionData == null) {
+                logger.warn("未找到问题数据，ID: {}", id);
+                return ApiResult.error("未找到问题数据");
+            }
+            
+            logger.info("问题数据获取成功，问题ID: {}", id);
+            return ApiResult.success(questionData);
+            
+        } catch (Exception e) {
+            logger.error("获取问题数据时发生异常", e);
+            return ApiResult.error("获取问题数据失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据问卷ID获取问卷预览数据
+     * @param questionnaireId 问卷ID
+     * @return 问卷预览数据
+     */
+    @GetMapping("/preview")
+    public ApiResult previewQuestionnaire(@RequestParam(value = "questionnaireId") Integer questionnaireId) {
+        try {
+            logger.info("收到问卷预览请求，问卷ID: {}", questionnaireId);
+            
+            if (questionnaireId == null) {
+                return ApiResult.error("问卷ID不能为空");
+            }
+            
+            QuestionnairePreviewDto previewData = questionServiceImpl.getQuestionnairePreview(questionnaireId);
+            if (previewData == null) {
+                logger.warn("未找到问卷数据，ID: {}", questionnaireId);
+                return ApiResult.error("未找到问卷数据");
+            }
+            
+            logger.info("问卷预览数据获取成功，问卷ID: {}", questionnaireId);
+            return ApiResult.success(previewData);
+            
+        } catch (Exception e) {
+            logger.error("获取问卷预览数据时发生异常", e);
+            return ApiResult.error("获取预览数据失败: " + e.getMessage());
         }
     }
 }

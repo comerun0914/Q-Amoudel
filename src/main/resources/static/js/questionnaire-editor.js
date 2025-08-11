@@ -1786,13 +1786,84 @@ async function deleteQuestionFromBackend(questionId) {
     
     // 打开预览函数
     function openPreview() {
+        console.log('=== 开始预览功能 ===');
+        console.log('当前问题数量:', questionCount);
+        console.log('当前问卷ID:', questionnaireId);
+        console.log('本地存储中的问卷ID:', localStorage.getItem('current_questionnaire_id'));
+        
         if (questionCount === 0) {
             alert('请至少添加一个问题！');
             return;
         }
-        // 预览问卷时清除本地存储的问卷ID
-        clearLocalQuestionnaireId();
-        alert('预览功能开发中...');
+        
+        try {
+            // 检查是否有问卷ID
+            const currentQuestionnaireId = localStorage.getItem('current_questionnaire_id');
+            
+            if (currentQuestionnaireId) {
+                // 如果有问卷ID，通过URL参数打开预览页面
+                // 使用完整的URL，确保serve服务器正确处理参数
+                const baseUrl = window.location.origin;
+                const previewUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?questionnaireId=${currentQuestionnaireId}`;
+                
+                console.log('=== 构建预览URL ===');
+                console.log('CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW:', CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW);
+                console.log('currentQuestionnaireId:', currentQuestionnaireId);
+                console.log('baseUrl:', baseUrl);
+                console.log('预览页面完整URL:', previewUrl);
+                console.log('URL长度:', previewUrl.length);
+                
+                // 验证URL格式
+                try {
+                    const testUrl = new URL(previewUrl);
+                    console.log('URL验证成功:', testUrl.href);
+                    console.log('URL参数:', testUrl.searchParams.get('questionnaireId'));
+                } catch (error) {
+                    console.error('URL验证失败:', error);
+                }
+                
+                // 使用页面跳转而不是弹窗，避免被浏览器阻止
+                console.log('正在跳转到预览页面...');
+                console.log('跳转前的当前URL:', window.location.href);
+                console.log('即将跳转到的URL:', previewUrl);
+                
+                // 验证跳转URL是否包含参数
+                if (previewUrl.includes('questionnaireId=')) {
+                    console.log('✅ URL包含questionnaireId参数，准备跳转');
+                    
+                    // 尝试多种跳转方式，确保兼容性
+                    try {
+                        // 方式1: 使用完整的URL进行跳转
+                        console.log('使用方式1: window.location.href');
+                        window.location.href = previewUrl;
+                    } catch (error) {
+                        console.error('方式1失败，尝试方式2:', error);
+                        try {
+                            // 方式2: 使用location.replace
+                            console.log('使用方式2: location.replace');
+                            location.replace(previewUrl);
+                        } catch (error2) {
+                            console.error('方式2也失败，尝试方式3:', error2);
+                            // 方式3: 使用assign
+                            console.log('使用方式3: location.assign');
+                            location.assign(previewUrl);
+                        }
+                    }
+                } else {
+                    console.error('❌ URL不包含questionnaireId参数，跳转失败');
+                    console.error('previewUrl:', previewUrl);
+                    alert('跳转URL构建失败，请检查配置');
+                }
+            } else {
+                // 如果没有问卷ID，显示错误提示
+                console.error('预览失败：没有找到问卷ID');
+                alert('无法预览：缺少问卷ID，请先保存问卷');
+            }
+            
+        } catch (error) {
+            console.error('准备预览功能出现错误:', error);
+            alert('预览功能出现错误，请重试');
+        }
     }
     
     // 初始化计数
@@ -1817,6 +1888,227 @@ async function deleteQuestionFromBackend(questionId) {
     // 监听输入变化，触发自动保存检查
     setupInputChangeListeners();
 });
+
+/**
+ * 收集预览数据
+ * @returns {Object} 预览数据对象
+ */
+function collectPreviewData() {
+    const questionnaireInfo = {
+        title: document.getElementById('questionnaire-title')?.value || '问卷标题',
+        description: document.getElementById('questionnaire-description')?.value || '问卷描述'
+    };
+    
+    const questions = [];
+    const questionElements = document.querySelectorAll('.question-item');
+    
+    questionElements.forEach((questionElement, index) => {
+        const questionData = collectQuestionData(questionElement, index + 1);
+        if (questionData) {
+            questions.push(questionData);
+        }
+    });
+    
+    return {
+        questionnaire: {
+            title: questionnaireInfo.title,
+            description: questionnaireInfo.description,
+            questions: questions
+        }
+    };
+}
+
+/**
+ * 收集单个问题的数据
+ * @param {HTMLElement} questionElement 问题元素
+ * @param {number} questionNumber 问题编号
+ * @returns {Object|null} 问题数据对象
+ */
+function collectQuestionData(questionElement, questionNumber) {
+    const questionType = questionElement.getAttribute('data-type');
+    const questionText = questionElement.querySelector('.question-text')?.value || `问题${questionNumber}`;
+    const isRequired = questionElement.querySelector('.required-checkbox')?.checked || false;
+    
+    let questionData = {
+        type: questionType,
+        text: questionText,
+        required: isRequired,
+        questionNumber: questionNumber
+    };
+    
+    // 根据问题类型收集特定数据
+    switch (questionType) {
+        case 'single-choice':
+            questionData.options = collectSingleChoiceOptions(questionElement);
+            break;
+        case 'multiple-choice':
+            questionData.options = collectMultipleChoiceOptions(questionElement);
+            break;
+        case 'text':
+            questionData.placeholder = questionElement.querySelector('.placeholder-input')?.value || '';
+            questionData.maxLength = questionElement.querySelector('.max-length-input')?.value || '';
+            break;
+        case 'rating':
+            questionData.maxRating = questionElement.querySelector('.max-rating-input')?.value || 5;
+            questionData.ratingLabels = collectRatingLabels(questionElement);
+            break;
+        case 'matrix':
+            questionData.rows = collectMatrixRows(questionElement);
+            questionData.columns = collectMatrixColumns(questionElement);
+            break;
+        case 'date':
+            questionData.dateFormat = questionElement.querySelector('.date-format-select')?.value || 'YYYY-MM-DD';
+            break;
+        case 'time':
+            questionData.timeFormat = questionElement.querySelector('.time-format-select')?.value || 'HH:mm';
+            break;
+        case 'file-upload':
+            questionData.maxFileSize = questionElement.querySelector('.max-file-size-input')?.value || 5;
+            questionData.allowedTypes = questionElement.querySelector('.allowed-types-input')?.value || '';
+            break;
+        case 'location':
+            questionData.locationType = questionElement.querySelector('.location-type-select')?.value || 'address';
+            break;
+        case 'signature':
+            questionData.signatureWidth = questionElement.querySelector('.signature-width-input')?.value || 400;
+            questionData.signatureHeight = questionElement.querySelector('.signature-height-input')?.value || 200;
+            break;
+        case 'user-info':
+            questionData.fields = collectUserInfoFields(questionElement);
+            break;
+    }
+    
+    return questionData;
+}
+
+/**
+ * 收集单选题选项
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Array} 选项数组
+ */
+function collectSingleChoiceOptions(questionElement) {
+    const options = [];
+    const optionElements = questionElement.querySelectorAll('.option-item');
+    
+    optionElements.forEach((optionElement, index) => {
+        const optionText = optionElement.querySelector('.option-text')?.value || `选项${index + 1}`;
+        const isDefault = optionElement.querySelector('.default-radio')?.checked || false;
+        
+        options.push({
+            text: optionText,
+            isDefault: isDefault,
+            order: index + 1
+        });
+    });
+    
+    return options;
+}
+
+/**
+ * 收集多选题选项
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Array} 选项数组
+ */
+function collectMultipleChoiceOptions(questionElement) {
+    const options = [];
+    const optionElements = questionElement.querySelectorAll('.option-item');
+    
+    optionElements.forEach((optionElement, index) => {
+        const optionText = optionElement.querySelector('.option-text')?.value || `选项${index + 1}`;
+        const isDefault = optionElement.querySelector('.default-checkbox')?.checked || false;
+        
+        options.push({
+            text: optionText,
+            isDefault: isDefault,
+            order: index + 1
+        });
+    });
+    
+    return options;
+}
+
+/**
+ * 收集评分标签
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Object} 评分标签对象
+ */
+function collectRatingLabels(questionElement) {
+    const labels = {};
+    const labelInputs = questionElement.querySelectorAll('.rating-label-input');
+    
+    labelInputs.forEach((input, index) => {
+        if (input.value.trim()) {
+            labels[index + 1] = input.value.trim();
+        }
+    });
+    
+    return labels;
+}
+
+/**
+ * 收集矩阵行
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Array} 行数组
+ */
+function collectMatrixRows(questionElement) {
+    const rows = [];
+    const rowElements = questionElement.querySelectorAll('.matrix-row-item');
+    
+    rowElements.forEach((rowElement, index) => {
+        const rowText = rowElement.querySelector('.row-text')?.value || `行${index + 1}`;
+        rows.push({
+            text: rowText,
+            order: index + 1
+        });
+    });
+    
+    return rows;
+}
+
+/**
+ * 收集矩阵列
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Array} 列数组
+ */
+function collectMatrixColumns(questionElement) {
+    const columns = [];
+    const columnElements = questionElement.querySelectorAll('.matrix-column-item');
+    
+    columnElements.forEach((columnElement, index) => {
+        const columnText = columnElement.querySelector('.column-text')?.value || `列${index + 1}`;
+        columns.push({
+            text: columnText,
+            order: index + 1
+        });
+    });
+    
+    return columns;
+}
+
+/**
+ * 收集用户信息字段
+ * @param {HTMLElement} questionElement 问题元素
+ * @returns {Array} 字段数组
+ */
+function collectUserInfoFields(questionElement) {
+    const fields = [];
+    const fieldElements = questionElement.querySelectorAll('.user-info-field');
+    
+    fieldElements.forEach((fieldElement, index) => {
+        const fieldType = fieldElement.querySelector('.field-type-select')?.value || 'text';
+        const fieldLabel = fieldElement.querySelector('.field-label-input')?.value || `字段${index + 1}`;
+        const isRequired = fieldElement.querySelector('.field-required-checkbox')?.checked || false;
+        
+        fields.push({
+            type: fieldType,
+            label: fieldLabel,
+            required: isRequired,
+            order: index + 1
+        });
+    });
+    
+    return fields;
+}
 
 /**
  * 设置输入变化监听器

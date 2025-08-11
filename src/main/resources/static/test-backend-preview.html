@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试后端预览功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试后端预览功能</h1>
+    
+    <div class="section">
+        <h3>测试后端预览API</h3>
+        <p>输入问卷ID来测试后端预览功能：</p>
+        <input type="number" id="questionnaireId" placeholder="请输入问卷ID" value="1">
+        <br>
+        <button onclick="testBackendPreview()">测试后端预览</button>
+        <button onclick="openPreviewPage()">打开预览页面</button>
+        <button onclick="clearResult()">清除结果</button>
+    </div>
+    
+    <div class="section">
+        <h3>测试结果</h3>
+        <div id="result" class="result info">等待测试...</div>
+    </div>
+    
+    <div class="section">
+        <h3>使用说明</h3>
+        <ol>
+            <li>在输入框中输入一个有效的问卷ID</li>
+            <li>点击"测试后端预览"按钮来测试API是否正常工作</li>
+            <li>如果API正常，点击"打开预览页面"按钮来查看问卷预览</li>
+            <li>预览页面会从后端获取数据，而不是从localStorage</li>
+        </ol>
+        <p><strong>注意：</strong>确保后端服务正在运行，并且数据库中有对应的问卷数据。</p>
+    </div>
+
+    <script>
+        /**
+         * 测试后端预览API
+         */
+        async function testBackendPreview() {
+            const questionnaireId = document.getElementById('questionnaireId').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!questionnaireId) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '请输入问卷ID';
+                return;
+            }
+            
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '正在测试后端预览API...';
+            
+            try {
+                const response = await fetch(`/question/preview?questionnaireId=${questionnaireId}`);
+                const data = await response.json();
+                
+                if (response.ok && data.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `API测试成功！\n\n返回数据：\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `API返回错误：\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `请求失败：${error.message}`;
+            }
+        }
+        
+        /**
+         * 打开预览页面
+         */
+        function openPreviewPage() {
+            const questionnaireId = document.getElementById('questionnaireId').value;
+            
+            if (!questionnaireId) {
+                alert('请输入问卷ID');
+                return;
+            }
+            
+            const previewUrl = `questionnaire-preview.html?questionnaireId=${questionnaireId}`;
+            window.open(previewUrl, '_blank');
+        }
+        
+        /**
+         * 清除测试结果
+         */
+        function clearResult() {
+            document.getElementById('result').className = 'result info';
+            document.getElementById('result').textContent = '等待测试...';
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('后端预览功能测试页面已加载');
+        });
+    </script>
+</body>
+</html>

@@ -1,5 +1,14 @@
 /**
  * 问卷预览页面功能
+ * 
+ * 使用说明：
+ * 1. 必须通过URL参数传入questionnaireId
+ * 2. 正确的URL格式：questionnaire-preview.html?questionnaireId=123
+ * 3. 页面会自动调用后端API获取问卷数据
+ * 4. 不再支持本地数据加载功能
+ * 
+ * 示例：
+ * http://localhost:7070/questionnaire-preview.html?questionnaireId=98284723
  */
 
 // 问卷数据结构
@@ -22,30 +31,134 @@ let duration = 0;
  * 初始化预览页面
  */
 function initPreview() {
-  // 从URL参数或localStorage获取问卷数据
-  loadQuestionnaireData();
+  console.log('=== 开始初始化预览页面 ===');
+  console.log('当前页面URL:', window.location.href);
+  console.log('当前页面search:', window.location.search);
   
-  // 渲染问卷内容
-  renderQuestionnaire();
+  // 显示调试信息
+  displayDebugInfo();
+  
+  // 使用你的样例代码方式获取参数
+  var receiveData = decodeURI(window.location.search);
+  console.log('解码后的search:', receiveData);
+  
+  var questionnaireId = null;
+  
+  if (receiveData && receiveData.includes("?")) {
+    // 去掉开头的?号
+    receiveData = receiveData.substr(receiveData.indexOf("?") + 1);
+    console.log('去掉?后的数据:', receiveData);
+    
+    // 查找questionnaireId参数
+    if (receiveData.includes("questionnaireId=")) {
+      let keyStart = receiveData.indexOf("questionnaireId=");
+      let valueStart = keyStart + "questionnaireId=".length;
+      let valueEnd = receiveData.indexOf("&", valueStart);
+      
+      if (valueEnd === -1) {
+        // 如果没有&号，说明是最后一个参数
+        valueEnd = receiveData.length;
+      }
+      
+      questionnaireId = receiveData.substring(valueStart, valueEnd);
+      console.log('提取到的questionnaireId:', questionnaireId);
+    }
+  }
+  
+  if (questionnaireId) {
+    // 如果有问卷ID，从后端API加载数据
+    console.log('检测到问卷ID，从后端API加载数据:', questionnaireId);
+    loadQuestionnaireFromAPI(questionnaireId);
+  } else {
+    // 如果没有问卷ID，显示错误信息
+    console.error('未检测到问卷ID，无法加载问卷数据');
+    console.log('完整URL:', window.location.href);
+    console.log('Search部分:', window.location.search);
+    showErrorMessage('缺少问卷ID参数，请检查URL');
+  }
   
   // 绑定事件
   bindEvents();
 }
 
 /**
- * 加载问卷数据
+ * 显示调试信息
+ */
+function displayDebugInfo() {
+  const pageUrlElement = document.getElementById('pageUrl');
+  const searchParamsElement = document.getElementById('searchParams');
+  const debugQuestionnaireIdElement = document.getElementById('debugQuestionnaireId');
+  
+  if (pageUrlElement) {
+    pageUrlElement.textContent = window.location.href;
+  }
+  
+  if (searchParamsElement) {
+    searchParamsElement.textContent = window.location.search;
+  }
+  
+  if (debugQuestionnaireIdElement) {
+    // 尝试多种方式获取问卷ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlParamId = urlParams.get('questionnaireId');
+    
+    // 使用你的样例代码方式
+    var receiveData = decodeURI(window.location.search);
+    var manualId = null;
+    
+    if (receiveData && receiveData.includes("?")) {
+      receiveData = receiveData.substr(receiveData.indexOf("?") + 1);
+      if (receiveData.includes("questionnaireId=")) {
+        let keyStart = receiveData.indexOf("questionnaireId=");
+        let valueStart = keyStart + "questionnaireId=".length;
+        let valueEnd = receiveData.indexOf("&", valueStart);
+        if (valueEnd === -1) {
+          valueEnd = receiveData.length;
+        }
+        manualId = receiveData.substring(valueStart, valueEnd);
+      }
+    }
+    
+    debugQuestionnaireIdElement.textContent = `URLSearchParams: ${urlParamId || 'null'}, 手动解析: ${manualId || 'null'}`;
+  }
+}
+
+/**
+ * 显示错误信息
+ */
+function showErrorMessage(message) {
+  const container = document.getElementById('questionnaireContainer') || document.getElementById('questionsContainer');
+  if (container) {
+    container.innerHTML = `
+      <div class="error-message">
+        <h3>参数错误</h3>
+        <p>${message}</p>
+        <p>正确的URL格式应该是：questionnaire-preview.html?questionnaireId=123</p>
+        <button onclick="location.reload()">重试</button>
+      </div>
+    `;
+  }
+}
+
+/**
+ * 加载问卷数据（已废弃，仅保留用于兼容）
+ * 注意：此函数已被废弃，现在只从后端API获取数据
  */
 function loadQuestionnaireData() {
-  // 首先尝试从localStorage获取预览数据（填写完问卷后的数据）
+  console.warn('loadQuestionnaireData 函数已被废弃，请使用 loadQuestionnaireFromAPI 函数');
+  
+  // 显示提示信息
+  showErrorMessage('本地数据加载功能已被废弃，请使用正确的URL参数从后端获取数据');
+  
+  // 以下代码已被注释，不再使用
+  /*
+  // 首先尝试从localStorage获取预览数据（从编辑器传递的数据）
   const previewData = localStorage.getItem('questionnaire_preview_data');
   if (previewData) {
     try {
       const data = JSON.parse(previewData);
       questionnaireData = data.questionnaire;
-      userAnswers = data.answers;
-      submitTime = data.submitTime;
-      duration = data.duration;
-      console.log('加载预览数据:', data);
+      console.log('加载编辑器预览数据:', data);
       return;
     } catch (error) {
       console.error('解析预览数据失败:', error);
@@ -83,15 +196,25 @@ function loadQuestionnaireData() {
       description: '这是一个示例问卷，用于演示预览功能',
       questions: [
         {
-          type: 'single',
+          type: 'single-choice',
           text: '您的性别是？',
-          options: ['男', '女', '其他'],
+          options: [
+            { text: '男', isDefault: false, order: 1 },
+            { text: '女', isDefault: false, order: 2 },
+            { text: '其他', isDefault: false, order: 3 }
+          ],
           required: true
         },
         {
-          type: 'multiple',
+          type: 'multiple-choice',
           text: '您喜欢哪些运动？（可多选）',
-          options: ['跑步', '游泳', '篮球', '足球', '网球'],
+          options: [
+            { text: '跑步', isDefault: false, order: 1 },
+            { text: '游泳', isDefault: false, order: 2 },
+            { text: '篮球', isDefault: false, order: 3 },
+            { text: '足球', isDefault: false, order: 4 },
+            { text: '网球', isDefault: false, order: 5 }
+        ],
           required: false
         },
         {
@@ -102,6 +225,231 @@ function loadQuestionnaireData() {
       ]
     };
   }
+  */
+}
+
+/**
+ * 从后端API加载问卷数据
+ */
+function loadQuestionnaireFromAPI(questionnaireId) {
+  console.log('=== 开始从后端API加载问卷数据 ===');
+  console.log('传入的问卷ID:', questionnaireId);
+  console.log('问卷ID类型:', typeof questionnaireId);
+  console.log('CONFIG.BACKEND_BASE_URL:', CONFIG.BACKEND_BASE_URL);
+  console.log('CONFIG.API_ENDPOINTS.QUESTION_PREVIEW:', CONFIG.API_ENDPOINTS.QUESTION_PREVIEW);
+  
+  const apiUrl = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_PREVIEW}?questionnaireId=${questionnaireId}`;
+  console.log('完整API地址:', apiUrl);
+  
+  // 显示加载状态
+  const container = document.getElementById('questionnaireContainer') || document.getElementById('questionsContainer');
+  if (container) {
+    container.innerHTML = `
+      <div class="loading">
+        <h3>正在加载问卷数据...</h3>
+        <p>问卷ID: ${questionnaireId}</p>
+        <p>数据来源: 后端API</p>
+        <p>API地址: ${apiUrl}</p>
+        <div class="loading-spinner"></div>
+      </div>
+    `;
+  }
+  
+  // 调用后端API
+  fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_PREVIEW}?questionnaireId=${questionnaireId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('API返回数据:', data);
+      
+      if (data.code === 200 && data.data) {
+        // 转换后端数据格式为前端格式
+        const apiData = data.data;
+        questionnaireData = {
+          title: apiData.questionnaireInfo?.title || '问卷预览',
+          description: apiData.questionnaireInfo?.description || '问卷描述',
+          questions: convertApiQuestionsToFrontend(apiData.questions || [])
+        };
+        
+        // 渲染问卷
+        renderQuestionnaire();
+      } else {
+        throw new Error(data.message || '获取数据失败');
+      }
+    })
+    .catch(error => {
+      console.error('加载问卷数据失败:', error);
+      const container = document.getElementById('questionnaireContainer') || document.getElementById('questionsContainer');
+      if (container) {
+        container.innerHTML = `
+          <div class="error-message">
+            <h3>加载失败</h3>
+            <p>无法从后端API加载问卷数据：${error.message}</p>
+            <p>问卷ID: ${questionnaireId}</p>
+            <p>API地址: ${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_PREVIEW}</p>
+            <button onclick="location.reload()">重试</button>
+            <button onclick="window.history.back()">返回上一页</button>
+          </div>
+        `;
+      }
+    });
+}
+
+/**
+ * 将后端API的问题数据转换为前端格式
+ */
+function convertApiQuestionsToFrontend(apiQuestions) {
+  console.log('开始转换API问题数据:', apiQuestions);
+  
+  return apiQuestions.map(question => {
+    const frontendQuestion = {
+      id: question.id,
+      type: getQuestionTypeFromId(question.questionType),
+      text: question.content,
+      required: question.isRequired === 1,
+      sortNum: question.sortNum
+    };
+    
+    console.log(`转换问题 ${question.id} (类型: ${question.questionType}):`, question);
+    
+            // 根据问题类型转换数据
+        switch (question.questionType) {
+          case 1: // 单选题
+            if (question.singleChoiceOptions && Array.isArray(question.singleChoiceOptions)) {
+              frontendQuestion.options = question.singleChoiceOptions.map(option => ({
+                text: option.optionContent,
+                isDefault: option.isDefault === 1,
+                order: option.sortNum
+              }));
+            } else {
+              frontendQuestion.options = [];
+            }
+            break;
+            
+          case 2: // 多选题
+            if (question.multipleChoiceOptions && Array.isArray(question.multipleChoiceOptions)) {
+              frontendQuestion.options = question.multipleChoiceOptions.map(option => ({
+                text: option.optionContent,
+                isDefault: option.isDefault === 1,
+                order: option.sortNum
+              }));
+            } else {
+              frontendQuestion.options = [];
+            }
+            break;
+            
+          case 3: // 文本题
+            if (question.textQuestion) {
+              frontendQuestion.maxLength = question.textQuestion.maxLength;
+              frontendQuestion.placeholder = question.textQuestion.hintText;
+            } else {
+              frontendQuestion.maxLength = 500;
+              frontendQuestion.placeholder = '';
+            }
+            break;
+            
+          case 4: // 评分题
+            if (question.ratingQuestion) {
+              frontendQuestion.minScore = question.ratingQuestion.minScore;
+              frontendQuestion.maxScore = question.ratingQuestion.maxScore;
+              frontendQuestion.minLabel = question.ratingQuestion.minLabel;
+              frontendQuestion.maxLabel = question.ratingQuestion.maxLabel;
+              frontendQuestion.ratingLabels = question.ratingQuestion.ratingLabels;
+            } else {
+              frontendQuestion.minScore = 1;
+              frontendQuestion.maxScore = 5;
+              frontendQuestion.minLabel = '';
+              frontendQuestion.maxLabel = '';
+              frontendQuestion.ratingLabels = [];
+            }
+            break;
+            
+          case 5: // 矩阵题
+            if (question.matrixQuestion) {
+              frontendQuestion.rows = question.matrixQuestion.rows?.map(row => ({
+                text: row.rowContent,
+                order: row.sortNum
+              })) || [];
+              frontendQuestion.columns = question.matrixQuestion.columns?.map(column => ({
+                text: column.columnContent,
+                order: column.sortNum
+              })) || [];
+            } else {
+              frontendQuestion.rows = [];
+              frontendQuestion.columns = [];
+            }
+            break;
+        
+      case 6: // 日期题
+        if (question.dateQuestion) {
+          frontendQuestion.dateFormat = question.dateQuestion.dateFormat;
+        }
+        break;
+        
+      case 7: // 时间题
+        if (question.timeQuestion) {
+          frontendQuestion.timeFormat = question.timeQuestion.timeFormat;
+        }
+        break;
+        
+      case 8: // 文件上传题
+        if (question.fileUploadQuestion) {
+          frontendQuestion.maxFileSize = question.fileUploadQuestion.maxFileSize;
+          frontendQuestion.allowedTypes = question.fileUploadQuestion.allowedTypes;
+        }
+        break;
+        
+      case 9: // 位置题
+        if (question.locationQuestion) {
+          frontendQuestion.locationType = question.locationQuestion.locationType;
+        }
+        break;
+        
+      case 10: // 签名题
+        if (question.signatureQuestion) {
+          frontendQuestion.width = question.signatureQuestion.width;
+          frontendQuestion.height = question.signatureQuestion.height;
+        }
+        break;
+        
+      case 11: // 用户信息题
+        if (question.userInfoQuestion) {
+          frontendQuestion.userInfoFields = question.userInfoQuestion.fields?.map(field => ({
+            type: field.fieldType,
+            label: field.label,
+            required: field.isRequired === 1
+          })) || [];
+        }
+        break;
+            }
+        
+        console.log(`问题 ${question.id} 转换完成:`, frontendQuestion);
+        return frontendQuestion;
+      });
+}
+
+/**
+ * 根据问题类型ID获取前端类型字符串
+ */
+function getQuestionTypeFromId(typeId) {
+  const typeMap = {
+    1: 'single-choice',
+    2: 'multiple-choice',
+    3: 'text',
+    4: 'rating',
+    5: 'matrix',
+    6: 'date',
+    7: 'time',
+    8: 'file-upload',
+    9: 'location',
+    10: 'signature',
+    11: 'user-info'
+  };
+  return typeMap[typeId] || 'text';
 }
 
 /**
@@ -182,13 +530,16 @@ function createQuestionElement(question, questionNumber) {
 function getQuestionTypeText(type) {
   const typeMap = {
     'single': '单选题',
+    'single-choice': '单选题',
     'multiple': '多选题',
+    'multiple-choice': '多选题',
     'text': '文本题',
     'rating': '评分题',
     'matrix': '矩阵题',
     'date': '日期题',
     'time': '时间题',
     'file': '文件上传',
+    'file-upload': '文件上传',
     'location': '位置选择',
     'signature': '签名',
     'user-info': '填写人信息'
@@ -203,8 +554,10 @@ function getQuestionTypeText(type) {
 function createInputElement(question) {
   switch (question.type) {
     case 'single':
+    case 'single-choice':
       return createRadioOptions(question);
     case 'multiple':
+    case 'multiple-choice':
       return createCheckboxOptions(question);
     case 'text':
       return createTextInput(question);
@@ -217,6 +570,7 @@ function createInputElement(question) {
     case 'time':
       return createTimeInput(question);
     case 'file':
+    case 'file-upload':
     case 'location':
     case 'signature':
     case 'user-info':
@@ -233,6 +587,12 @@ function createRadioOptions(question) {
   const container = document.createElement('div');
   container.className = 'options-container';
   
+  // 安全检查：确保options存在且是数组
+  if (!question.options || !Array.isArray(question.options)) {
+    console.warn('单选题缺少选项数据:', question);
+    return container;
+  }
+  
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
   
@@ -243,21 +603,43 @@ function createRadioOptions(question) {
     const radio = document.createElement('input');
     radio.type = 'radio';
     radio.name = `question_${question.id || Math.random()}`;
-    radio.value = option;
-    radio.disabled = true;
     
-    // 如果这是用户选择的答案，则选中
-    if (userAnswer === option) {
-      radio.checked = true;
-      optionDiv.classList.add('selected-answer');
+    // 处理新的选项数据结构
+    if (typeof option === 'object' && option.text) {
+      radio.value = option.text;
+      radio.disabled = true;
+      
+      // 如果这是用户选择的答案，则选中
+      if (userAnswer === option.text) {
+        radio.checked = true;
+        optionDiv.classList.add('selected-answer');
+      }
+      
+      const label = document.createElement('span');
+      label.className = 'option-text';
+      label.textContent = option.text;
+      
+      optionDiv.appendChild(radio);
+      optionDiv.appendChild(label);
+    } else {
+      // 兼容旧的选项数据结构
+      radio.value = option;
+      radio.disabled = true;
+      
+      // 如果这是用户选择的答案，则选中
+      if (userAnswer === option) {
+        radio.checked = true;
+        optionDiv.classList.add('selected-answer');
+      }
+      
+      const label = document.createElement('span');
+      label.className = 'option-text';
+      label.textContent = option;
+      
+      optionDiv.appendChild(radio);
+      optionDiv.appendChild(label);
     }
     
-    const label = document.createElement('span');
-    label.className = 'option-text';
-    label.textContent = option;
-    
-    optionDiv.appendChild(radio);
-    optionDiv.appendChild(label);
     container.appendChild(optionDiv);
   });
   
@@ -271,6 +653,12 @@ function createCheckboxOptions(question) {
   const container = document.createElement('div');
   container.className = 'options-container';
   
+  // 安全检查：确保options存在且是数组
+  if (!question.options || !Array.isArray(question.options)) {
+    console.warn('多选题缺少选项数据:', question);
+    return container;
+  }
+  
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
   const selectedOptions = Array.isArray(userAnswer) ? userAnswer : [];
@@ -281,21 +669,43 @@ function createCheckboxOptions(question) {
     
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.value = option;
-    checkbox.disabled = true;
     
-    // 如果这是用户选择的答案，则选中
-    if (selectedOptions.includes(option)) {
-      checkbox.checked = true;
-      optionDiv.classList.add('selected-answer');
+    // 处理新的选项数据结构
+    if (typeof option === 'object' && option.text) {
+      checkbox.value = option.text;
+      checkbox.disabled = true;
+      
+      // 如果这是用户选择的答案，则选中
+      if (selectedOptions.includes(option.text)) {
+        checkbox.checked = true;
+        optionDiv.classList.add('selected-answer');
+      }
+      
+      const label = document.createElement('span');
+      label.className = 'option-text';
+      label.textContent = option.text;
+      
+      optionDiv.appendChild(checkbox);
+      optionDiv.appendChild(label);
+    } else {
+      // 兼容旧的选项数据结构
+      checkbox.value = option;
+      checkbox.disabled = true;
+      
+      // 如果这是用户选择的答案，则选中
+      if (selectedOptions.includes(option)) {
+        checkbox.checked = true;
+        optionDiv.classList.add('selected-answer');
+      }
+      
+      const label = document.createElement('span');
+      label.className = 'option-text';
+      label.textContent = option;
+      
+      optionDiv.appendChild(checkbox);
+      optionDiv.appendChild(label);
     }
     
-    const label = document.createElement('span');
-    label.className = 'option-text';
-    label.textContent = option;
-    
-    optionDiv.appendChild(checkbox);
-    optionDiv.appendChild(label);
     container.appendChild(optionDiv);
   });
   
@@ -312,8 +722,15 @@ function createTextInput(question) {
   const textarea = document.createElement('textarea');
   textarea.className = 'text-input';
   textarea.rows = 4;
-  textarea.placeholder = '请输入您的答案...';
+  
+  // 使用问题中定义的占位符，如果没有则使用默认值
+  textarea.placeholder = question.placeholder || '请输入您的答案...';
   textarea.disabled = true;
+  
+  // 设置最大长度（如果有的话）
+  if (question.maxLength) {
+    textarea.maxLength = question.maxLength;
+  }
   
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
@@ -333,13 +750,14 @@ function createRatingInput(question) {
   const container = document.createElement('div');
   container.className = 'rating-container';
   
-  const maxRating = question.maxRating || 5;
+  const maxRating = question.maxScore || 5;
+  const minRating = question.minScore || 1;
   
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
   const rating = userAnswer ? parseInt(userAnswer) : 0;
   
-  for (let i = 1; i <= maxRating; i++) {
+  for (let i = minRating; i <= maxRating; i++) {
     const star = document.createElement('span');
     star.className = 'rating-star';
     star.textContent = '★';
@@ -352,6 +770,26 @@ function createRatingInput(question) {
     }
     
     container.appendChild(star);
+  }
+  
+  // 添加评分标签（如果有的话）
+  if (question.minLabel && question.maxLabel) {
+    const labelsContainer = document.createElement('div');
+    labelsContainer.style.marginTop = '0.5rem';
+    labelsContainer.style.fontSize = '0.875rem';
+    labelsContainer.style.color = 'var(--text-secondary)';
+    
+    const minLabelSpan = document.createElement('span');
+    minLabelSpan.textContent = `${question.minScore || 1}: ${question.minLabel}`;
+    minLabelSpan.style.marginRight = '1rem';
+    labelsContainer.appendChild(minLabelSpan);
+    
+    const maxLabelSpan = document.createElement('span');
+    maxLabelSpan.textContent = `${question.maxScore || 5}: ${question.maxLabel}`;
+    maxLabelSpan.style.marginRight = '1rem';
+    labelsContainer.appendChild(maxLabelSpan);
+    
+    container.appendChild(labelsContainer);
   }
   
   return container;
@@ -374,11 +812,19 @@ function createMatrixInput(question) {
   const emptyCell = document.createElement('th');
   headerRow.appendChild(emptyCell);
   
-  question.columns.forEach(column => {
-    const th = document.createElement('th');
-    th.textContent = column;
-    headerRow.appendChild(th);
-  });
+  // 处理列数据
+  if (question.columns && Array.isArray(question.columns)) {
+    question.columns.forEach(column => {
+      const th = document.createElement('th');
+      // 处理新的列数据结构
+      if (typeof column === 'object' && column.text) {
+        th.textContent = column.text;
+      } else {
+        th.textContent = column;
+      }
+      headerRow.appendChild(th);
+    });
+  }
   
   thead.appendChild(headerRow);
   table.appendChild(thead);
@@ -389,34 +835,52 @@ function createMatrixInput(question) {
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
   
-  question.rows.forEach(row => {
-    const tr = document.createElement('tr');
-    
-    const rowHeader = document.createElement('td');
-    rowHeader.textContent = row;
-    rowHeader.style.fontWeight = '600';
-    tr.appendChild(rowHeader);
-    
-    question.columns.forEach(column => {
-      const td = document.createElement('td');
-      const radio = document.createElement('input');
-      radio.type = 'radio';
-      radio.name = `matrix_${row}`;
-      radio.value = column;
-      radio.disabled = true;
+  // 处理行数据
+  if (question.rows && Array.isArray(question.rows)) {
+    question.rows.forEach(row => {
+      const tr = document.createElement('tr');
       
-      // 如果这是用户选择的答案，则选中
-      if (userAnswer && userAnswer[row] === column) {
-        radio.checked = true;
-        td.classList.add('selected-answer');
+      const rowHeader = document.createElement('td');
+      // 处理新的行数据结构
+      if (typeof row === 'object' && row.text) {
+        rowHeader.textContent = row.text;
+      } else {
+        rowHeader.textContent = row;
+      }
+      rowHeader.style.fontWeight = '600';
+      tr.appendChild(rowHeader);
+      
+      // 处理列数据
+      if (question.columns && Array.isArray(question.columns)) {
+        question.columns.forEach(column => {
+          const td = document.createElement('td');
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = `matrix_${typeof row === 'object' ? row.text : row}`;
+          
+          // 处理新的列数据结构
+          if (typeof column === 'object' && column.text) {
+            radio.value = column.text;
+          } else {
+            radio.value = column;
+          }
+          
+          radio.disabled = true;
+          
+          // 如果这是用户选择的答案，则选中
+          if (userAnswer && userAnswer[typeof row === 'object' ? row.text : row] === (typeof column === 'object' ? column.text : column)) {
+            radio.checked = true;
+            td.classList.add('selected-answer');
+          }
+          
+          td.appendChild(radio);
+          tr.appendChild(td);
+        });
       }
       
-      td.appendChild(radio);
-      tr.appendChild(td);
+      tbody.appendChild(tr);
     });
-    
-    tbody.appendChild(tr);
-  });
+  }
   
   table.appendChild(tbody);
   container.appendChild(table);
@@ -435,6 +899,16 @@ function createDateInput(question) {
   input.type = 'date';
   input.className = 'text-input';
   input.disabled = true;
+  
+  // 设置日期格式提示（如果有的话）
+  if (question.dateFormat) {
+    const formatHint = document.createElement('div');
+    formatHint.style.fontSize = '0.75rem';
+    formatHint.style.color = 'var(--text-secondary)';
+    formatHint.style.marginTop = '0.25rem';
+    formatHint.textContent = `格式: ${question.dateFormat}`;
+    container.appendChild(formatHint);
+  }
   
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
@@ -458,6 +932,16 @@ function createTimeInput(question) {
   input.type = 'time';
   input.className = 'text-input';
   input.disabled = true;
+  
+  // 设置时间格式提示（如果有的话）
+  if (question.timeFormat) {
+    const formatHint = document.createElement('div');
+    formatHint.style.fontSize = '0.75rem';
+    formatHint.style.color = 'var(--text-secondary)';
+    formatHint.style.marginTop = '0.25rem';
+    formatHint.textContent = `格式: ${question.timeFormat}`;
+    container.appendChild(formatHint);
+  }
   
   // 获取用户答案 - 尝试多种可能的键名
   const userAnswer = userAnswers[question.id] || userAnswers[question.content] || userAnswers[question.text];
@@ -486,6 +970,64 @@ function createComponentPreview(question) {
   container.appendChild(title);
   container.appendChild(description);
   
+  // 根据问题类型添加特定的预览信息
+  switch (question.type) {
+    case 'file-upload':
+      if (question.maxFileSize) {
+        const sizeInfo = document.createElement('p');
+        sizeInfo.style.fontSize = '0.875rem';
+        sizeInfo.style.color = 'var(--text-secondary)';
+        sizeInfo.textContent = `最大文件大小: ${question.maxFileSize}MB`;
+        container.appendChild(sizeInfo);
+      }
+      if (question.allowedTypes) {
+        const typeInfo = document.createElement('p');
+        typeInfo.style.fontSize = '0.875rem';
+        typeInfo.style.color = 'var(--text-secondary)';
+        typeInfo.textContent = `允许的文件类型: ${question.allowedTypes}`;
+        container.appendChild(typeInfo);
+      }
+      break;
+      
+    case 'location':
+      if (question.locationType) {
+        const locationInfo = document.createElement('p');
+        locationInfo.style.fontSize = '0.875rem';
+        locationInfo.style.color = 'var(--text-secondary)';
+        locationInfo.textContent = `位置类型: ${question.locationType}`;
+        container.appendChild(locationInfo);
+      }
+      break;
+      
+    case 'signature':
+      if (question.signatureWidth && question.signatureHeight) {
+        const sizeInfo = document.createElement('p');
+        sizeInfo.style.fontSize = '0.875rem';
+        sizeInfo.style.color = 'var(--text-secondary)';
+        sizeInfo.textContent = `签名区域: ${question.signatureWidth} × ${question.signatureHeight} 像素`;
+        container.appendChild(sizeInfo);
+      }
+      break;
+      
+    case 'user-info':
+      if (question.fields && Array.isArray(question.fields)) {
+        const fieldsInfo = document.createElement('div');
+        fieldsInfo.style.marginTop = '0.5rem';
+        
+        question.fields.forEach(field => {
+          const fieldInfo = document.createElement('p');
+          fieldInfo.style.fontSize = '0.875rem';
+          fieldInfo.style.color = 'var(--text-secondary)';
+          fieldInfo.style.margin = '0.25rem 0';
+          fieldInfo.textContent = `${field.label} (${field.type})${field.required ? ' *' : ''}`;
+          fieldsInfo.appendChild(fieldInfo);
+        });
+        
+        container.appendChild(fieldsInfo);
+      }
+      break;
+  }
+  
   return container;
 }
 
@@ -493,10 +1035,29 @@ function createComponentPreview(question) {
  * 绑定事件
  */
 function bindEvents() {
-  // 绑定返回按钮事件
+  // 绑定返回编辑器按钮事件
+  const backToEditorButton = document.getElementById('btnBackToEditor');
+  if (backToEditorButton) {
+    backToEditorButton.addEventListener('click', () => {
+      console.log('点击返回编辑器按钮');
+      
+      // 尝试返回上一页（问卷编辑器）
+      if (window.history.length > 1) {
+        console.log('返回上一页');
+        window.history.back();
+      } else {
+        // 如果没有历史记录，跳转到问卷编辑器
+        console.log('跳转到问卷编辑器页面');
+        window.location.href = 'questionnaire-editor.html';
+      }
+    });
+  }
+  
+  // 绑定返回问卷管理按钮事件
   const backButton = document.getElementById('btnBackToManagement');
   if (backButton) {
     backButton.addEventListener('click', () => {
+      console.log('点击返回问卷管理按钮');
       // 清除预览数据
       localStorage.removeItem('questionnaire_preview_data');
       // 跳转到问卷管理页面
@@ -504,7 +1065,7 @@ function bindEvents() {
     });
   }
   
-  console.log('问卷预览页面已加载');
+  console.log('问卷预览页面事件已绑定');
 }
 
 // 页面加载完成后初始化

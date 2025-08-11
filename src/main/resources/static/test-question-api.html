@@ -107,12 +107,23 @@
         <div id="typesResult" class="result" style="display: none;"></div>
     </div>
 
+    <div class="test-section">
+        <h2>测试根据问题ID获取问题数据</h2>
+        <div class="form-group">
+            <label for="questionId">问题ID:</label>
+            <input type="number" id="questionId" value="1" required>
+        </div>
+        <button onclick="getQuestionById()">获取问题数据</button>
+        <div id="questionResult" class="result" style="display: none;"></div>
+    </div>
+
     <script>
         const CONFIG = {
             BACKEND_BASE_URL: 'http://localhost:7070/api',
             API_ENDPOINTS: {
                 QUESTION_SAVE: '/question/save',
-                QUESTION_TYPES: '/question/types'
+                QUESTION_TYPES: '/question/types',
+                QUESTION_GET: '/question/question'
             }
         };
 
@@ -203,6 +214,52 @@
             } catch (error) {
                 console.error('获取题目类型失败:', error);
                 const resultDiv = document.getElementById('typesResult');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `请求失败！\n错误信息: ${error.message}`;
+            }
+        }
+
+        // 根据问题ID获取问题数据
+        async function getQuestionById() {
+            try {
+                const questionId = document.getElementById('questionId').value;
+                if (!questionId) {
+                    alert('请输入问题ID');
+                    return;
+                }
+
+                console.log('获取问题数据，问题ID:', questionId);
+                
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_GET}/${questionId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                console.log('响应状态:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('响应数据:', result);
+
+                const resultDiv = document.getElementById('questionResult');
+                resultDiv.style.display = 'block';
+                
+                if (result.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `获取成功！\n问题数据:\n${JSON.stringify(result.data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `获取失败！\n错误信息: ${result.message}\n响应: ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                console.error('获取问题数据失败:', error);
+                const resultDiv = document.getElementById('questionResult');
                 resultDiv.style.display = 'block';
                 resultDiv.className = 'result error';
                 resultDiv.textContent = `请求失败！\n错误信息: ${error.message}`;
