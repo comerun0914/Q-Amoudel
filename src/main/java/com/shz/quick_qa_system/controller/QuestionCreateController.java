@@ -358,5 +358,91 @@ public class QuestionCreateController {
         });
         return ApiResult.success(questionListId);
     }
+
+    /**
+     * 发布问卷
+     */
+    @PostMapping("/publish/{id}")
+    public ApiResult publishQuestionnaire(@PathVariable Integer id) {
+        try {
+            // 更新问卷状态为已发布
+            QuestionCreate questionnaire = questionCreateServiceImpl.getById(id);
+            if (questionnaire == null) {
+                return ApiResult.error("问卷不存在");
+            }
+
+            // 检查问卷是否完整（至少有一个问题）
+            List<QuestionDto> questions = questionCreateServiceImpl.getQuestionnaireQuestions(id);
+            if (questions.isEmpty()) {
+                return ApiResult.error("问卷至少需要包含一个问题");
+            }
+
+            // 更新状态为已发布
+            questionnaire.setStatus(1); // 1=已发布
+            questionnaire.setUpdatedTime(LocalDateTime.now());
+            questionCreateServiceImpl.updateById(questionnaire);
+
+            // 生成访问链接
+            String accessUrl = generateAccessUrl(id);
+
+            return ApiResult.success(accessUrl);
+        } catch (Exception e) {
+            return ApiResult.error("发布失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 取消发布问卷
+     */
+    @PostMapping("/unpublish/{id}")
+    public ApiResult unpublishQuestionnaire(@PathVariable Integer id) {
+        try {
+            QuestionCreate questionnaire = questionCreateServiceImpl.getById(id);
+            if (questionnaire == null) {
+                return ApiResult.error("问卷不存在");
+            }
+
+            // 更新状态为草稿
+            questionnaire.setStatus(2); // 2=草稿
+            questionnaire.setUpdatedTime(LocalDateTime.now());
+            questionCreateServiceImpl.updateById(questionnaire);
+
+            return ApiResult.success("问卷已取消发布");
+        } catch (Exception e) {
+            return ApiResult.error("操作失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取问卷分享信息
+     */
+    @GetMapping("/share/{id}")
+    public ApiResult getQuestionnaireShareInfo(@PathVariable Integer id) {
+        try {
+            QuestionCreate questionnaire = questionCreateServiceImpl.getById(id);
+            if (questionnaire == null) {
+                return ApiResult.error("问卷不存在");
+            }
+
+            Map<String, Object> shareInfo = new HashMap<>();
+            shareInfo.put("id", questionnaire.getId());
+            shareInfo.put("title", questionnaire.getTitle());
+            shareInfo.put("status", questionnaire.getStatus());
+            shareInfo.put("accessUrl", generateAccessUrl(id));
+            shareInfo.put("createdTime", questionnaire.getCreatedTime());
+
+            return ApiResult.success(shareInfo);
+        } catch (Exception e) {
+            return ApiResult.error("获取失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成访问链接
+     */
+    private String generateAccessUrl(Integer questionnaireId) {
+        // 生成访问链接，可以是相对路径或绝对路径
+        return "/questionnaire-fill.html?id=" + questionnaireId;
+    }
 }
 
