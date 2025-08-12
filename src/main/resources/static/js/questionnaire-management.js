@@ -628,6 +628,10 @@ function editQuestionnaire(id) {
     }
     
     try {
+        // 保存问卷ID到本地存储
+        localStorage.setItem('current_questionnaire_id', id);
+        console.log('问卷ID已保存到本地存储:', id);
+        
         // 构建编辑URL，使用与预览界面一致的逻辑
         const baseUrl = window.location.origin;
         const editUrl = `${baseUrl}/${CONFIG.ROUTES.QUESTIONNAIRE_EDITOR}?id=${id}`;

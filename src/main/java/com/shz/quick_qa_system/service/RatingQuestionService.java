@@ -13,4 +13,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface RatingQuestionService extends IService<RatingQuestion> {
 
+    /**
+     * 删除旧数据
+     * @param questionId
+     * @return
+     */
+    public boolean deleteByQuestionId(Integer questionId);
 }

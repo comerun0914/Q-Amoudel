@@ -177,29 +177,29 @@ const QuestionTypeHandler = {
         const rows = [];
         const columns = [];
         
-        // 收集行数据
-        const rowElements = questionElement.querySelectorAll('.matrix-row');
-        rowElements.forEach((rowElement, index) => {
-            const rowText = rowElement.querySelector('.row-text')?.value || '';
-            if (rowText.trim()) {
-                rows.push({
-                    rowContent: rowText,
-                    sortNum: index + 1
-                });
-            }
-        });
+            // 收集行数据
+    const rowElements = questionElement.querySelectorAll('.row-item');
+    rowElements.forEach((rowElement, index) => {
+        const rowText = rowElement.querySelector('.row-text')?.value || '';
+        if (rowText.trim()) {
+            rows.push({
+                rowContent: rowText,
+                sortNum: index + 1
+            });
+        }
+    });
 
-        // 收集列数据
-        const columnElements = questionElement.querySelectorAll('.matrix-column');
-        columnElements.forEach((columnElement, index) => {
-            const columnText = columnElement.querySelector('.column-text')?.value || '';
-            if (columnText.trim()) {
-                columns.push({
-                    columnContent: columnText,
-                    sortNum: index + 1
-                });
-            }
-        });
+    // 收集列数据
+    const columnElements = questionElement.querySelectorAll('.column-item');
+    columnElements.forEach((columnElement, index) => {
+        const columnText = columnElement.querySelector('.column-text')?.value || '';
+        if (columnText.trim()) {
+            columns.push({
+                columnContent: columnText,
+                sortNum: index + 1
+            });
+        }
+    });
 
         return { rows, columns, subQuestionType: 1 };
     }
@@ -595,14 +595,14 @@ function createMatrixQuestionTemplate() {
                 <div class="row-list">
                     <div class="row-item">
                         <input type="text" class="row-text" placeholder="行1">
-                        <button type="button" class="btn-delete-row">删除</button>
+                        <button type="button" class="btn-delete-row" onclick="deleteMatrixRow(this)">删除</button>
                     </div>
                     <div class="row-item">
                         <input type="text" class="row-text" placeholder="行2">
-                        <button type="button" class="btn-delete-row">删除</button>
+                        <button type="button" class="btn-delete-row" onclick="deleteMatrixRow(this)">删除</button>
                     </div>
                 </div>
-                <button type="button" class="add-row-btn">
+                <button type="button" class="add-row-btn" onclick="addMatrixRow(this)">
                     <i class="iconfont icon-add"></i> 添加行
                 </button>
             </div>
@@ -611,16 +611,51 @@ function createMatrixQuestionTemplate() {
                 <div class="column-list">
                     <div class="column-item">
                         <input type="text" class="column-text" placeholder="列1">
-                        <button type="button" class="btn-delete-column">删除</button>
+                        <button type="button" class="btn-delete-column" onclick="deleteMatrixColumn(this)">删除</button>
                     </div>
                     <div class="column-item">
                         <input type="text" class="column-text" placeholder="列2">
-                        <button type="button" class="btn-delete-column">删除</button>
+                        <button type="button" class="btn-delete-column" onclick="deleteMatrixColumn(this)">删除</button>
                     </div>
                 </div>
-                <button type="button" class="add-column-btn">
+                <button type="button" class="add-column-btn" onclick="addMatrixColumn(this)">
                     <i class="iconfont icon-add"></i> 添加列
                 </button>
+            </div>
+
+        </div>
+        <div class="matrix-preview">
+            <h4>矩阵预览</h4>
+            <div class="matrix-table-container">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th class="matrix-header-cell">问题</th>
+                            <th class="matrix-header-cell">选项1</th>
+                            <th class="matrix-header-cell">选项2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="matrix-row-header">行1</td>
+                            <td class="matrix-cell">
+                                <input type="radio" name="matrix_row_1" value="1">
+                            </td>
+                            <td class="matrix-cell">
+                                <input type="radio" name="matrix_row_1" value="2">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="matrix-row-header">行2</td>
+                            <td class="matrix-cell">
+                                <input type="radio" name="matrix_row_2" value="1">
+                            </td>
+                            <td class="matrix-cell">
+                                <input type="radio" name="matrix_row_2" value="2">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     `;
@@ -668,6 +703,171 @@ function attachQuestionEvents(questionElement, type) {
             attachUserInfoEvents(questionElement);
             break;
     }
+
+    // 为所有题型绑定通用的输入变化事件
+    attachInputChangeEvents(questionElement);
+}
+
+// 为题目绑定输入变化事件
+function attachInputChangeEvents(questionElement) {
+    console.log('为题目绑定输入变化事件:', questionElement);
+    
+    // 监听问题文本变化
+    const questionText = questionElement.querySelector('.question-text');
+    if (questionText) {
+        questionText.addEventListener('input', function() {
+            console.log('问题文本变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.questionTextTimer);
+                window.questionTextTimer = setTimeout(() => {
+                    console.log('触发问题文本自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    // 监听问答题设置变化
+    const hintText = questionElement.querySelector('.hint-text');
+    if (hintText) {
+        hintText.addEventListener('input', function() {
+            console.log('提示文字变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.hintTextTimer);
+                window.hintTextTimer = setTimeout(() => {
+                    console.log('触发提示文字自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const maxLength = questionElement.querySelector('.max-length');
+    if (maxLength) {
+        maxLength.addEventListener('input', function() {
+            console.log('最大字数变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.maxLengthTimer);
+                window.maxLengthTimer = setTimeout(() => {
+                    console.log('触发最大字数自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const inputType = questionElement.querySelector('.input-type');
+    if (inputType) {
+        inputType.addEventListener('change', function() {
+            console.log('输入类型变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                setTimeout(() => {
+                    console.log('触发输入类型自动保存');
+                    performAutoSave();
+                }, 1000);
+            }
+        });
+    }
+    
+    // 监听评分题设置变化
+    const minScore = questionElement.querySelector('.min-score');
+    if (minScore) {
+        minScore.addEventListener('input', function() {
+            console.log('最低分变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.minScoreTimer);
+                window.minScoreTimer = setTimeout(() => {
+                    console.log('触发最低分自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const maxScore = questionElement.querySelector('.max-score');
+    if (maxScore) {
+        maxScore.addEventListener('input', function() {
+            console.log('最高分变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.maxScoreTimer);
+                window.maxScoreTimer = setTimeout(() => {
+                    console.log('触发最高分自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const minLabel = questionElement.querySelector('.min-label');
+    if (minLabel) {
+        minLabel.addEventListener('input', function() {
+            console.log('最低分标签变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.minLabelTimer);
+                window.minLabelTimer = setTimeout(() => {
+                    console.log('触发最低分标签自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const maxLabel = questionElement.querySelector('.max-label');
+    if (maxLabel) {
+        maxLabel.addEventListener('input', function() {
+            console.log('最高分标签变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.maxLabelTimer);
+                window.maxLabelTimer = setTimeout(() => {
+                    console.log('触发最高分标签自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    const ratingStep = questionElement.querySelector('.rating-step');
+    if (ratingStep) {
+        ratingStep.addEventListener('input', function() {
+            console.log('评分步长变化:', this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.ratingStepTimer);
+                window.ratingStepTimer = setTimeout(() => {
+                    console.log('触发评分步长自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+    
+    // 监听矩阵题设置变化
+    const rowTexts = questionElement.querySelectorAll('.row-text');
+    rowTexts.forEach((rowText, index) => {
+        rowText.addEventListener('input', function() {
+            console.log(`矩阵行${index + 1}变化:`, this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.matrixRowTimer);
+                window.matrixRowTimer = setTimeout(() => {
+                    console.log('触发矩阵行自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    });
+    
+    const columnTexts = questionElement.querySelectorAll('.column-text');
+    columnTexts.forEach((columnText, index) => {
+        columnText.addEventListener('input', function() {
+            console.log(`矩阵列${index + 1}变化:`, this.value);
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.matrixColumnTimer);
+                window.matrixColumnTimer = setTimeout(() => {
+                    console.log('触发矩阵列自动保存');
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    });
 }
 
 function attachDragEvents(questionElement) {
@@ -698,7 +898,7 @@ function loadQuestionnaireInfo() {
     console.log('当前页面search:', window.location.search);
 
     // 优先从本地存储获取问卷ID
-    let questionnaireId = localStorage.getItem('current_questionnaire_id');
+    questionnaireId = localStorage.getItem('current_questionnaire_id');
 
     if (questionnaireId) {
         console.log('从本地存储获取到问卷ID:', questionnaireId);
@@ -714,6 +914,8 @@ function loadQuestionnaireInfo() {
             if (encodedQuestionnaireId) {
                 questionnaireId = decodeURIComponent(encodedQuestionnaireId);
                 console.log('成功从URL参数解析问卷ID:', questionnaireId);
+                // 将URL中的问卷ID保存到本地存储，避免后续重复获取
+                localStorage.setItem('current_questionnaire_id', questionnaireId);
             } else {
                 console.log('URL中也没有找到id参数');
             }
@@ -725,9 +927,14 @@ function loadQuestionnaireInfo() {
             if (match) {
                 questionnaireId = decodeURIComponent(match[1]);
                 console.log('手动解析成功:', questionnaireId);
+                // 将URL中的问卷ID保存到本地存储，避免后续重复获取
+                localStorage.setItem('current_questionnaire_id', questionnaireId);
             }
         }
     }
+    
+    // 更新全局变量
+    window.questionnaireId = questionnaireId;
 
     console.log('最终获取的问卷ID:', questionnaireId);
     console.log('问卷ID类型:', typeof questionnaireId);
@@ -957,6 +1164,48 @@ function createQuestionElement(question, questionNumber) {
     // 如果是选择题，加载选项
     if (questionTypeName === 'single' || questionTypeName === 'multiple') {
         loadQuestionOptions(questionElement, question);
+        
+        // 为新添加的选项按钮绑定事件
+        const addOptionBtn = questionElement.querySelector('.add-option-btn');
+        if (addOptionBtn) {
+            addOptionBtn.addEventListener('click', function() {
+                const inputType = questionTypeName === 'single' ? 'radio' : 'checkbox';
+                addOption(this, inputType);
+            });
+        }
+    }
+    
+    // 如果是问答题，加载问答题配置
+    if (questionTypeName === 'text') {
+        loadTextQuestionConfig(questionElement, question);
+    }
+    
+    // 如果是评分题，加载评分题配置
+    if (questionTypeName === 'rating') {
+        loadRatingQuestionConfig(questionElement, question);
+    }
+    
+    // 如果是矩阵题，加载行列数据
+    if (questionTypeName === 'matrix') {
+        loadMatrixQuestionData(questionElement, question);
+        
+        // 为新添加的行列按钮绑定事件
+        const addRowBtn = questionElement.querySelector('.add-row-btn');
+        if (addRowBtn) {
+            addRowBtn.addEventListener('click', function() {
+                addMatrixRow(this);
+            });
+        }
+        
+        const addColumnBtn = questionElement.querySelector('.add-column-btn');
+        if (addColumnBtn) {
+            addColumnBtn.addEventListener('click', function() {
+                addMatrixColumn(this);
+            });
+        }
+        
+        // 初始化矩阵预览
+        updateMatrixPreview(questionElement);
     }
     
     return questionElement;
@@ -1020,11 +1269,73 @@ function loadQuestionOptions(questionElement, question) {
     console.log('选项加载完成，共加载', question.options.length, '个选项');
 }
 
+/**
+ * 加载矩阵题行列数据
+ */
+function loadMatrixQuestionData(questionElement, question) {
+    console.log('加载矩阵题行列数据:', question);
+    
+    // 加载行数据
+    if (question.matrixQuestionConfig && question.matrixQuestionConfig.rows && question.matrixQuestionConfig.rows.length > 0) {
+        const rowList = questionElement.querySelector('.row-list');
+        if (rowList) {
+            // 清空现有行
+            rowList.innerHTML = '';
+            
+            question.matrixQuestionConfig.rows.forEach((row, index) => {
+                const rowElement = document.createElement('div');
+                rowElement.className = 'row-item';
+                rowElement.innerHTML = `
+                    <input type="text" class="row-text" value="${row.rowContent || row.text || ''}" placeholder="行${index + 1}">
+                    <button type="button" class="btn-delete-row" onclick="deleteMatrixRow(this)">删除</button>
+                `;
+                rowList.appendChild(rowElement);
+                bindMatrixRowEvents(rowElement);
+            });
+        }
+    }
+    
+    // 加载列数据
+    if (question.matrixQuestionConfig && question.matrixQuestionConfig.columns && question.matrixQuestionConfig.columns.length > 0) {
+        const columnList = questionElement.querySelector('.column-list');
+        if (columnList) {
+            // 清空现有列
+            columnList.innerHTML = '';
+            
+            question.matrixQuestionConfig.columns.forEach((column, index) => {
+                const columnElement = document.createElement('div');
+                columnElement.className = 'column-item';
+                columnElement.innerHTML = `
+                    <input type="text" class="column-text" value="${column.columnContent || column.text || ''}" placeholder="列${index + 1}">
+                    <button type="button" class="btn-delete-column" onclick="deleteMatrixColumn(this)">删除</button>
+                `;
+                columnList.appendChild(columnElement);
+                bindMatrixColumnEvents(columnElement);
+            });
+        }
+    }
+    
+    // 加载矩阵题配置数据
+    loadMatrixQuestionConfig(questionElement, question);
+    
+    console.log('矩阵题行列数据加载完成');
+}
+
 // 添加选项函数
 function addOption(button, inputType) {
-    const optionsContainer = button.previousElementSibling;
+    // 修复容器查找逻辑：从按钮向上查找，找到选项容器
+    const questionItem = button.closest('.question-item');
+    const optionsContainer = questionItem.querySelector('.options-container');
+    
+    if (!optionsContainer) {
+        console.error('找不到选项容器');
+        return;
+    }
+    
     const optionCount = optionsContainer.children.length + 1;
-    const name = inputType === 'radio' ? `single_${Date.now()}` : `multiple_${Date.now()}`;
+    // 修复name属性，确保单选和多选有不同的name
+    const questionId = questionItem.dataset.questionId || Date.now();
+    const name = inputType === 'radio' ? `single_${questionId}` : `multiple_${questionId}`;
     
     const optionElement = document.createElement('div');
     optionElement.className = 'option-item';
@@ -1048,12 +1359,17 @@ function addOption(button, inputType) {
     // 绑定新选项的事件
     bindOptionEvents(optionElement);
     
+    // 更新题目序号
+    updateQuestionNumbers();
+    
     // 触发自动保存检查
     if (AUTO_SAVE_ENABLED) {
         setTimeout(() => {
             performAutoSave();
         }, 1000);
     }
+    
+    console.log(`成功添加${inputType === 'radio' ? '单选' : '多选'}选项，当前选项数量:`, optionCount);
 }
 
 // 删除选项函数
@@ -1068,15 +1384,164 @@ function deleteOption(button) {
             // 重新编号选项
             renumberOptions(optionsContainer);
             
+            // 更新题目序号
+            updateQuestionNumbers();
+            
             // 触发自动保存检查
             if (AUTO_SAVE_ENABLED) {
                 setTimeout(() => {
                     performAutoSave();
                 }, 1000);
             }
+            
+            console.log('选项删除成功，当前选项数量:', optionsContainer.children.length);
         } else {
             alert('至少需要保留2个选项');
         }
+    }
+}
+
+// 添加矩阵行
+function addMatrixRow(button) {
+    const questionItem = button.closest('.question-item');
+    const rowList = questionItem.querySelector('.row-list');
+    
+    if (!rowList) {
+        console.error('找不到行列表容器');
+        return;
+    }
+    
+    const rowCount = rowList.children.length + 1;
+    
+    const rowElement = document.createElement('div');
+    rowElement.className = 'row-item';
+    rowElement.innerHTML = `
+        <input type="text" class="row-text" placeholder="行${rowCount}">
+        <button type="button" class="btn-delete-row" onclick="deleteMatrixRow(this)">删除</button>
+    `;
+    
+    rowList.appendChild(rowElement);
+    
+    // 绑定新行的事件
+    bindMatrixRowEvents(rowElement);
+    
+    // 更新矩阵预览
+    updateMatrixPreview(questionItem);
+    
+    // 更新题目序号
+    updateQuestionNumbers();
+    
+    // 触发自动保存检查
+    if (AUTO_SAVE_ENABLED) {
+        setTimeout(() => {
+            performAutoSave();
+        }, 1000);
+    }
+    
+    console.log(`成功添加矩阵行，当前行数量:`, rowCount);
+}
+
+// 删除矩阵行
+function deleteMatrixRow(button) {
+    const rowElement = button.closest('.row-item');
+    const questionItem = rowElement.closest('.question-item');
+    const rowList = questionItem.querySelector('.row-list');
+    
+    // 检查是否至少保留2行
+    if (rowList.children.length > 2) {
+        rowElement.remove();
+        
+        // 重新编号行
+        renumberMatrixRows(rowList);
+        
+        // 更新矩阵预览
+        updateMatrixPreview(questionItem);
+        
+        // 更新题目序号
+        updateQuestionNumbers();
+        
+        // 触发自动保存检查
+        if (AUTO_SAVE_ENABLED) {
+            setTimeout(() => {
+                performAutoSave();
+            }, 1000);
+        }
+        
+        console.log('矩阵行删除成功，当前行数量:', rowList.children.length);
+    } else {
+        alert('至少需要保留2行');
+    }
+}
+
+// 添加矩阵列
+function addMatrixColumn(button) {
+    const questionItem = button.closest('.question-item');
+    const columnList = questionItem.querySelector('.column-list');
+    
+    if (!columnList) {
+        console.error('找不到列列表容器');
+        return;
+    }
+    
+    const columnCount = columnList.children.length + 1;
+    
+    const columnElement = document.createElement('div');
+    columnElement.className = 'column-item';
+    columnElement.innerHTML = `
+        <input type="text" class="column-text" placeholder="列${columnCount}">
+        <button type="button" class="btn-delete-column" onclick="deleteMatrixColumn(this)">删除</button>
+    `;
+    
+    columnList.appendChild(columnElement);
+    
+    // 绑定新列的事件
+    bindMatrixColumnEvents(columnElement);
+    
+    // 更新矩阵预览
+    updateMatrixPreview(questionItem);
+    
+    // 更新题目序号
+    updateQuestionNumbers();
+    
+    // 触发自动保存检查
+    if (AUTO_SAVE_ENABLED) {
+        setTimeout(() => {
+            performAutoSave();
+        }, 1000);
+    }
+    
+    console.log(`成功添加矩阵列，当前列数量:`, columnCount);
+}
+
+// 删除矩阵列
+function deleteMatrixColumn(button) {
+    const columnElement = button.closest('.column-item');
+    const questionItem = columnElement.closest('.question-item');
+    const columnList = questionItem.querySelector('.column-list');
+    
+    // 检查是否至少保留2列
+    if (columnList.children.length > 2) {
+        columnElement.remove();
+        
+        // 重新编号列
+        renumberMatrixColumns(columnList);
+        
+        // 更新矩阵预览
+        updateMatrixPreview(questionItem);
+        
+        // 更新题目序号
+        updateQuestionNumbers();
+        
+        // 触发自动保存检查
+        if (AUTO_SAVE_ENABLED) {
+            setTimeout(() => {
+                performAutoSave();
+            }, 1000);
+        }
+        
+        console.log('矩阵列删除成功，当前列数量:', columnList.children.length);
+    } else {
+        alert('至少需要保留2列');
     }
 }
 
@@ -1094,35 +1559,127 @@ function renumberOptions(optionsContainer) {
             input.value = index + 1;
         }
     });
+    
+    console.log('选项重新编号完成，共', optionElements.length, '个选项');
 }
 
-// 绑定选项事件
-function bindOptionEvents(optionElement) {
-    // 绑定选项文本输入事件
-    const optionText = optionElement.querySelector('.option-text');
-    if (optionText) {
-        optionText.addEventListener('input', function() {
-            // 输入变化时触发自动保存检查
+// 重新编号矩阵行
+function renumberMatrixRows(rowList) {
+    const rowElements = rowList.querySelectorAll('.row-item');
+    rowElements.forEach((rowElement, index) => {
+        const rowText = rowElement.querySelector('.row-text');
+        if (rowText) {
+            rowText.placeholder = `行${index + 1}`;
+        }
+    });
+    
+    console.log('矩阵行重新编号完成，共', rowElements.length, '行');
+}
+
+// 重新编号矩阵列
+function renumberMatrixColumns(columnList) {
+    const columnElements = columnList.querySelectorAll('.column-item');
+    columnElements.forEach((columnElement, index) => {
+        const columnText = columnElement.querySelector('.column-text');
+        if (columnText) {
+            columnText.placeholder = `列${index + 1}`;
+        }
+    });
+    
+    console.log('矩阵列重新编号完成，共', columnElements.length, '列');
+}
+
+// 绑定矩阵行事件
+function bindMatrixRowEvents(rowElement) {
+    const rowText = rowElement.querySelector('.row-text');
+    if (rowText) {
+        rowText.addEventListener('input', function() {
+            // 更新矩阵预览
+            const questionItem = rowElement.closest('.question-item');
+            if (questionItem) {
+                updateMatrixPreview(questionItem);
+            }
+            
             if (AUTO_SAVE_ENABLED) {
-                clearTimeout(window.optionInputTimer);
-                window.optionInputTimer = setTimeout(() => {
+                clearTimeout(window.matrixRowInputTimer);
+                window.matrixRowInputTimer = setTimeout(() => {
                     performAutoSave();
                 }, 2000);
             }
         });
     }
+}
+
+// 绑定矩阵列事件
+function bindMatrixColumnEvents(columnElement) {
+    const columnText = columnElement.querySelector('.column-text');
+    if (columnText) {
+        columnText.addEventListener('input', function() {
+            // 更新矩阵预览
+            const questionItem = columnElement.closest('.question-item');
+            if (questionItem) {
+                updateMatrixPreview(questionItem);
+            }
+            
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.matrixColumnInputTimer);
+                window.matrixColumnInputTimer = setTimeout(() => {
+                    performAutoSave();
+                }, 2000);
+            }
+        });
+    }
+}
+
+// 绑定选项事件
+function bindOptionEvents(optionElement) {
+    console.log('绑定选项事件:', optionElement); // 添加调试日志
+    
+    // 绑定选项文本输入事件
+    const optionText = optionElement.querySelector('.option-text');
+    if (optionText) {
+        // 移除之前的事件监听器（避免重复绑定）
+        optionText.removeEventListener('input', optionText._inputHandler);
+        
+        // 创建新的事件处理函数
+        optionText._inputHandler = function() {
+            console.log('选项文本输入变化:', this.value); // 添加调试日志
+            // 输入变化时触发自动保存检查
+            if (AUTO_SAVE_ENABLED) {
+                clearTimeout(window.optionInputTimer);
+                window.optionInputTimer = setTimeout(() => {
+                    console.log('触发选项文本自动保存'); // 添加调试日志
+                    performAutoSave();
+                }, 2000);
+            }
+        };
+        
+        // 绑定事件
+        optionText.addEventListener('input', optionText._inputHandler);
+        console.log('选项文本输入事件绑定成功'); // 添加调试日志
+    }
     
     // 绑定选项选中状态变化事件
     const input = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
     if (input) {
-        input.addEventListener('change', function() {
+        // 移除之前的事件监听器（避免重复绑定）
+        input.removeEventListener('change', input._changeHandler);
+        
+        // 创建新的事件处理函数
+        input._changeHandler = function() {
+            console.log('选项选中状态变化:', this.checked); // 添加调试日志
             // 选项状态变化时触发自动保存检查
             if (AUTO_SAVE_ENABLED) {
                 setTimeout(() => {
+                    console.log('触发选项状态自动保存'); // 添加调试日志
                     performAutoSave();
                 }, 1000);
             }
-        });
+        };
+        
+        // 绑定事件
+        input.addEventListener('change', input._changeHandler);
+        console.log('选项状态变化事件绑定成功'); // 添加调试日志
     }
 }
 
@@ -1390,28 +1947,79 @@ function getCurrentPageState() {
     };
     
     questions.forEach((question, index) => {
+        const questionType = question.getAttribute('data-type');
         const questionData = {
             index: index,
-            type: question.getAttribute('data-type'),
+            type: questionType,
             content: question.querySelector('.question-text')?.value || '',
             questionId: question.dataset.questionId || null,
             options: []
         };
         
-        // 收集选项数据
-        const optionElements = question.querySelectorAll('.option-item');
-        optionElements.forEach((optionElement, optionIndex) => {
-            const optionText = optionElement.querySelector('.option-text');
-            const radioCheckbox = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
-            
-            if (optionText && optionText.value.trim()) {
-                questionData.options.push({
-                    content: optionText.value.trim(),
-                    isDefault: radioCheckbox && radioCheckbox.checked ? 1 : 0,
-                    sortNum: optionIndex + 1
+        // 根据题目类型收集特定配置
+        switch (questionType) {
+            case 'single':
+            case 'multiple':
+                // 收集选项数据
+                const optionElements = question.querySelectorAll('.option-item');
+                optionElements.forEach((optionElement, optionIndex) => {
+                    const optionText = optionElement.querySelector('.option-text');
+                    const radioCheckbox = optionElement.querySelector('input[type="radio"], input[type="checkbox"]');
+                    
+                    if (optionText && optionText.value.trim()) {
+                        questionData.options.push({
+                            content: optionText.value.trim(),
+                            isDefault: radioCheckbox && radioCheckbox.checked ? 1 : 0,
+                            sortNum: optionIndex + 1
+                        });
+                    }
                 });
-            }
-        });
+                break;
+                
+            case 'text':
+                // 收集问答题配置
+                questionData.hintText = question.querySelector('.hint-text')?.value || '';
+                questionData.maxLength = parseInt(question.querySelector('.max-length')?.value) || 500;
+                questionData.inputType = question.querySelector('.input-type')?.value || 'single';
+                break;
+                
+            case 'rating':
+                // 收集评分题配置
+                questionData.minScore = parseInt(question.querySelector('.min-score')?.value) || 1;
+                questionData.maxScore = parseInt(question.querySelector('.max-score')?.value) || 5;
+                questionData.minLabel = question.querySelector('.min-label')?.value || '非常不满意';
+                questionData.maxLabel = question.querySelector('.max-label')?.value || '非常满意';
+                questionData.step = parseInt(question.querySelector('.rating-step')?.value) || 1;
+                break;
+                
+            case 'matrix':
+                // 收集矩阵题配置
+                questionData.rows = [];
+                questionData.columns = [];
+                
+                const rowElements = question.querySelectorAll('.row-item');
+                rowElements.forEach((rowElement, rowIndex) => {
+                    const rowText = rowElement.querySelector('.row-text')?.value || '';
+                    if (rowText.trim()) {
+                        questionData.rows.push({
+                            text: rowText.trim(),
+                            order: rowIndex + 1
+                        });
+                    }
+                });
+                
+                const columnElements = question.querySelectorAll('.column-item');
+                columnElements.forEach((columnElement, columnIndex) => {
+                    const columnText = columnElement.querySelector('.column-text')?.value || '';
+                    if (columnText.trim()) {
+                        questionData.columns.push({
+                            text: columnText.trim(),
+                            order: columnIndex + 1
+                        });
+                    }
+                });
+                break;
+        }
         
         state.questions.push(questionData);
     });
@@ -1431,8 +2039,14 @@ function hasPageChanged() {
         return false;
     }
     
+    console.log('检查页面变化:', {
+        current: currentState,
+        last: lastSavedState
+    });
+    
     // 比较问题数量
     if (currentState.questionCount !== lastSavedState.questionCount) {
+        console.log('问题数量变化:', currentState.questionCount, '->', lastSavedState.questionCount);
         return true;
     }
     
@@ -1441,31 +2055,113 @@ function hasPageChanged() {
         const currentQuestion = currentState.questions[i];
         const lastQuestion = lastSavedState.questions[i];
         
-        if (!lastQuestion) return true; // 新问题
+        if (!lastQuestion) {
+            console.log('新问题:', currentQuestion);
+            return true; // 新问题
+        }
         
         // 比较问题内容
         if (currentQuestion.content !== lastQuestion.content) {
+            console.log('问题内容变化:', currentQuestion.content, '->', lastQuestion.content);
             return true;
         }
         
-        // 比较选项
-        if (currentQuestion.options.length !== lastQuestion.options.length) {
-            return true;
-        }
-        
-        for (let j = 0; j < currentQuestion.options.length; j++) {
-            const currentOption = currentQuestion.options[j];
-            const lastOption = lastQuestion.options[j];
-            
-            if (!lastOption) return true; // 新选项
-            
-            if (currentOption.content !== lastOption.content || 
-                currentOption.isDefault !== lastOption.isDefault) {
+        // 比较选项（仅针对选择题）
+        if (currentQuestion.type === 'single' || currentQuestion.type === 'multiple') {
+            if (currentQuestion.options.length !== lastQuestion.options.length) {
+                console.log('选项数量变化:', currentQuestion.options.length, '->', lastQuestion.options.length);
                 return true;
+            }
+            
+            for (let j = 0; j < currentQuestion.options.length; j++) {
+                const currentOption = currentQuestion.options[j];
+                const lastOption = lastQuestion.options[j];
+                
+                if (!lastOption) {
+                    console.log('新选项:', currentOption);
+                    return true; // 新选项
+                }
+                
+                if (currentOption.content !== lastOption.content || 
+                    currentOption.isDefault !== lastOption.isDefault) {
+                    console.log('选项变化:', {
+                        content: currentOption.content + ' -> ' + lastOption.content,
+                        isDefault: currentOption.isDefault + ' -> ' + lastOption.isDefault
+                    });
+                    return true;
+                }
+            }
+        }
+        
+        // 比较问答题配置
+        if (currentQuestion.type === 'text') {
+            if (currentQuestion.hintText !== lastQuestion.hintText ||
+                currentQuestion.maxLength !== lastQuestion.maxLength ||
+                currentQuestion.inputType !== lastQuestion.inputType) {
+                console.log('问答题配置变化:', {
+                    hintText: currentQuestion.hintText + ' -> ' + lastQuestion.hintText,
+                    maxLength: currentQuestion.maxLength + ' -> ' + lastQuestion.maxLength,
+                    inputType: currentQuestion.inputType + ' -> ' + lastQuestion.inputType
+                });
+                return true;
+            }
+        }
+        
+        // 比较评分题配置
+        if (currentQuestion.type === 'rating') {
+            if (currentQuestion.minScore !== lastQuestion.minScore ||
+                currentQuestion.maxScore !== lastQuestion.maxScore ||
+                currentQuestion.minLabel !== lastQuestion.minLabel ||
+                currentQuestion.maxLabel !== lastQuestion.maxLabel ||
+                currentQuestion.step !== lastQuestion.step) {
+                console.log('评分题配置变化:', {
+                    minScore: currentQuestion.minScore + ' -> ' + lastQuestion.minScore,
+                    maxScore: currentQuestion.maxScore + ' -> ' + lastQuestion.maxScore,
+                    minLabel: currentQuestion.minLabel + ' -> ' + lastQuestion.minLabel,
+                    maxLabel: currentQuestion.maxLabel + ' -> ' + lastQuestion.maxLabel,
+                    step: currentQuestion.step + ' -> ' + lastQuestion.step
+                });
+                return true;
+            }
+        }
+        
+        // 比较矩阵题配置
+        if (currentQuestion.type === 'matrix') {
+            // 比较行配置
+            if (currentQuestion.rows.length !== lastQuestion.rows.length) {
+                console.log('矩阵行数量变化:', currentQuestion.rows.length, '->', lastQuestion.rows.length);
+                return true;
+            }
+            
+            for (let j = 0; j < currentQuestion.rows.length; j++) {
+                const currentRow = currentQuestion.rows[j];
+                const lastRow = lastQuestion.rows[j];
+                
+                if (!lastRow || currentRow.text !== lastRow.text) {
+                    console.log('矩阵行变化:', currentRow.text + ' -> ' + (lastRow ? lastRow.text : 'undefined'));
+                    return true;
+                }
+            }
+            
+            // 比较列配置
+            if (currentQuestion.columns.length !== lastQuestion.columns.length) {
+                console.log('矩阵列数量变化:', currentQuestion.columns.length, '->', lastQuestion.columns.length);
+                return true;
+            }
+            
+            for (let j = 0; j < currentQuestion.columns.length; j++) {
+                const currentColumn = currentQuestion.columns[j];
+                const lastColumn = lastQuestion.columns[j];
+                
+                if (!lastColumn || currentColumn.text !== lastColumn.text) {
+                    console.log('矩阵列变化:', currentColumn.text + ' -> ' + (lastColumn ? lastColumn.text : 'undefined'));
+                    return true;
+                }
             }
         }
     }
     
+    console.log('页面没有变化');
     return false;
 }
 
@@ -1855,6 +2551,149 @@ async function deleteQuestionFromBackend(questionId) {
             optionElements.forEach(optionElement => {
                 bindOptionEvents(optionElement);
             });
+            
+            // 为新添加的选项按钮绑定事件
+            const addOptionBtn = questionElement.querySelector('.add-option-btn');
+            if (addOptionBtn) {
+                addOptionBtn.addEventListener('click', function() {
+                    const inputType = type === 'single' ? 'radio' : 'checkbox';
+                    addOption(this, inputType);
+                });
+            }
+        }
+        
+        // 为问答题绑定事件
+        if (type === 'text') {
+            // 绑定问答题配置变化事件
+            const hintText = questionElement.querySelector('.hint-text');
+            const maxLength = questionElement.querySelector('.max-length');
+            const inputType = questionElement.querySelector('.input-type');
+            
+            if (hintText) {
+                hintText.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.hintTextTimer);
+                        window.hintTextTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (maxLength) {
+                maxLength.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.maxLengthTimer);
+                        window.maxLengthTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (inputType) {
+                inputType.addEventListener('change', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        setTimeout(() => {
+                            performAutoSave();
+                        }, 1000);
+                    }
+                });
+            }
+        }
+        
+        // 为评分题绑定事件
+        if (type === 'rating') {
+            // 绑定评分题配置变化事件
+            const minScore = questionElement.querySelector('.min-score');
+            const maxScore = questionElement.querySelector('.max-score');
+            const minLabel = questionElement.querySelector('.min-label');
+            const maxLabel = questionElement.querySelector('.max-label');
+            const ratingStep = questionElement.querySelector('.rating-step');
+            
+            if (minScore) {
+                minScore.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.minScoreTimer);
+                        window.minScoreTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (maxScore) {
+                maxScore.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.maxScoreTimer);
+                        window.maxScoreTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (minLabel) {
+                minLabel.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.minLabelTimer);
+                        window.minLabelTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (maxLabel) {
+                maxLabel.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.maxLabelTimer);
+                        window.maxLabelTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+            
+            if (ratingStep) {
+                ratingStep.addEventListener('input', function() {
+                    if (AUTO_SAVE_ENABLED) {
+                        clearTimeout(window.ratingStepTimer);
+                        window.ratingStepTimer = setTimeout(() => {
+                            performAutoSave();
+                        }, 2000);
+                    }
+                });
+            }
+        }
+        
+        // 为矩阵题的行列绑定事件
+        if (type === 'matrix') {
+            const rowElements = questionElement.querySelectorAll('.row-item');
+            const columnElements = questionElement.querySelectorAll('.column-item');
+            
+            rowElements.forEach(rowElement => {
+                bindMatrixRowEvents(rowElement);
+            });
+            
+            columnElements.forEach(columnElement => {
+                bindMatrixColumnEvents(columnElement);
+            });
+            
+            // 为新添加的行列按钮绑定事件
+            const addRowBtn = questionElement.querySelector('.add-row-btn');
+            if (addRowBtn) {
+                addRowBtn.addEventListener('click', function() {
+                    addMatrixRow(this);
+                });
+            }
+            
+            const addColumnBtn = questionElement.querySelector('.add-column-btn');
+            if (addColumnBtn) {
+                addColumnBtn.addEventListener('click', function() {
+                    addMatrixColumn(this);
+                });
+            }
         }
         
         // 更新计数（填写人信息不算作问题）
@@ -1894,7 +2733,33 @@ async function deleteQuestionFromBackend(questionId) {
         
         try {
             // 检查是否有问卷ID
-            const currentQuestionnaireId = localStorage.getItem('current_questionnaire_id');
+            let currentQuestionnaireId = localStorage.getItem('current_questionnaire_id');
+            
+            // 如果本地存储没有，尝试从URL参数获取
+            if (!currentQuestionnaireId) {
+                console.log('本地存储中没有问卷ID，尝试从URL参数获取');
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const encodedQuestionnaireId = urlParams.get('id');
+                    if (encodedQuestionnaireId) {
+                        currentQuestionnaireId = decodeURIComponent(encodedQuestionnaireId);
+                        console.log('成功从URL参数获取问卷ID:', currentQuestionnaireId);
+                        // 将URL中的问卷ID保存到本地存储
+                        localStorage.setItem('current_questionnaire_id', currentQuestionnaireId);
+                    }
+                } catch (error) {
+                    console.error('URL参数解析失败:', error);
+                    // 尝试手动解析
+                    const search = window.location.search;
+                    const match = search.match(/[?&]id=([^&]*)/);
+                    if (match) {
+                        currentQuestionnaireId = decodeURIComponent(match[1]);
+                        console.log('手动解析成功:', currentQuestionnaireId);
+                        // 将URL中的问卷ID保存到本地存储
+                        localStorage.setItem('current_questionnaire_id', currentQuestionnaireId);
+                    }
+                }
+            }
             
             if (currentQuestionnaireId) {
                 // 如果有问卷ID，通过URL参数打开预览页面
@@ -1982,7 +2847,7 @@ async function deleteQuestionFromBackend(questionId) {
     });
     
     // 监听输入变化，触发自动保存检查
-    setupInputChangeListeners();
+    // setupInputChangeListeners();
 });
 
 /**
@@ -2212,11 +3077,13 @@ function collectUserInfoFields(questionElement) {
 function setupInputChangeListeners() {
     // 使用事件委托监听所有输入变化
     document.addEventListener('input', function(e) {
-        if (e.target.matches('.question-text, .option-text')) {
+        // 扩展监听的输入元素类型
+        if (e.target.matches('.question-text, .option-text, .hint-text, .max-length, .min-score, .max-score, .min-label, .max-label, .rating-step, .row-text, .column-text')) {
             // 输入变化时，延迟触发自动保存检查
             if (AUTO_SAVE_ENABLED) {
                 clearTimeout(window.inputChangeTimer);
                 window.inputChangeTimer = setTimeout(() => {
+                    console.log('输入变化触发自动保存:', e.target.className, e.target.value);
                     performAutoSave();
                 }, 2000); // 输入停止2秒后触发保存
             }
@@ -2225,14 +3092,162 @@ function setupInputChangeListeners() {
     
     // 监听选项的选中状态变化
     document.addEventListener('change', function(e) {
-        if (e.target.matches('input[type="radio"], input[type="checkbox"]')) {
+        if (e.target.matches('input[type="radio"], input[type="checkbox"], .input-type')) {
             // 选项状态变化时，延迟触发自动保存检查
             if (AUTO_SAVE_ENABLED) {
                 clearTimeout(window.optionChangeTimer);
                 window.optionChangeTimer = setTimeout(() => {
+                    console.log('选择变化触发自动保存:', e.target.className, e.target.value);
                     performAutoSave();
                 }, 1000); // 选项变化1秒后触发保存
             }
         }
     });
 }
+
+/**
+ * 加载矩阵题配置数据
+ */
+function loadMatrixQuestionConfig(questionElement, question) {
+    console.log('加载矩阵题配置数据:', question);
+    
+    // 初始化矩阵预览
+    updateMatrixPreview(questionElement);
+    
+    console.log('矩阵题配置数据加载完成');
+}
+
+/**
+ * 加载问答题配置数据
+ */
+function loadTextQuestionConfig(questionElement, question) {
+    console.log('加载问答题配置数据:', question);
+    
+    if (question.textQuestionConfig) {
+        // 设置提示文字
+        const hintTextElement = questionElement.querySelector('.hint-text');
+        if (hintTextElement && question.textQuestionConfig.hintText) {
+            hintTextElement.value = question.textQuestionConfig.hintText;
+        }
+        
+        // 设置最大字数
+        const maxLengthElement = questionElement.querySelector('.max-length');
+        if (maxLengthElement && question.textQuestionConfig.maxLength) {
+            maxLengthElement.value = question.textQuestionConfig.maxLength;
+        }
+        
+        // 设置输入类型
+        const inputTypeElement = questionElement.querySelector('.input-type');
+        if (inputTypeElement && question.textQuestionConfig.inputType) {
+            const inputType = question.textQuestionConfig.inputType === 2 ? 'multiline' : 'single';
+            inputTypeElement.value = inputType;
+        }
+        
+        console.log('问答题配置数据加载完成:', {
+            hintText: question.textQuestionConfig.hintText,
+            maxLength: question.textQuestionConfig.maxLength,
+            inputType: question.textQuestionConfig.inputType
+        });
+    }
+}
+
+/**
+ * 加载评分题配置数据
+ */
+function loadRatingQuestionConfig(questionElement, question) {
+    console.log('加载评分题配置数据:', question);
+    
+    if (question.ratingQuestionConfig) {
+        // 设置最低分
+        const minScoreElement = questionElement.querySelector('.min-score');
+        if (minScoreElement && question.ratingQuestionConfig.minScore) {
+            minScoreElement.value = question.ratingQuestionConfig.minScore;
+        }
+        
+        // 设置最高分
+        const maxScoreElement = questionElement.querySelector('.max-score');
+        if (maxScoreElement && question.ratingQuestionConfig.maxScore) {
+            maxScoreElement.value = question.ratingQuestionConfig.maxScore;
+        }
+        
+        // 设置最低分标签
+        const minLabelElement = questionElement.querySelector('.min-label');
+        if (minLabelElement && question.ratingQuestionConfig.minLabel) {
+            minLabelElement.value = question.ratingQuestionConfig.minLabel;
+        }
+        
+        // 设置最高分标签
+        const maxLabelElement = questionElement.querySelector('.max-label');
+        if (maxLabelElement && question.ratingQuestionConfig.maxLabel) {
+            maxLabelElement.value = question.ratingQuestionConfig.maxLabel;
+        }
+        
+        // 设置评分步长
+        const ratingStepElement = questionElement.querySelector('.rating-step');
+        if (ratingStepElement && question.ratingQuestionConfig.step) {
+            ratingStepElement.value = question.ratingQuestionConfig.step;
+        }
+        
+        console.log('评分题配置数据加载完成:', {
+            minScore: question.ratingQuestionConfig.minScore,
+            maxScore: question.ratingQuestionConfig.maxScore,
+            minLabel: question.ratingQuestionConfig.minLabel,
+            maxLabel: question.ratingQuestionConfig.maxLabel,
+            step: question.ratingQuestionConfig.step
+        });
+    }
+}
+
+// 更新矩阵预览表格
+function updateMatrixPreview(questionElement) {
+    const matrixTable = questionElement.querySelector('.matrix-table');
+    if (!matrixTable) return;
+    
+    const rowElements = questionElement.querySelectorAll('.row-item .row-text');
+    const columnElements = questionElement.querySelectorAll('.column-item .column-text');
+    
+    // 更新表头
+    const thead = matrixTable.querySelector('thead tr');
+    thead.innerHTML = '<th class="matrix-header-cell" style="background: #f8f9fa; padding: 8px; border: 1px solid #dee2e6; font-weight: bold; text-align: center;">问题</th>';
+    columnElements.forEach((colElement, index) => {
+        const colText = colElement.value.trim() || `选项${index + 1}`;
+        thead.innerHTML += `<th class="matrix-header-cell" style="background: #f8f9fa; padding: 8px; border: 1px solid #dee2e6; font-weight: bold; text-align: center;">${colText}</th>`;
+    });
+    
+    // 更新表格内容
+    const tbody = matrixTable.querySelector('tbody');
+    tbody.innerHTML = '';
+    
+    rowElements.forEach((rowElement, rowIndex) => {
+        const rowText = rowElement.value.trim() || `行${rowIndex + 1}`;
+        const rowName = `matrix_row_${rowIndex + 1}`;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="matrix-row-header" style="background: #f8f9fa; padding: 8px; border: 1px solid #dee2e6; font-weight: bold; text-align: center;">${rowText}</td>`;
+        
+        columnElements.forEach((colElement, colIndex) => {
+            const inputType = 'radio'; // 固定使用单选题
+            const inputName = rowName; // 每行使用相同的name，确保单选
+            const inputValue = colIndex + 1;
+            
+            tr.innerHTML += `
+                <td class="matrix-cell" style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                    <input type="${inputType}" name="${inputName}" value="${inputValue}" style="margin: 0;">
+                </td>
+            `;
+        });
+        
+        tbody.appendChild(tr);
+    });
+    
+    // 设置表格样式
+    matrixTable.style.cssText = `
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 14px;
+    `;
+    
+    console.log('矩阵预览已更新，行数:', rowElements.length, '列数:', columnElements.length, '类型: 单选题');
+}
+

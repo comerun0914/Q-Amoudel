@@ -23,6 +23,7 @@ public class TextQuestionServiceImpl extends ServiceImpl<TextQuestionMapper, Tex
 
     @Override
     public boolean save(TextQuestion entity) {
+        deleteByQuestionId(entity.getQuestionId());
         if (entity.getId() == null) {
             int id = CodeGenerator.generateFormId();
             while (textQuestionMapper.exists(new QueryWrapper<TextQuestion>().eq("id", id))) {
@@ -31,5 +32,12 @@ public class TextQuestionServiceImpl extends ServiceImpl<TextQuestionMapper, Tex
             entity.setId(id);
         }
         return super.save(entity);
+    }
+
+    @Override
+    public boolean deleteByQuestionId(Integer questionId) {
+        // 删除问答题配置
+        return remove(new QueryWrapper<TextQuestion>()
+                .eq("question_id", questionId));
     }
 }

@@ -23,6 +23,7 @@ public class RatingQuestionServiceImpl extends ServiceImpl<RatingQuestionMapper,
 
     @Override
     public boolean save(RatingQuestion entity) {
+        deleteByQuestionId(entity.getQuestionId());
         if (entity.getId() == null) {
             int id = CodeGenerator.generateFormId();
             while (ratingQuestionMapper.exists(new QueryWrapper<RatingQuestion>().eq("id", id))) {
@@ -31,5 +32,12 @@ public class RatingQuestionServiceImpl extends ServiceImpl<RatingQuestionMapper,
             entity.setId(id);
         }
         return super.save(entity);
+    }
+
+    @Override
+    public boolean deleteByQuestionId(Integer questionId) {
+        // 删除评分题配置
+        return remove(new QueryWrapper<RatingQuestion>()
+                .eq("question_id", questionId));
     }
 }

@@ -12,5 +12,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2025-08-06
  */
 public interface MatrixQuestionService extends IService<MatrixQuestion> {
-
+    /**
+     * 删除旧数据
+     * @param questionId
+     * @return
+     */
+    public boolean deleteByQuestionId(Integer questionId);
 }

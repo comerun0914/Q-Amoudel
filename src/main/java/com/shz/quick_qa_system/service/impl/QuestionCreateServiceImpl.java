@@ -24,6 +24,7 @@ import com.shz.quick_qa_system.dao.MatrixColumnMapper;
 import com.shz.quick_qa_system.service.QuestionCreateService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shz.quick_qa_system.utils.CodeGenerator;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.dto.QuestionOptionDto;
+import com.shz.quick_qa_system.dto.QuestionnairePreviewDto;
 
 /**
  * <p>
@@ -641,6 +643,79 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                     }
 
                     questionDto.setOptions(options);
+                }
+                
+                // 如果是问答题，查询问答题配置
+                if (question.getQuestionType() == 3) {
+                    QueryWrapper<TextQuestion> textWrapper = new QueryWrapper<>();
+                    textWrapper.eq("question_id", question.getId());
+                    TextQuestion textQuestion = textQuestionMapper.selectOne(textWrapper);
+                    QuestionnairePreviewDto.TextQuestionInfo config = new QuestionnairePreviewDto.TextQuestionInfo();
+                    BeanUtils.copyProperties(textQuestion, config);
+                    if (textQuestion != null) {
+                        questionDto.setTextQuestionConfig(config);
+                    }
+                }
+                
+                // 如果是评分题，查询评分题配置
+                if (question.getQuestionType() == 4) {
+                    QueryWrapper<RatingQuestion> ratingWrapper = new QueryWrapper<>();
+                    ratingWrapper.eq("question_id", question.getId());
+                    RatingQuestion ratingQuestion = ratingQuestionMapper.selectOne(ratingWrapper);
+                    QuestionnairePreviewDto.RatingQuestionInfo config = new QuestionnairePreviewDto.RatingQuestionInfo();
+                    BeanUtils.copyProperties(ratingQuestion, config);
+                    if (ratingQuestion != null) {
+                        questionDto.setRatingQuestionConfig(config);
+                    }
+                }
+                
+                // 如果是矩阵题，查询矩阵题配置
+                if (question.getQuestionType() == 5) {
+                    // 先查询矩阵题主体
+                    QueryWrapper<MatrixQuestion> matrixWrapper = new QueryWrapper<>();
+                    matrixWrapper.eq("question_id", question.getId());
+                    MatrixQuestion matrixQuestion = matrixQuestionMapper.selectOne(matrixWrapper);
+                    
+                    if (matrixQuestion != null) {
+                        // 查询矩阵行数据
+                        QueryWrapper<MatrixRow> rowWrapper = new QueryWrapper<>();
+                        rowWrapper.eq("matrix_id", matrixQuestion.getId());
+                        rowWrapper.orderByAsc("sort_num");
+                        List<MatrixRow> rows = matrixRowMapper.selectList(rowWrapper);
+                        
+                        // 查询矩阵列数据
+                        QueryWrapper<MatrixColumn> columnWrapper = new QueryWrapper<>();
+                        columnWrapper.eq("matrix_id", matrixQuestion.getId());
+                        columnWrapper.orderByAsc("sort_num");
+                        List<MatrixColumn> columns = matrixColumnMapper.selectList(columnWrapper);
+                    
+                        // 创建矩阵题配置信息
+                        QuestionnairePreviewDto.MatrixQuestionInfo matrixQuestionInfo = new QuestionnairePreviewDto.MatrixQuestionInfo();
+                        
+                        // 设置行数据
+                        List<QuestionnairePreviewDto.MatrixRowInfo> rowInfos = new ArrayList<>();
+                        for (MatrixRow row : rows) {
+                            QuestionnairePreviewDto.MatrixRowInfo rowInfo = new QuestionnairePreviewDto.MatrixRowInfo();
+                            rowInfo.setId(row.getId());
+                            rowInfo.setRowContent(row.getRowContent());
+                            rowInfo.setSortNum(row.getSortNum());
+                            rowInfos.add(rowInfo);
+                        }
+                        matrixQuestionInfo.setRows(rowInfos);
+                        
+                        // 设置列数据
+                        List<QuestionnairePreviewDto.MatrixColumnInfo> columnInfos = new ArrayList<>();
+                        for (MatrixColumn column : columns) {
+                            QuestionnairePreviewDto.MatrixColumnInfo columnInfo = new QuestionnairePreviewDto.MatrixColumnInfo();
+                            columnInfo.setId(column.getId());
+                            columnInfo.setColumnContent(column.getColumnContent());
+                            columnInfo.setSortNum(column.getSortNum());
+                            columnInfos.add(columnInfo);
+                        }
+                        matrixQuestionInfo.setColumns(columnInfos);
+                        
+                        questionDto.setMatrixQuestionConfig(matrixQuestionInfo);
+                    }
                 }
 
                 questionDtos.add(questionDto);

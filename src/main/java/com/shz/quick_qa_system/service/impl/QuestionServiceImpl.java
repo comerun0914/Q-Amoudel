@@ -374,6 +374,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             if (matrixQuestions != null && !matrixQuestions.isEmpty()) {
                 // 如果有多条记录，取第一条（或者根据业务逻辑选择）
                 MatrixQuestion matrixQuestion = matrixQuestions.get(0);
+                Integer matrixId = matrixQuestion.getId();
                 if (matrixQuestions.size() > 1) {
                     logger.warn("问题ID {} 存在多条矩阵题配置记录，使用第一条", questionId);
                 }
@@ -382,7 +383,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
                 
                 // 获取矩阵行
                 QueryWrapper<MatrixRow> rowWrapper = new QueryWrapper<>();
-                rowWrapper.eq("question_id", questionId);
+                rowWrapper.eq("matrix_id", matrixId);
                 rowWrapper.orderByAsc("sort_num");
                 List<MatrixRow> rows = matrixRowMapper.selectList(rowWrapper);
                 
@@ -394,7 +395,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
                 
                 // 获取矩阵列
                 QueryWrapper<MatrixColumn> columnWrapper = new QueryWrapper<>();
-                columnWrapper.eq("question_id", questionId);
+                columnWrapper.eq("matrix_id", matrixId);
                 columnWrapper.orderByAsc("sort_num");
                 List<MatrixColumn> columns = matrixColumnMapper.selectList(columnWrapper);
                 

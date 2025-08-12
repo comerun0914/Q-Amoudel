@@ -38,6 +38,8 @@ public class MatrixQuestionController {
     @Transactional(rollbackFor = Exception.class)
     public ApiResult saveAll(@RequestBody MatrixQuestionDto dto) {
         try {
+            // 先清理旧的行列
+            matrixQuestionService.deleteByQuestionId(dto.getQuestionId());
             MatrixQuestion mq = new MatrixQuestion();
             mq.setId(dto.getId());
             mq.setQuestionId(dto.getQuestionId());
@@ -53,9 +55,6 @@ public class MatrixQuestionController {
 
             Integer matrixId = mq.getId();
 
-            // 先清理旧的行列
-            matrixRowService.remove(new QueryWrapper<MatrixRow>().eq("matrix_id", matrixId));
-            matrixColumnService.remove(new QueryWrapper<MatrixColumn>().eq("matrix_id", matrixId));
 
             // 批量保存行
             if (dto.getRows() != null && !dto.getRows().isEmpty()) {
