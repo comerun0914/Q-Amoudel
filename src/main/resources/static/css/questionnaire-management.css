@@ -518,28 +518,28 @@ header {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* 活跃状态 */
-.status-active {
+/* 已发布状态 */
+.status-published {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     border: 2px solid #10b981;
 }
 
-.status-active::after {
+.status-published::after {
     content: '●';
     margin-left: 6px;
     font-size: 0.7rem;
     animation: pulse 2s infinite;
 }
 
-/* 非活跃状态 */
-.status-inactive {
+/* 禁用状态 */
+.status-disabled {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
     border: 2px solid #ef4444;
 }
 
-.status-inactive::after {
+.status-disabled::after {
     content: '●';
     margin-left: 6px;
     font-size: 0.7rem;
@@ -763,6 +763,24 @@ header {
 
 .btn-disable:hover {
     background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+}
+
+.btn-publish {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.btn-publish:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+}
+
+.btn-unpublish {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.btn-unpublish:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
 }
 
 /* 分页样式 */

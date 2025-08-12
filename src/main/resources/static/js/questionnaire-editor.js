@@ -2527,7 +2527,7 @@ async function deleteQuestionFromBackend(questionId) {
     // 绑定操作按钮事件
     document.getElementById('save-draft')?.addEventListener('click', saveQuestionnaire);
     document.getElementById('preview-questionnaire')?.addEventListener('click', openPreview);
-    document.getElementById('publish-questionnaire')?.addEventListener('click', saveQuestionnaire);
+    document.getElementById('publish-questionnaire')?.addEventListener('click', publishQuestionnaire);
     
     // 添加问题函数
     function addQuestion(type) {
@@ -3249,5 +3249,140 @@ function updateMatrixPreview(questionElement) {
     `;
     
     console.log('矩阵预览已更新，行数:', rowElements.length, '列数:', columnElements.length, '类型: 单选题');
+}
+
+// 发布问卷函数
+async function publishQuestionnaire() {
+    if (questionCount === 0) {
+        alert('请至少添加一个问题！');
+        return;
+    }
+    
+    // 获取当前问卷ID
+    const currentQuestionnaireId = localStorage.getItem('current_questionnaire_id');
+    if (!currentQuestionnaireId) {
+        alert('请先保存问卷！');
+        return;
+    }
+    
+    try {
+        // 调用发布API
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}/questionCreate/publish/${currentQuestionnaireId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.TOKEN)}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.code === 200) {
+            // 发布成功，显示分享信息
+            showPublishSuccessModal(result.data);
+        } else {
+            alert('发布失败：' + result.message);
+        }
+    } catch (error) {
+        console.error('发布失败:', error);
+        alert('发布失败，请重试');
+    }
+}
+
+// 显示发布成功弹窗
+function showPublishSuccessModal(accessUrl) {
+    const modal = document.createElement('div');
+    modal.className = 'publish-success-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎉 问卷发布成功！</h3>
+                <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="share-section">
+                    <h4>分享链接</h4>
+                    <div class="url-input-group">
+                        <input type="text" id="shareUrl" value="${window.location.origin}${accessUrl}" readonly>
+                        <button onclick="copyShareUrl()">复制链接</button>
+                    </div>
+                </div>
+                
+                <div class="qr-section">
+                    <h4>二维码</h4>
+                    <div id="qrCode"></div>
+                    <button onclick="downloadQRCode()">下载二维码</button>
+                </div>
+                
+                <div class="stats-section">
+                    <h4>访问统计</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">访问次数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">填写次数</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="window.location.href='questionnaire-management.html'">返回管理</button>
+                <button onclick="previewPublishedQuestionnaire('${accessUrl}')">预览发布</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 生成二维码
+    generateQRCode(accessUrl);
+}
+
+// 复制分享链接
+function copyShareUrl() {
+    const urlInput = document.getElementById('shareUrl');
+    urlInput.select();
+    document.execCommand('copy');
+    alert('链接已复制到剪贴板！');
+}
+
+// 生成二维码
+function generateQRCode(accessUrl) {
+    const qrContainer = document.getElementById('qrCode');
+    const fullUrl = window.location.origin + accessUrl;
+    
+    // 使用qrcode.js库生成二维码
+    if (typeof QRCode !== 'undefined') {
+        new QRCode(qrContainer, {
+            text: fullUrl,
+            width: 128,
+            height: 128,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    } else {
+        // 如果没有QRCode库，显示链接
+        qrContainer.innerHTML = `<p>二维码生成失败，请手动分享链接</p>`;
+    }
+}
+
+// 下载二维码
+function downloadQRCode() {
+    const qrCanvas = document.querySelector('#qrCode canvas');
+    if (qrCanvas) {
+        const link = document.createElement('a');
+        link.download = '问卷二维码.png';
+        link.href = qrCanvas.toDataURL();
+        link.click();
+    }
+}
+
+// 预览已发布的问卷
+function previewPublishedQuestionnaire(accessUrl) {
+    window.open(accessUrl, '_blank');
 }
 

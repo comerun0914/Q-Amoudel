@@ -344,14 +344,19 @@ function renderQuestionnaireTable() {
                         <i class="fas fa-copy"></i>
                         复制
                     </button>
-                    ${(questionnaire.status === 0 || questionnaire.status === 1 || questionnaire.status === 2) ? 
+                    ${questionnaire.status === 2 ? 
+                        `<button class="btn-action btn-publish" onclick="publishQuestionnaire(${questionnaire.id})" title="发布问卷">
+                            <i class="fas fa-paper-plane"></i>
+                            发布
+                        </button>` :
+                        questionnaire.status === 1 ?
+                        `<button class="btn-action btn-unpublish" onclick="unpublishQuestionnaire(${questionnaire.id})" title="取消发布">
+                            <i class="fas fa-pause"></i>
+                            取消发布
+                        </button>` :
                         `<button class="btn-action btn-disable" onclick="toggleQuestionnaireStatus(${questionnaire.id}, false)" title="禁用问卷">
                             <i class="fas fa-ban"></i>
                             禁用
-                        </button>` :
-                        `<button class="btn-action btn-enable" onclick="toggleQuestionnaireStatus(${questionnaire.id}, true)" title="启用问卷">
-                            <i class="fas fa-check"></i>
-                            启用
                         </button>`
                     }
                     <button class="btn-action btn-delete" onclick="deleteQuestionnaire(${questionnaire.id})" title="删除问卷">
@@ -982,9 +987,11 @@ function getStatusText(status) {
             return '禁用';
         case 1:
         case true:
-            return '启用';
+            return '已发布';
         case 2:
             return '草稿';
+        default:
+            return '未知';
     }
 }
 
@@ -995,14 +1002,12 @@ function getStatusClass(status) {
     switch (status) {
         case 0:
         case false:
-            return 'status-draft';
+            return 'status-disabled';
         case 1:
         case true:
-            return 'status-active';
+            return 'status-published';
         case 2:
-            return 'status-paused';
-        case 3:
-            return 'status-expired';
+            return 'status-draft';
         default:
             return 'status-unknown';
     }
@@ -1054,6 +1059,70 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+/**
+ * 发布问卷
+ */
+async function publishQuestionnaire(id) {
+    if (!confirm('确定要发布这个问卷吗？发布后用户就可以访问填写了。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}/questionCreate/publish/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.TOKEN)}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.code === 200) {
+            UTILS.showToast('问卷发布成功！', 'success');
+            // 重新加载数据
+            loadQuestionnaireData();
+        } else {
+            UTILS.showToast('发布失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('发布失败:', error);
+        UTILS.showToast('发布失败，请重试', 'error');
+    }
+}
+
+/**
+ * 取消发布问卷
+ */
+async function unpublishQuestionnaire(id) {
+    if (!confirm('确定要取消发布这个问卷吗？取消后用户将无法访问。')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}/questionCreate/unpublish/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.TOKEN)}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.code === 200) {
+            UTILS.showToast('问卷已取消发布', 'success');
+            // 重新加载数据
+            loadQuestionnaireData();
+        } else {
+            UTILS.showToast('操作失败：' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('操作失败:', error);
+        UTILS.showToast('操作失败，请重试', 'error');
+    }
+}
+
 // 导出函数到全局作用域，以便HTML中的onclick事件可以调用
 window.loadQuestionnaireData = loadQuestionnaireData;
 window.editQuestionnaire = editQuestionnaire;
@@ -1062,6 +1131,8 @@ window.testQuestionnaire = testQuestionnaire;
 window.copyQuestionnaire = copyQuestionnaire;
 window.toggleQuestionnaireStatus = toggleQuestionnaireStatus;
 window.deleteQuestionnaire = deleteQuestionnaire;
+window.publishQuestionnaire = publishQuestionnaire;
+window.unpublishQuestionnaire = unpublishQuestionnaire;
 
 // 确保所有函数都在全局作用域中可用
 window.handleSearch = handleSearch;
