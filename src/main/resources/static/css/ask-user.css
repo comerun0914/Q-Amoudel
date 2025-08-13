@@ -833,6 +833,34 @@ main {
   color: #991b1b;
 }
 
+.status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-disabled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-draft {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-unknown {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
 /* 空状态 */
 .empty-state {
   text-align: center;
@@ -1069,50 +1097,50 @@ footer::before {
   .navbar {
     padding: 0 15px;
   }
-  
+
   .nav-links {
     gap: 20px;
   }
-  
+
   main {
     margin: 20px auto;
     padding: 0 15px;
   }
-  
+
   .ask-container {
     padding: 30px 20px;
   }
-  
+
   .ask-container h1 {
     font-size: 1.75rem;
   }
-  
+
   .method-tabs {
     flex-direction: column;
     gap: 5px;
   }
-  
+
   .method-tab {
     text-align: center;
   }
-  
+
   .input-group {
     flex-direction: column;
   }
-  
+
   .recent-list {
     grid-template-columns: 1fr;
   }
-  
+
   .history-filters {
     flex-direction: column;
   }
-  
+
   .modal-content {
     width: 95%;
     margin: 20px;
   }
-  
+
   .modal-body {
     padding: 20px;
   }
@@ -1121,20 +1149,20 @@ footer::before {
       flex-direction: column;
       align-items: center;
   }
-  
+
   .permission-actions .btn-primary,
   .permission-actions .btn-secondary {
       width: 100%;
       max-width: 200px;
       justify-content: center;
   }
-  
+
   .step-item {
       flex-direction: column;
       align-items: flex-start;
       gap: 8px;
   }
-  
+
   .step-number {
       align-self: flex-start;
   }
@@ -1143,22 +1171,22 @@ footer::before {
         margin: 15px 0;
         padding: 15px;
     }
-    
+
     .hint-content h3 {
         font-size: 16px;
     }
-    
+
     .permission-tips {
         padding: 12px;
     }
-    
+
     .tip-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
         text-align: center;
     }
-    
+
     .tip-icon {
         align-self: center;
     }
@@ -1167,20 +1195,20 @@ footer::before {
         margin: 15px 0;
         padding: 15px;
     }
-    
+
     .status-content h3 {
         font-size: 16px;
     }
-    
+
     .status-details {
         padding: 12px;
     }
-    
+
     .permission-status .permission-actions {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .permission-status .btn-primary,
     .permission-status .btn-secondary {
         width: 100%;
@@ -1196,19 +1224,19 @@ footer::before {
     padding: 15px;
     gap: 15px;
   }
-  
+
   .nav-links {
     gap: 15px;
   }
-  
+
   .ask-container {
     padding: 20px 15px;
   }
-  
+
   .method-tabs {
     gap: 5px;
   }
-  
+
   .qr-container {
     min-height: 250px;
   }
@@ -1441,15 +1469,15 @@ footer::before {
         max-width: 95vw;
         margin: 20px;
     }
-    
+
     .compatibility-content, .guide-content {
         padding: 20px;
     }
-    
+
     .compatibility-actions, .restricted-actions {
         flex-direction: column;
     }
-    
+
     .compatibility-actions button, .restricted-actions button {
         width: 100%;
     }
