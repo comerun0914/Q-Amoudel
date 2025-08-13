@@ -108,46 +108,9 @@ public class QuestionCreateController {
             @RequestParam(value = "status", required = false) Integer status,
             @RequestParam(value = "dateFilter", required = false) String dateFilter) {
         try {
-            // 添加调试日志
-//            System.out.println("=== 控制器接收分页请求 ===");
-//            System.out.println("接收到的参数：");
-//            System.out.println("  creatorId: " + creatorId);
-//            System.out.println("  page: " + page);
-//            System.out.println("  size: " + size);
-//            System.out.println("  keyword: " + keyword);
-//            System.out.println("  status: " + status);
-//            System.out.println("  dateFilter: " + dateFilter);
-//
-            Integer id = Integer.valueOf(creatorId);
-//            System.out.println("转换后的 creatorId: " + id);
-
-            // 调用分页查询方法，传递所有参数
-            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireListWithPagination(id, page, size, keyword, status, dateFilter);
-
-//            System.out.println("服务层返回结果：");
-//            System.out.println("  result: " + result);
-
-            // result 应包含: list, currentPage, pageSize, totalCount, totalPages
-            // ApiResult apiResult = ApiResult.successWithPagination(
-            //         result.get("list"),
-            //         (Integer) result.get("currentPage"),
-            //         (Integer) result.get("pageSize"),
-            //         ((Integer) result.get("totalCount")).longValue()
-            // );
-            // return apiResult;
+            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireList(page, size, keyword, status, dateFilter, Integer.valueOf(creatorId));
             return ApiResult.success(result);
-
-//            System.out.println("最终返回的 ApiResult：");
-            // System.out.println("  currentPage: " + apiResult.getCurrentPage());
-            // System.out.println("  pageSize: " + apiResult.getPageSize());
-            // System.out.println("  totalCount: " + apiResult.getTotalCount());
-            // System.out.println("  totalPages: " + apiResult.getTotalPages());
-//            System.out.println("=== 控制器处理完成 ===");
-
-//            return ApiResult.success(result);
         } catch (Exception e) {
-            System.err.println("获取问卷列表失败: " + e.getMessage());
-            e.printStackTrace();
             return ApiResult.error("获取问卷列表失败: " + e.getMessage());
         }
     }

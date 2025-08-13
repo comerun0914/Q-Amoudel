@@ -20,7 +20,7 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorsFilter implements Filter {
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080,http://93d7k45123.goho.co:44966}")
     private String allowedOrigins;
 
     @Value("${spring.profiles.active:dev}")
@@ -41,7 +41,7 @@ public class CorsFilter implements Filter {
             response.setHeader("Access-Control-Allow-Origin", origin);
         } else if ("dev".equals(activeProfile)) {
             // 开发环境默认允许localhost
-            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000,http://93d7k45123.goho.co:44966");
         }
 
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");

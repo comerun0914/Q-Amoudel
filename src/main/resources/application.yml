@@ -9,8 +9,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/q-asystem?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=UTC
-    username: root # 使用环境变量或默认值
-    password: mor112112
+    username: comerun # 使用环境变量或默认值
+    password: shz@hyj1314
     type: com.zaxxer.hikari.HikariDataSource  # 使用HikariCP连接池
     hikari:
       minimum-idle: 5
@@ -105,7 +105,7 @@ server:
 app:
 #  跨域请求配置
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080,http://93d7k45123.goho.co:44966}
   jwt:
     secret: ${JWT_SECRET:your-strong-secret-key}  # JWT密钥
     expiration: 86400000  # 过期时间(ms)，默认24小时

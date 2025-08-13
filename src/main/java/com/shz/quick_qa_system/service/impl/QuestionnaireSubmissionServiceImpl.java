@@ -5,13 +5,18 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shz.quick_qa_system.dao.QuestionAnswerMapper;
 import com.shz.quick_qa_system.dao.QuestionnaireSubmissionMapper;
 import com.shz.quick_qa_system.entity.QuestionAnswer;
+import com.shz.quick_qa_system.entity.QuestionCreate;
 import com.shz.quick_qa_system.entity.QuestionnaireSubmission;
+import com.shz.quick_qa_system.service.QuestionCreateService;
 import com.shz.quick_qa_system.service.QuestionnaireSubmissionService;
+import com.shz.quick_qa_system.service.UsersService;
+import com.shz.quick_qa_system.utils.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +33,13 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
     
     @Autowired
     private QuestionAnswerMapper questionAnswerMapper;
+    @Autowired
+    private QuestionCreateService questionCreateService;
+    @Autowired
+    private QuestionnaireSubmissionMapper questionnaireSubmissionMapper;
+    @Autowired
+    private UsersService usersService;
+
     
     @Override
     @Transactional
@@ -49,18 +61,11 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
             submission.setIsComplete(1);
             
             // 生成随机提交ID（基于问卷ID），并带重试避免极小概率冲突
-            Integer qid = submission.getQuestionnaireId();
-            int tryCount = 0;
-            Integer genId = null;
-            do {
-                genId = RandomIdUtil.generateSubmissionId(qid != null ? qid : 0);
-                // 如果已存在，则重试
-                if (getById(genId) == null) {
-                    break;
-                }
-                tryCount++;
-            } while (tryCount < 5);
-            submission.setId(genId);
+            Integer qid = CodeGenerator.generateFormId();
+            while (questionnaireSubmissionMapper.exists(new QueryWrapper<QuestionnaireSubmission>().eq("id", qid))) {
+                qid = CodeGenerator.generateFormId();
+            }
+            submission.setId(qid);
 
             // 保存提交记录（使用手动ID）
             save(submission);
@@ -183,5 +188,139 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
                .eq("status", 1);
         
         return count(wrapper) > 0;
+    }
+
+    @Override
+    public Map<String, Object> getUserSubmittedQuestionnaires(Integer userId, Integer page, Integer size, String keyword, String dateFilter) {
+        // 构建查询条件 - 查询用户已提交的问卷
+        QueryWrapper<QuestionnaireSubmission> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId)
+               .eq("status", 1)
+               .orderByDesc("submit_time");
+        
+        // 关键词搜索（在问卷标题中搜索）
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            // 这里需要通过关联查询来搜索问卷标题
+            // 暂时先按提交时间排序，后续可以优化为关联查询
+        }
+        
+        // 日期筛选
+        if (dateFilter != null && !dateFilter.trim().isEmpty()) {
+            // 根据提交时间筛选
+            // 这里可以添加日期范围筛选逻辑
+        }
+        
+        // 执行分页查询
+        long total = count(wrapper);
+        List<QuestionnaireSubmission> submissions = list(wrapper);
+        
+        // 通过关联查询获取问卷的标题和描述
+        List<Map<String, Object>> enrichedSubmissions = new ArrayList<>();
+        for (QuestionnaireSubmission submission : submissions) {
+            Map<String, Object> enrichedSubmission = new HashMap<>();
+            
+            // 复制原始提交记录的所有字段
+            enrichedSubmission.put("id", submission.getId());
+            enrichedSubmission.put("questionnaireId", submission.getQuestionnaireId());
+
+            // 获取问卷信息
+            QuestionCreate questionInfo = questionCreateService.getById(submission.getQuestionnaireId());
+
+            enrichedSubmission.put("creatorName",usersService.getUserByuserId(questionInfo.getCreatorId()).getUsername());
+            enrichedSubmission.put("submitterName", submission.getSubmitterName());
+            enrichedSubmission.put("submitterEmail", submission.getSubmitterEmail());
+            enrichedSubmission.put("submitterPhone", submission.getSubmitterPhone());
+            enrichedSubmission.put("ipAddress", submission.getIpAddress());
+            enrichedSubmission.put("userAgent", submission.getUserAgent());
+            enrichedSubmission.put("startTime", questionInfo.getStartDate());
+            enrichedSubmission.put("endTime", questionInfo.getEndDate());
+            enrichedSubmission.put("submitTime", submission.getSubmitTime());
+            enrichedSubmission.put("durationSeconds", submission.getDurationSeconds());
+            enrichedSubmission.put("status", submission.getStatus());
+            enrichedSubmission.put("isComplete", submission.getIsComplete());
+            
+            // 通过问卷ID查询问卷信息
+            try {
+                if (questionInfo != null) {
+                    enrichedSubmission.put("questionnaireTitle", questionInfo.getTitle() != null ? questionInfo.getTitle() : "问卷#" + submission.getQuestionnaireId());
+                    enrichedSubmission.put("questionnaireDescription", questionInfo.getDescription() != null ? questionInfo.getDescription() : "暂无描述");
+                    
+                    // 计算剩余提交次数
+                    Integer submissionLimit = questionInfo.getSubmissionLimit();
+                    if (submissionLimit != null) {
+                        // 查询该用户对该问卷的提交次数
+                        QueryWrapper<QuestionnaireSubmission> userSubmissionWrapper = new QueryWrapper<>();
+                        userSubmissionWrapper.eq("questionnaire_id", submission.getQuestionnaireId())
+                                           .eq("user_id", userId)
+                                           .eq("status", 1);
+                        long userSubmissionCount = count(userSubmissionWrapper);
+                        
+                        int remainingTimes = Math.max(0, submissionLimit - (int)userSubmissionCount);
+                        enrichedSubmission.put("remainingTimes", remainingTimes);
+                    } else {
+                        enrichedSubmission.put("remainingTimes", -1); // 无限制
+                    }
+                } else {
+                    enrichedSubmission.put("questionnaireTitle", "问卷#" + submission.getQuestionnaireId());
+                    enrichedSubmission.put("questionnaireDescription", "暂无描述");
+                    enrichedSubmission.put("remainingTimes", -1);
+                }
+            } catch (Exception e) {
+                // 如果查询失败，设置默认值
+                enrichedSubmission.put("questionnaireTitle", "问卷#" + submission.getQuestionnaireId());
+                enrichedSubmission.put("questionnaireDescription", "暂无描述");
+                enrichedSubmission.put("remainingTimes", -1);
+            }
+            
+            enrichedSubmissions.add(enrichedSubmission);
+        }
+        
+        // 构建返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("list", enrichedSubmissions);
+        result.put("page", page);
+        result.put("size", size);
+        result.put("pages", (total + size - 1) / size);
+        
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> checkUserSubmissionLimit(Integer questionnaireId, Integer userId) {
+        try {
+            // 获取问卷信息
+            QuestionCreate questionInfo = questionCreateService.getById(questionnaireId);
+            if (questionInfo == null) {
+                throw new RuntimeException("问卷不存在");
+            }
+            
+            // 获取问卷的提交次数限制
+            Integer submissionLimit = questionInfo.getSubmissionLimit();
+            if (submissionLimit == null) {
+                submissionLimit = 1; // 默认限制为1次
+            }
+            
+            // 查询该用户对该问卷的已提交次数
+            QueryWrapper<QuestionnaireSubmission> userSubmissionWrapper = new QueryWrapper<>();
+            userSubmissionWrapper.eq("questionnaire_id", questionnaireId)
+                               .eq("user_id", userId)
+                               .eq("status", 1);
+            long userSubmissionCount = count(userSubmissionWrapper);
+            
+            // 计算剩余提交次数
+            int remainingTimes = Math.max(0, submissionLimit - (int)userSubmissionCount);
+            
+            // 构建返回结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("submissionLimit", submissionLimit);
+            result.put("userSubmissionCount", userSubmissionCount);
+            result.put("remainingTimes", remainingTimes);
+            result.put("canSubmit", remainingTimes > 0);
+            
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException("检查用户提交次数限制失败: " + e.getMessage());
+        }
     }
 }

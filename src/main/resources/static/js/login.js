@@ -52,6 +52,24 @@ function handleSubmit(e) {
       console.log('保存的用户信息:', data.data);
     }
     
+    // 检查是否有需要跳转的原始URL
+    const originalUrl = UTILS.getStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL);
+    if (originalUrl) {
+      console.log('检测到原始访问URL，准备跳转:', originalUrl);
+      
+      // 清除保存的原始URL
+      UTILS.removeStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL);
+      
+      // 跳转到原始URL
+      try {
+        window.location.href = originalUrl;
+        return data; // 直接返回，不执行后续的角色跳转逻辑
+      } catch (error) {
+        console.error('跳转到原始URL失败:', error);
+        // 如果跳转失败，继续执行角色跳转逻辑
+      }
+    }
+    
     // 调试：检查数据结构
     console.log('data.data:', data.data);
     console.log('data.data.role:', data.data?.role);

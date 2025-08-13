@@ -185,6 +185,30 @@ body {
   line-height: 1.6;
 }
 
+/* 问卷信息区域 */
+.questionnaire-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--white);
+  padding: 2rem;
+  text-align: center;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-bottom: 2rem;
+}
+
+.questionnaire-info h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.questionnaire-info p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
 .questionnaire-meta {
   display: flex;
   justify-content: center;
@@ -196,8 +220,67 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--neutral-500);
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.meta-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 剩余提交次数信息样式 */
+.submission-limit-info {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.limit-info-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 1rem;
+}
+
+.limit-label {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.limit-value {
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  border: 2px solid;
+}
+
+.limit-value.limit-ok {
+  color: var(--secondary);
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.limit-value.limit-warning {
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.limit-value.limit-reached {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.limit-total {
+  opacity: 0.8;
+  font-size: 0.9rem;
 }
 
 /* 问题容器 */

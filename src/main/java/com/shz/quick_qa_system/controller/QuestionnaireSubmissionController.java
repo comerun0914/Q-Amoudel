@@ -149,6 +149,21 @@ public class QuestionnaireSubmissionController {
             if (userId != null) {
                 boolean hasSubmitted = submissionService.hasUserSubmitted(questionnaireId, userId);
                 result.put("hasUserSubmitted", hasSubmitted);
+                
+                // 检查用户剩余提交次数
+                try {
+                    Map<String, Object> limitInfo = submissionService.checkUserSubmissionLimit(questionnaireId, userId);
+                    result.put("submissionLimit", limitInfo.get("submissionLimit"));
+                    result.put("userSubmissionCount", limitInfo.get("userSubmissionCount"));
+                    result.put("remainingTimes", limitInfo.get("remainingTimes"));
+                    result.put("canSubmit", limitInfo.get("canSubmit"));
+                } catch (Exception e) {
+                    // 如果检查失败，设置默认值
+                    result.put("submissionLimit", 1);
+                    result.put("userSubmissionCount", hasSubmitted ? 1 : 0);
+                    result.put("remainingTimes", hasSubmitted ? 0 : 1);
+                    result.put("canSubmit", !hasSubmitted);
+                }
             }
             
             if (ipAddress != null) {
@@ -177,5 +192,23 @@ public class QuestionnaireSubmissionController {
         }
         
         return request.getRemoteAddr();
+    }
+
+    /**
+     * 获取用户已提交的问卷列表
+     */
+    @GetMapping("/userSubmitted")
+    public ApiResult getUserSubmittedQuestionnaires(
+            @RequestParam Integer userId,
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "dateFilter", required = false) String dateFilter) {
+        try {
+            Map<String, Object> result = submissionService.getUserSubmittedQuestionnaires(userId, page, size, keyword, dateFilter);
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            return ApiResult.error("获取用户已提交问卷列表失败: " + e.getMessage());
+        }
     }
 }

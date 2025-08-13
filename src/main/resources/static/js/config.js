@@ -37,6 +37,7 @@ const CONFIG = {
 		SUBMISSION_SAVE_DRAFT: '/submission/saveDraft',
 		SUBMISSION_GET_DRAFT: '/submission/getDraft',
 		SUBMISSION_CHECK: '/submission/checkSubmission',
+		SUBMISSION_USER_SUBMITTED: '/submission/userSubmitted',
 
         // 题目相关
         QUESTION_SAVE: '/question/save',
@@ -187,7 +188,8 @@ const CONFIG = {
         USER_INFO: 'user_info',
         QUESTIONNAIRE_DRAFT: 'questionnaire_draft',
         FILL_PROGRESS: 'fill_progress',
-        CURRENT_QUESTIONNAIRE_ID: 'current_questionnaire_id'
+        CURRENT_QUESTIONNAIRE_ID: 'current_questionnaire_id',
+        ORIGINAL_URL: 'original_url'
     },
 
     // 默认配置
@@ -506,6 +508,11 @@ const UTILS = {
 
     // 显示重新登录弹窗
     showReLoginModal: function() {
+        // 保存当前页面URL，以便登录成功后跳转回来
+        const currentUrl = window.location.href;
+        console.log('显示重新登录弹窗，保存当前访问URL:', currentUrl);
+        this.setStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL, currentUrl);
+        
         // 创建弹窗样式
         const style = document.createElement('style');
         style.textContent = `
@@ -620,8 +627,18 @@ const UTILS = {
 
     // 跳转到登录页面
     goToLogin: function() {
-        // 清除本地存储
+        // 保存当前页面URL，以便登录成功后跳转回来
+        const currentUrl = window.location.href;
+        console.log('准备跳转登录，保存当前访问URL:', currentUrl);
+        this.setStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL, currentUrl);
+        
+        // 清除其他本地存储，但保留ORIGINAL_URL
+        const originalUrl = this.getStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL);
         this.clearStorage();
+        if (originalUrl) {
+            this.setStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL, originalUrl);
+        }
+        
         // 跳转到登录页面
         window.location.href = CONFIG.ROUTES.LOGIN;
     },

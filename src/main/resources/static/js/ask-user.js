@@ -70,8 +70,8 @@ async function loadQuestionnairesFromDatabase() {
             return;
         }
         
-        // 使用 /all 接口获取所有问卷，不传入用户ID
-        const url = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_ALL}?page=1&size=50`;
+        // 使用新的API端点获取用户已提交的问卷
+        const url = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_USER_SUBMITTED}?userId=${userInfo.id}&page=1&size=50`;
         
         const response = await fetch(url, {
             method: 'GET',
@@ -83,30 +83,34 @@ async function loadQuestionnairesFromDatabase() {
         const data = await response.json();
         
         if (data.code === 200 && data.data) {
-            // 兼容不同的数据结构
-            const questionnaireList = data.data.list || data.data;
-            // 转换数据库数据为前端需要的格式
-            recentQuestionnaires = questionnaireList.map(questionnaire => ({
-                id: questionnaire.id,
-                title: questionnaire.title || '未命名问卷',
-                description: questionnaire.description || '暂无描述',
-                status: getQuestionnaireStatus(questionnaire.status),
-                progress: 0, // 默认进度为0
-                lastAccess: formatDateTime(questionnaire.createdTime),
-                startDate: questionnaire.startDate,
-                endDate: questionnaire.endDate,
-                creatorId: questionnaire.creatorId,
-                createdTime: questionnaire.createdTime,
-                updatedTime: questionnaire.updatedTime
+            // 获取提交记录列表
+            const submissionList = data.data.list || [];
+            
+            // 转换提交记录为问卷信息
+            recentQuestionnaires = submissionList.map(submission => ({
+                id: submission.questionnaireId,
+                title: submission.questionnaireTitle || '未命名问卷',
+                description: submission.questionnaireDescription || '暂无描述',
+                status: 'completed', // 已提交的问卷状态为completed
+                progress: 100, // 已提交的问卷进度为100%
+                lastAccess: formatDateTime(submission.submitTime),
+                startDate: submission.startTime,
+                endDate: submission.submitTime,
+                creatorName: submission.creatorName,
+                createdTime: submission.startTime,
+                updatedTime: submission.submitTime,
+                submissionId: submission.id,
+                submitTime: submission.submitTime,
+                remainingTimes: submission.remainingTimes || 0 // 剩余填写次数
             }));
             
-            showMessage('问卷数据加载成功', 'success');
+            showMessage('已提交问卷数据加载成功', 'success');
         } else {
-            showMessage(data.message || '加载问卷数据失败', 'error');
+            showMessage(data.message || '加载已提交问卷数据失败', 'error');
         }
     } catch (error) {
-        console.error('加载问卷数据失败:', error);
-        showMessage('加载问卷数据失败，请检查网络连接', 'error');
+        console.error('加载已提交问卷数据失败:', error);
+        showMessage('加载已提交问卷数据失败，请检查网络连接', 'error');
     } finally {
         // 渲染问卷列表
         renderRecentQuestionnaires();
@@ -124,6 +128,8 @@ function getQuestionnaireStatus(status) {
             return 'active';
         case 2:
             return 'draft';
+        case 'completed':
+            return 'completed';
         default:
             return 'unknown';
     }
@@ -702,7 +708,10 @@ function createRecentItem(questionnaire) {
             </div>
             <div class="recent-meta">
                 <span>问卷ID: ${questionnaire.id}</span>
-                <span>创建者ID: ${questionnaire.creatorId || '未知'}</span>
+                <span>创建者用户名: ${questionnaire.creatorName || '未知'}</span>
+            </div>
+            <div class="recent-meta">
+                <span class="remaining-times ${getRemainingTimesClass(questionnaire.remainingTimes)}">${getRemainingTimesText(questionnaire.remainingTimes)}</span>
             </div>
             <button class="btn-continue" onclick="${buttonAction}(${questionnaire.id})">
                 ${buttonText}
@@ -722,6 +731,8 @@ function getButtonText(status) {
             return '问卷已禁用';
         case 'draft':
             return '问卷草稿';
+        case 'completed':
+            return '查看结果';
         default:
             return '查看详情';
     }
@@ -738,6 +749,8 @@ function getButtonAction(status) {
             return 'showDisabledMessage';
         case 'draft':
             return 'showDraftMessage';
+        case 'completed':
+            return 'viewResult';
         default:
             return 'viewDetail';
     }
@@ -824,7 +837,7 @@ async function loadHistoryForUser() {
             list.forEach(q => questionnaireMap.set(q.id, q));
         }
 
-        // 2) 查询用户是否提交（单个问卷的“是否提交”接口已存在：/submission/checkSubmission），
+        // 2) 查询用户是否提交（单个问卷的"是否提交"接口已存在：/submission/checkSubmission），
         //    这里没有后端批量列表接口，前端临时用草稿+全部问卷拼装：
         //    2.1 尝试为每个问卷获取自身草稿（有则视为进行中）
         const drafts = [];
@@ -959,6 +972,34 @@ function getStatusText(status) {
         'unknown': '未知状态'
     };
     return statusMap[status] || status;
+}
+
+/**
+ * 获取剩余填写次数文本
+ */
+function getRemainingTimesText(remainingTimes) {
+    if (remainingTimes === -1) {
+        return '无填写次数限制';
+    } else if (remainingTimes === 0) {
+        return '已达到填写次数限制';
+    } else if (remainingTimes === 1) {
+        return '剩余填写次数: 1次';
+    } else {
+        return `剩余填写次数: ${remainingTimes}次`;
+    }
+}
+
+/**
+ * 获取剩余填写次数CSS类
+ */
+function getRemainingTimesClass(remainingTimes) {
+    if (remainingTimes === -1) {
+        return 'unlimited';
+    } else if (remainingTimes === 0) {
+        return 'limited';
+    } else {
+        return 'remaining';
+    }
 }
 
 function showMessage(message, type = 'info') {

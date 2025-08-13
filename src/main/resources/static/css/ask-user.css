@@ -203,13 +203,20 @@ main {
 }
 
 .ask-container h1 {
-  font-size: 2rem;
-  color: var(--neutral-800);
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid var(--neutral-200);
-  text-align: center;
+  font-size: 2.5rem;
   font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* 输入方式选择 */
@@ -656,6 +663,35 @@ main {
 
 .recent-item .btn-continue:hover {
   background: #059669;
+}
+
+/* 剩余填写次数样式 */
+.recent-item .remaining-times {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+}
+
+/* 无限制状态 */
+.recent-item .remaining-times.unlimited {
+  color: var(--secondary);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+/* 已达到限制状态 */
+.recent-item .remaining-times.limited {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* 剩余次数状态 */
+.recent-item .remaining-times.remaining {
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 /* 历史记录区域 */

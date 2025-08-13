@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080")  // 明确指定允许的源
+                .allowedOrigins("http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080,http://93d7k45123.goho.co:44966")  // 明确指定允许的源
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
                 .allowedHeaders("Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Cache-Control",
                         "X-File-Name", "X-Forwarded-For", "X-Real-IP", "User-Agent", "Referer",
@@ -38,7 +38,8 @@ public class WebConfig implements WebMvcConfigurer {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "http://127.0.0.1:3000",
-                "http://127.0.0.1:8080"
+                "http://127.0.0.1:8080",
+                "http://93d7k45123.goho.co:44966"
         ));
 
         // 允许的HTTP方法

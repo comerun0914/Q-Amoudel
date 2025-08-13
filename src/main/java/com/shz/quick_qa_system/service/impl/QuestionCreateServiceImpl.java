@@ -507,16 +507,16 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
         }
         queryWrapper.orderByDesc("created_time");
-        
-        System.out.println("执行分页查询...");
+//
+//        System.out.println("执行分页查询...");
         IPage<QuestionCreate> result = page(pageParam, queryWrapper);
-        
-        System.out.println("分页查询结果：");
-        System.out.println("  result.getRecords().size(): " + result.getRecords().size());
-        System.out.println("  result.getCurrent(): " + result.getCurrent());
-        System.out.println("  result.getSize(): " + result.getSize());
-        System.out.println("  result.getTotal(): " + result.getTotal());
-        System.out.println("  result.getPages(): " + result.getPages());
+//
+//        System.out.println("分页查询结果：");
+//        System.out.println("  result.getRecords().size(): " + result.getRecords().size());
+//        System.out.println("  result.getCurrent(): " + result.getCurrent());
+//        System.out.println("  result.getSize(): " + result.getSize());
+//        System.out.println("  result.getTotal(): " + result.getTotal());
+//        System.out.println("  result.getPages(): " + result.getPages());
         
         Map<String, Object> response = new HashMap<>();
         response.put("list", result.getRecords());
@@ -525,13 +525,13 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         response.put("totalCount", (int) result.getTotal());
         response.put("totalPages", (int) result.getPages());
         
-        System.out.println("返回的响应：");
-        System.out.println("  list.size(): " + ((List<?>) response.get("list")).size());
-        System.out.println("  currentPage: " + response.get("currentPage"));
-        System.out.println("  pageSize: " + response.get("pageSize"));
-        System.out.println("  totalCount: " + response.get("totalCount"));
-        System.out.println("  totalPages: " + response.get("totalPages"));
-        System.out.println("=== 分页查询结束 ===");
+//        System.out.println("返回的响应：");
+//        System.out.println("  list.size(): " + ((List<?>) response.get("list")).size());
+//        System.out.println("  currentPage: " + response.get("currentPage"));
+//        System.out.println("  pageSize: " + response.get("pageSize"));
+//        System.out.println("  totalCount: " + response.get("totalCount"));
+//        System.out.println("  totalPages: " + response.get("totalPages"));
+//        System.out.println("=== 分页查询结束 ===");
         
         return response;
     }

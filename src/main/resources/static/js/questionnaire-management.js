@@ -395,11 +395,11 @@ function showEmptyState() {
             <td colspan="8">
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>
-                    <h3>暂无问卷数据</h3>
-                    <p>您还没有创建任何问卷，点击"创建问卷"开始您的第一个问卷吧！</p>
-                    <button class="btn-create" onclick="window.location.href='manual-create-questionnaire.html'">
-                        <i class="fas fa-plus"></i>
-                        创建问卷
+                    <h3>暂无问卷记录</h3>
+                    <p>您还没有填写过任何问卷，快去填写一些问卷吧！</p>
+                    <button class="btn-create" onclick="window.location.href='ask-user.html'">
+                        <i class="fas fa-search"></i>
+                        查找问卷
                     </button>
                 </div>
             </td>

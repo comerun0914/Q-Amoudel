@@ -45,6 +45,11 @@ const confirmModal = document.getElementById('confirmModal');
 
 // 初始化页面
 document.addEventListener('DOMContentLoaded', function() {
+    // 保存页面链接，用于登录后跳转
+    const currentUrl = window.location.href;
+    console.log('用户未登录，保存当前访问URL:', currentUrl);
+    UTILS.setStorage(CONFIG.STORAGE_KEYS.ORIGINAL_URL, currentUrl);
+    UTILS.startAutoAuthCheck();
     initQuestionnaire();
     setupEventListeners();
     startTimer();
@@ -106,8 +111,14 @@ async function loadQuestionnaireData(id, link, code) {
                     description: questionnaireInfo.description,
                     questions: questions,
                     startTime: new Date().toLocaleString('zh-CN'),
-                    estimatedTime: '15分钟'
+                    estimatedTime: '15分钟',
+                    submissionLimit: questionnaireInfo.submissionLimit || 1 // 添加提交次数限制
                 };
+                
+                // 检查用户剩余提交次数
+                if (userInfo && userInfo.id) {
+                    await checkUserSubmissionLimit(id, userInfo.id);
+                }
             } else {
                 throw new Error('获取问卷数据失败');
             }
@@ -154,14 +165,15 @@ async function loadQuestionnaireData(id, link, code) {
                     {
                         id: 5,
                         type: 'matrix',
-                        text: '请评价以下各项能力：',
-                        rows: ['语言表达', '数学思维', '社交能力', '创造力'],
-                        columns: ['很差', '较差', '一般', '较好', '很好'],
+                        text: '请评价您孩子在不同方面的表现：',
+                        rows: ['语言能力', '数学能力', '社交能力', '创造力'],
+                        columns: ['优秀', '良好', '一般', '需要改进'],
                         required: true
                     }
                 ],
                 startTime: new Date().toLocaleString('zh-CN'),
-                estimatedTime: '10分钟'
+                estimatedTime: '15分钟',
+                submissionLimit: 1
             };
         }
         
@@ -171,10 +183,50 @@ async function loadQuestionnaireData(id, link, code) {
         document.getElementById('startTime').textContent = questionnaireData.startTime;
         document.getElementById('estimatedTime').textContent = questionnaireData.estimatedTime;
         
+        // 显示剩余提交次数信息
+        if (userInfo && userInfo.id && questionnaireData.submissionLimit) {
+            displaySubmissionLimitInfo();
+        }
+        
     } catch (error) {
         console.error('加载问卷数据失败:', error);
         // 显示错误信息
         showErrorMessage('加载问卷数据失败，请检查网络连接或联系管理员');
+    }
+}
+
+/**
+ * 显示剩余提交次数信息
+ */
+async function displaySubmissionLimitInfo() {
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_CHECK}?questionnaireId=${questionnaireData.id}&userId=${userInfo.id}`);
+        const result = await response.json();
+        
+        if (result.code === 200 && result.data) {
+            const { remainingTimes, submissionLimit } = result.data;
+            
+            // 在问卷标题下方显示剩余次数信息
+            const titleElement = document.getElementById('questionnaireTitle');
+            if (titleElement) {
+                const limitInfoElement = document.createElement('div');
+                limitInfoElement.className = 'submission-limit-info';
+                limitInfoElement.innerHTML = `
+                    <div class="limit-info-content">
+                        <span class="limit-label">填写次数限制：</span>
+                        <span class="limit-value ${remainingTimes <= 0 ? 'limit-reached' : remainingTimes <= 2 ? 'limit-warning' : 'limit-ok'}">
+                            ${remainingTimes <= 0 ? '已达到限制' : `剩余 ${remainingTimes} 次`}
+                        </span>
+                        <span class="limit-total">（总共 ${submissionLimit} 次）</span>
+                    </div>
+                `;
+                
+                // 在标题后插入
+                titleElement.parentNode.insertBefore(limitInfoElement, titleElement.nextSibling);
+            }
+        }
+    } catch (error) {
+        console.error('获取提交次数信息失败:', error);
     }
 }
 
@@ -1139,3 +1191,79 @@ window.saveTimeAnswer = function(questionId, value) {
     saveAnswers();
     saveDraftDebounced();
 }; 
+
+/**
+ * 检查用户剩余提交次数
+ */
+async function checkUserSubmissionLimit(questionnaireId, userId) {
+    try {
+        // 调用后端API检查用户剩余提交次数
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_CHECK}?questionnaireId=${questionnaireId}&userId=${userId}`);
+        const result = await response.json();
+        
+        if (result.code === 200 && result.data) {
+            const { remainingTimes, submissionLimit, canSubmit } = result.data;
+            
+            // 如果剩余次数为0，阻止填写
+            if (!canSubmit || remainingTimes <= 0) {
+                showSubmissionLimitError(submissionLimit);
+                return false;
+            }
+            
+            // 如果剩余次数较少，显示提醒
+            if (remainingTimes <= 2) {
+                showSubmissionLimitWarning(remainingTimes, submissionLimit);
+            }
+            
+            return true;
+        } else {
+            console.warn('检查提交次数失败:', result.message);
+            return true; // 如果检查失败，允许继续填写
+        }
+    } catch (error) {
+        console.error('检查提交次数时发生错误:', error);
+        return true; // 如果检查失败，允许继续填写
+    }
+}
+
+/**
+ * 显示提交次数限制错误
+ */
+function showSubmissionLimitError(submissionLimit) {
+    // 隐藏问卷内容
+    const questionsContainer = document.getElementById('questionsContainer');
+    const navigationButtons = document.getElementById('navigationButtons');
+    const submitSection = document.getElementById('submitSection');
+    
+    if (questionsContainer) questionsContainer.style.display = 'none';
+    if (navigationButtons) navigationButtons.style.display = 'none';
+    if (submitSection) submitSection.style.display = 'none';
+    
+    // 显示错误信息
+    const errorContainer = document.getElementById('errorContainer');
+    if (errorContainer) {
+        errorContainer.style.display = 'block';
+        const errorMessage = document.getElementById('errorMessage');
+        if (errorMessage) {
+            errorMessage.textContent = `您已达到该问卷的填写次数限制（${submissionLimit}次），无法继续填写。`;
+        }
+    }
+    
+    // 显示返回按钮
+    const btnBack = document.getElementById('btnBack');
+    if (btnBack) {
+        btnBack.style.display = 'block';
+        btnBack.textContent = '返回问卷列表';
+        btnBack.onclick = () => {
+            window.location.href = CONFIG.ROUTES.ASK_USER;
+        };
+    }
+}
+
+/**
+ * 显示提交次数限制警告
+ */
+function showSubmissionLimitWarning(remainingTimes, submissionLimit) {
+    const warningMessage = `注意：您对该问卷的剩余填写次数为 ${remainingTimes} 次（总共 ${submissionLimit} 次）`;
+    showToast(warningMessage, 'warning');
+} 

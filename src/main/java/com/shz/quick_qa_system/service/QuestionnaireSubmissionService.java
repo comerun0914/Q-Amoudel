@@ -39,4 +39,23 @@ public interface QuestionnaireSubmissionService extends IService<QuestionnaireSu
      * @return 是否已提交
      */
     boolean hasIpSubmitted(Integer questionnaireId, String ipAddress);
+
+    /**
+     * 获取用户已提交的问卷列表
+     * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页大小
+     * @param keyword 关键词
+     * @param dateFilter 日期筛选
+     * @return 问卷列表和分页信息
+     */
+    Map<String, Object> getUserSubmittedQuestionnaires(Integer userId, Integer page, Integer size, String keyword, String dateFilter);
+    
+    /**
+     * 检查用户剩余提交次数
+     * @param questionnaireId 问卷ID
+     * @param userId 用户ID
+     * @return 包含剩余次数和提交限制的Map
+     */
+    Map<String, Object> checkUserSubmissionLimit(Integer questionnaireId, Integer userId);
 }
