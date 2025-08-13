@@ -1,5 +1,4 @@
 package com.shz.quick_qa_system.utils;
-
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.MultiFormatWriter;

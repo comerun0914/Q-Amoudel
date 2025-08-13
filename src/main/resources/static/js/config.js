@@ -1,8 +1,9 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://93d7k45123.goho.co:48134/api',
-
+    // BACKEND_BASE_URL: 'http://93d7k45123.goho.co:48134/api',
+    // 测试专用
+    BACKEND_BASE_URL: 'http://localhost:7070/api',
     // API端点配置
     API_ENDPOINTS: {
         // 用户相关
@@ -16,6 +17,7 @@ const CONFIG = {
         QUESTIONNAIRE_DETAIL: '/questionCreate/detail',
         QUESTIONNAIRE_GETINFOBYID: '/questionCreate/getInfoById',
         QUESTIONNAIRE_QUESTIONS: '/questionCreate/questions',
+        QUESTIONNAIRE_ALL: '/questionCreate/all',
         QUESTIONNAIRE_CREATE: '/questionCreate/create',
         QUESTIONNAIRE_UPDATE: '/questionCreate/update',
         QUESTIONNAIRE_DELETE: '/questionCreate/delete',
@@ -28,7 +30,13 @@ const CONFIG = {
         QUESTIONNAIRE_FILL: '/questionCreate/fill',
         QUESTIONNAIRE_SUBMIT: '/questionCreate/submit',
         QUESTIONNAIRE_RESULT: '/questionCreate/result',
-        QUESTIONNAIRE_RESULTS: '/questionCreate/results',
+		QUESTIONNAIRE_RESULTS: '/questionCreate/results',
+
+		// 问卷提交与草稿（前端基础地址已含 /api，这里不再重复 /api 前缀）
+		SUBMISSION_SUBMIT: '/submission/submit',
+		SUBMISSION_SAVE_DRAFT: '/submission/saveDraft',
+		SUBMISSION_GET_DRAFT: '/submission/getDraft',
+		SUBMISSION_CHECK: '/submission/checkSubmission',
 
         // 题目相关
         QUESTION_SAVE: '/question/save',
@@ -46,7 +54,7 @@ const CONFIG = {
         SINGLE_CHOICE_OPTION_UPDATE: '/singleChoiceOption/update',
         SINGLE_CHOICE_OPTION_DELETE: '/singleChoiceOption/delete',
         SINGLE_CHOICE_OPTION_DELETE_BY_QUESTION: '/singleChoiceOption/deleteByQuestionId',
-        
+
         MULTIPLE_CHOICE_OPTION_SAVE: '/multipleChoiceOption/save',
         MULTIPLE_CHOICE_OPTION_BATCH_SAVE: '/multipleChoiceOption/batchSave',
         MULTIPLE_CHOICE_OPTION_LIST: '/multipleChoiceOption/listByQuestionId',
@@ -59,7 +67,7 @@ const CONFIG = {
 
         // 文件上传
         UPLOAD_FILE: '/upload/file',
-        
+
         // 二维码相关
         QRCODE_GENERATE: '/code/generateQRcode'
     },
@@ -74,7 +82,7 @@ const CONFIG = {
             RATING: 4,      // 评分题
             MATRIX: 5       // 矩阵题
         },
-        
+
         // 题目类型名称映射
         TYPE_NAMES: {
             single: '单选题',
@@ -83,7 +91,7 @@ const CONFIG = {
             rating: '评分题',
             matrix: '矩阵题'
         },
-        
+
         // 题目类型接口映射
         TYPE_ENDPOINTS: {
             single: {
@@ -722,29 +730,29 @@ const UTILS = {
                 format: 'png',
                 quality: 0.8
             };
-            
+
             const config = { ...defaultOptions, ...options };
-            
+
             // 创建表单数据
             const formData = new FormData();
             formData.append('content', content);
-            
+
             // 调用后端接口生成二维码
             const response = await fetch(CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QRCODE_GENERATE, {
                 method: 'POST',
                 body: formData
             });
-            
+
             if (!response.ok) {
                 throw new Error(`二维码生成失败: HTTP ${response.status}`);
             }
-            
+
             // 将响应转换为Blob
             const blob = await response.blob();
-            
+
             // 创建图片URL
             const imageUrl = URL.createObjectURL(blob);
-            
+
             return {
                 success: true,
                 imageUrl: imageUrl,
@@ -752,7 +760,7 @@ const UTILS = {
                 size: blob.size,
                 content: content
             };
-            
+
         } catch (error) {
             console.error('生成二维码失败:', error);
             return {
@@ -767,13 +775,13 @@ const UTILS = {
         try {
             // 构建问卷分享链接
             const shareUrl = `${baseUrl}/questionnaire-fill.html?id=${questionnaireId}`;
-            
+
             // 生成二维码
             const result = await this.generateQRCode(shareUrl, {
                 width: 300,
                 height: 300
             });
-            
+
             if (result.success) {
                 return {
                     ...result,
@@ -783,7 +791,7 @@ const UTILS = {
             } else {
                 throw new Error(result.error);
             }
-            
+
         } catch (error) {
             console.error('生成问卷分享二维码失败:', error);
             return {
@@ -815,7 +823,7 @@ const UTILS = {
             // 优先使用现代 Clipboard API
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(text);
-                
+
                 // 验证复制是否成功（如果支持读取剪贴板）
                 if (navigator.clipboard && navigator.clipboard.readText) {
                     try {
@@ -845,7 +853,7 @@ const UTILS = {
             // 创建临时文本区域
             const textArea = document.createElement('textarea');
             textArea.value = text;
-            
+
             // 设置样式，使其不可见
             textArea.style.position = 'fixed';
             textArea.style.left = '-999999px';
@@ -853,18 +861,18 @@ const UTILS = {
             textArea.style.opacity = '0';
             textArea.style.pointerEvents = 'none';
             textArea.style.zIndex = '-1';
-            
+
             document.body.appendChild(textArea);
-            
+
             // 选择文本并复制
             textArea.focus();
             textArea.select();
-            
+
             const successful = document.execCommand('copy');
-            
+
             // 移除临时元素
             document.body.removeChild(textArea);
-            
+
             if (successful) {
                 return true;
             } else {
@@ -900,7 +908,7 @@ const UTILS = {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
     },
 
@@ -1146,26 +1154,26 @@ const UTILS = {
         // 定义复制链接处理函数
         window.handleCopyLink = async function(url, button) {
             if (!button) return;
-            
+
             // 保存原始按钮状态
             const originalText = button.innerHTML;
             const originalClass = button.className;
-            
+
             // 显示复制中状态
             button.innerHTML = '⏳ 复制中...';
             button.disabled = true;
             button.style.opacity = '0.7';
-            
+
             try {
                 // 尝试复制
                 const success = await UTILS.copyToClipboard(url);
-                
+
                 if (success) {
                     // 复制成功
                     button.innerHTML = '✅ 已复制';
                     button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-success');
                     UTILS.showToast('链接已复制到剪贴板！', 'success');
-                    
+
                     // 2秒后恢复原始状态
                     setTimeout(() => {
                         button.innerHTML = originalText;
@@ -1178,7 +1186,7 @@ const UTILS = {
                     button.innerHTML = '❌ 复制失败';
                     button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-secondary');
                     UTILS.showToast('复制失败，请手动复制', 'error');
-                    
+
                     // 3秒后恢复原始状态
                     setTimeout(() => {
                         button.innerHTML = originalText;
@@ -1193,7 +1201,7 @@ const UTILS = {
                 button.innerHTML = '❌ 复制失败';
                 button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-secondary');
                 UTILS.showToast('复制失败，请手动复制', 'error');
-                
+
                 // 3秒后恢复原始状态
                 setTimeout(() => {
                     button.innerHTML = originalText;
@@ -1212,23 +1220,23 @@ window.UTILS = UTILS;
 
 /*
  * API使用示例：
- * 
+ *
  * // 获取问卷预览数据
  * fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_PREVIEW}?questionnaireId=123`)
  *   .then(response => response.json())
  *   .then(data => console.log(data));
- * 
+ *
  * // 获取题目类型列表
  * fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTION_TYPES}`)
  *   .then(response => response.json())
  *   .then(data => console.log(data));
- * 
+ *
  * // 使用工具函数获取完整API URL（自动添加userId）
  * const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTION_SAVE);
  * fetch(url, { method: 'POST', body: JSON.stringify(data) });
- * 
+ *
  * // 二维码生成使用示例：
- * 
+ *
  * // 生成普通二维码
  * UTILS.generateQRCode('https://www.example.com').then(result => {
  *   if (result.success) {
@@ -1237,7 +1245,7 @@ window.UTILS = UTILS;
  *     UTILS.showQRCodeModal(result, '示例二维码');
  *   }
  * });
- * 
+ *
  * // 生成问卷分享二维码
  * UTILS.generateQuestionnaireQRCode('123').then(result => {
  *   if (result.success) {
@@ -1246,7 +1254,7 @@ window.UTILS = UTILS;
  *     UTILS.showQRCodeModal(result, '问卷分享二维码');
  *   }
  * });
- * 
+ *
  * // 下载二维码
  * UTILS.downloadQRCode(imageUrl, 'my_qrcode.png');
  */
