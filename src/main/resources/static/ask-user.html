@@ -30,7 +30,7 @@
     <main>
         <div class="ask-container">
             <h1>填写问卷</h1>
-            
+
             <!-- 问卷输入方式选择 -->
             <div class="input-methods">
                 <div class="method-tabs">
@@ -38,7 +38,7 @@
                     <button class="method-tab" data-method="code">问卷代码</button>
                     <button class="method-tab" data-method="qr">二维码扫描</button>
                 </div>
-                
+
                 <!-- 链接输入方式 -->
                 <div class="method-content active" id="link-method">
                     <div class="input-section">
@@ -50,7 +50,7 @@
                         <p class="input-hint">请从问卷发布者处获取完整的问卷链接</p>
                     </div>
                 </div>
-                
+
                 <!-- 问卷代码输入方式 -->
                 <div class="method-content" id="code-method">
                     <div class="input-section">
@@ -62,7 +62,7 @@
                         <p class="input-hint">问卷代码通常为6位字母数字组合</p>
                     </div>
                 </div>
-                
+
                 <!-- 二维码扫描方式 -->
                 <div class="method-content" id="qr-method">
                     <div class="qr-section">
@@ -88,7 +88,7 @@
                                 <button class="btn-secondary" onclick="hideMobilePermissionHint()">我知道了</button>
                             </div>
                         </div>
-                        
+
                         <div class="qr-container">
                             <div id="qr-reader"></div>
                             <div class="qr-overlay" id="qr-overlay">
@@ -98,7 +98,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="qr-controls">
                             <button class="btn-primary" id="start-scan">开始扫描</button>
                             <button class="btn-secondary" id="stop-scan" style="display: none;">停止扫描</button>
@@ -111,21 +111,22 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- 最近填写的问卷 -->
             <div class="recent-section">
                 <h2>最近填写的问卷</h2>
                 <div class="recent-list" id="recent-list">
                     <!-- 最近填写的问卷将通过JavaScript动态生成 -->
                 </div>
+
             </div>
-            
+
             <!-- 历史记录按钮 -->
             <div class="history-section">
                 <button class="btn-secondary" id="view-all-history">查看所有历史记录</button>
             </div>
         </div>
-        
+
         <!-- 历史记录模态框 -->
         <div class="modal" id="history-modal">
             <div class="modal-content">
@@ -157,4 +158,4 @@
     <script src="js/config.js"></script>
     <script src="js/ask-user.js"></script>
 </body>
-</html> 
+</html>

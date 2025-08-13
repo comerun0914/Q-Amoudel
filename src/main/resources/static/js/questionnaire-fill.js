@@ -22,6 +22,11 @@ let currentQuestionIndex = 0;
 let timer = null;
 let startTime = null;
 
+// 用户与会话
+const userInfo = (window.UTILS && UTILS.getUserInfo && UTILS.getUserInfo()) || null;
+const sessionId = getOrCreateSessionId();
+const saveDraftDebounced = (window.UTILS && UTILS.debounce) ? UTILS.debounce(saveDraftToServer, 800) : saveDraftToServer;
+
 // DOM元素
 const btnBack = document.getElementById('btnBack');
 const btnSave = document.getElementById('btnSave');
@@ -59,8 +64,8 @@ async function initQuestionnaire() {
         // 加载问卷数据
         await loadQuestionnaireData(questionnaireId, link, code);
         
-        // 加载保存的答案
-        loadSavedAnswers();
+        // 加载保存的答案（优先从服务端草稿，其次本地）
+        await loadSavedAnswers();
         
         // 渲染问卷
         renderQuestionnaire();
@@ -70,6 +75,14 @@ async function initQuestionnaire() {
         
         // 更新进度
         updateProgress();
+
+        // 显示内容，隐藏加载
+        const loading = document.getElementById('loadingContainer');
+        const qc = document.getElementById('questionsContainer');
+        const nav = document.getElementById('navigationButtons');
+        if (loading) loading.style.display = 'none';
+        if (qc) qc.style.display = 'block';
+        if (nav) nav.style.display = 'flex';
     } catch (error) {
         console.error('初始化问卷失败:', error);
         showErrorMessage('初始化问卷失败，请刷新页面重试');
@@ -561,9 +574,11 @@ function setupEventListeners() {
 function handleBack() {
     if (hasUnsavedChanges()) {
         showConfirmModal('确认离开', '您有未保存的答案，确定要离开吗？', () => {
+            window.__allowLeave__ = true;
             window.location.href = CONFIG.ROUTES.ASK_USER;
         });
     } else {
+        window.__allowLeave__ = true;
         window.location.href = CONFIG.ROUTES.ASK_USER;
     }
 }
@@ -571,8 +586,9 @@ function handleBack() {
 /**
  * 处理保存
  */
-function handleSave() {
+async function handleSave() {
     saveAnswers();
+    await saveDraftToServer();
     showToast('草稿已保存');
 }
 
@@ -625,14 +641,15 @@ function handleReview() {
  * 处理确认
  */
 function handleConfirm() {
-    if (confirmModal.dataset.action) {
-        const action = confirmModal.dataset.action;
-        const callback = confirmModal.dataset.callback;
-        
-        if (callback && typeof window[callback] === 'function') {
-            window[callback]();
-        }
+    const callback = confirmModal.dataset.callback;
+    
+    if (callback && typeof window[callback] === 'function') {
+        // 临时允许离开，避免 beforeunload 阻拦
+        window.__allowLeave__ = true;
+        window[callback]();
+        setTimeout(() => { window.__allowLeave__ = false; }, 1000);
     }
+    
     closeModal();
 }
 
@@ -641,6 +658,8 @@ function handleConfirm() {
  */
 function showSubmitSection() {
     document.getElementById('submitSection').style.display = 'block';
+    const nav = document.getElementById('navigationButtons');
+    if (nav) nav.style.display = 'none';
     renderAnswerSummary();
 }
 
@@ -709,34 +728,62 @@ function validateAnswers() {
 /**
  * 提交问卷
  */
-function submitQuestionnaire() {
-    // 模拟提交到后端
-    const submitData = {
-        questionnaireId: questionnaireData.id,
-        answers: userAnswers,
-        submitTime: new Date().toISOString(),
-        duration: getDuration()
+async function submitQuestionnaire() {
+    const payload = {
+        questionnaireId: Number(questionnaireData.id),
+        userId: userInfo && userInfo.id ? Number(userInfo.id) : null,
+        // 符合后端期望的时间字段
+        startTime: getStartTimeIso(),
+        durationSeconds: getDuration(),
+        // 符合后端期望的答案列表结构
+        answers: buildBackendAnswers(),
+        sessionId: sessionId
     };
-    
-    console.log('提交数据:', submitData);
-    
-    // 保存答案数据到localStorage，供预览页面使用
-    const previewData = {
-        questionnaire: questionnaireData,
-        answers: userAnswers,
-        submitTime: submitData.submitTime,
-        duration: submitData.duration
-    };
-    localStorage.setItem('questionnaire_preview_data', JSON.stringify(previewData));
-    
-    // 清除本地保存的答案
-    localStorage.removeItem(`questionnaire-${questionnaireData.id}-answers`);
-    
-    // 显示成功消息并跳转到预览页面
-    showToast('问卷提交成功！', 'success');
-    setTimeout(() => {
-        window.location.href = CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW;
-    }, 2000);
+
+    try {
+        const urls = [ `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_SUBMIT}` ];
+        let data = null;
+        for (let i = 0; i < urls.length; i++) {
+            try {
+                const res = await fetch(urls[i], {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                data = await res.json();
+                if (data && data.code === 200) break;
+            } catch (e) {
+                console.warn('提交尝试失败: ', urls[i], e);
+            }
+        }
+        if (data && data.code === 200) {
+            // 提交成功后清除本地草稿
+            localStorage.removeItem(`questionnaire-${questionnaireData.id}-answers`);
+            
+            // 关闭确认弹窗
+            closeModal();
+            
+            // 显示成功反馈
+            showToast('问卷提交成功！正在跳转...', 'success');
+            
+            // 延迟跳转，让用户看到成功提示
+            setTimeout(() => {
+                // 临时允许离开，避免 beforeunload 阻拦
+                window.__allowLeave__ = true;
+                // 返回用户界面
+                window.location.href = CONFIG.ROUTES.ASK_USER;
+            }, 2000);
+        } else {
+            // 关闭确认弹窗
+            closeModal();
+            showToast((data && data.message) || '提交失败，请稍后再试', 'error');
+        }
+    } catch (e) {
+        console.error('提交失败:', e);
+        // 关闭确认弹窗
+        closeModal();
+        showToast('提交失败，请检查网络后重试', 'error');
+    }
 }
 
 /**
@@ -749,7 +796,37 @@ function saveAnswers() {
 /**
  * 加载保存的答案
  */
-function loadSavedAnswers() {
+async function loadSavedAnswers() {
+    // 优先从服务端草稿加载
+    try {
+        if (questionnaireData.id) {
+            const params = new URLSearchParams();
+            params.set('questionnaireId', questionnaireData.id);
+            if (userInfo && userInfo.id) params.set('userId', userInfo.id);
+            if (sessionId) params.set('sessionId', sessionId);
+            const url = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_GET_DRAFT}?${params.toString()}`;
+            const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            const data = await res.json();
+            if (data && data.code === 200 && data.data) {
+                if (data.data.answers) {
+                    userAnswers = data.data.answers;
+                    return;
+                }
+                if (data.data.answersList && Array.isArray(data.data.answersList)) {
+                    userAnswers = convertAnswerListToMap(data.data.answersList);
+                    return;
+                }
+                if (data.data.answersMap) {
+                    userAnswers = data.data.answersMap;
+                    return;
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('从服务端加载草稿失败，使用本地草稿:', e);
+    }
+
+    // 本地草稿回退
     const saved = localStorage.getItem(`questionnaire-${questionnaireData.id}-answers`);
     if (saved) {
         try {
@@ -758,6 +835,110 @@ function loadSavedAnswers() {
             console.error('加载保存的答案失败:', error);
             userAnswers = {};
         }
+    }
+}
+
+// 将本地答案保存到服务端草稿
+async function saveDraftToServer() {
+    try {
+        if (!questionnaireData.id) return;
+        const payload = {
+            questionnaireId: Number(questionnaireData.id),
+            userId: userInfo && userInfo.id ? Number(userInfo.id) : null,
+            answers: userAnswers,
+            answersList: buildAnswerList(),
+            saveTime: new Date().toISOString(),
+            progress: getProgressPercent(),
+            sessionId: sessionId
+        };
+        await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_SAVE_DRAFT}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.warn('保存草稿到服务端失败:', e);
+    }
+}
+
+// 构建提交的答案列表，便于后端解析
+function buildAnswerList() {
+    const list = [];
+    (questionnaireData.questions || []).forEach(q => {
+        const ans = userAnswers[q.id];
+        if (ans === undefined) return;
+        list.push({
+            questionId: Number(q.id),
+            type: q.type,
+            answer: ans
+        });
+    });
+    return list;
+}
+
+// 构建符合后端的 answers 数组
+function buildBackendAnswers() {
+    const answers = [];
+    (questionnaireData.questions || []).forEach(q => {
+        const ans = userAnswers[q.id];
+        if (ans === undefined) return;
+        const typeId = getBackendTypeId(q.type);
+        const one = { questionId: Number(q.id), questionType: typeId };
+        if (q.type === 'single' || q.type === 'rating') {
+            one.answerValue = typeof ans === 'number' ? ans : null;
+            one.answerText = null;
+        } else if (q.type === 'multiple') {
+            const arr = Array.isArray(ans) ? ans : [];
+            one.answerJson = JSON.stringify(arr);
+            one.answerText = null;
+        } else if (q.type === 'text' || q.type === 'date' || q.type === 'time') {
+            one.answerText = String(ans);
+        } else if (q.type === 'matrix') {
+            one.answerJson = JSON.stringify(ans);
+            one.answerText = null;
+        } else {
+            one.answerText = typeof ans === 'string' ? ans : JSON.stringify(ans);
+        }
+        answers.push(one);
+    });
+    return answers;
+}
+
+function getBackendTypeId(frontType) {
+    const map = { single: 1, multiple: 2, text: 3, rating: 4, matrix: 5, date: 6, time: 7 };
+    return map[frontType] || 3;
+}
+
+function getStartTimeIso() {
+    try {
+        const now = new Date();
+        const started = new Date(now.getTime() - getDuration() * 1000);
+        return started.toISOString().replace('Z', '');
+    } catch (e) {
+        return new Date().toISOString().replace('Z', '');
+    }
+}
+
+function convertAnswerListToMap(answerList) {
+    const map = {};
+    answerList.forEach(item => {
+        if (item && (item.questionId !== undefined)) {
+            map[item.questionId] = item.answer;
+        }
+    });
+    return map;
+}
+
+function getOrCreateSessionId() {
+    try {
+        let id = localStorage.getItem('fill_session_id');
+        if (!id) {
+            id = 'sess_' + Math.random().toString(36).slice(2) + Date.now();
+            localStorage.setItem('fill_session_id', id);
+        }
+        return id;
+    } catch (e) {
+        return 'sess_' + Date.now();
     }
 }
 
@@ -772,7 +953,7 @@ function hasUnsavedChanges() {
  * 页面离开前处理
  */
 function handleBeforeUnload(event) {
-    if (hasUnsavedChanges()) {
+    if (hasUnsavedChanges() && !window.__allowLeave__) {
         event.preventDefault();
         event.returnValue = '您有未保存的答案，确定要离开吗？';
         return event.returnValue;
@@ -807,6 +988,13 @@ function getDuration() {
     return 0;
 }
 
+function getProgressPercent() {
+    const totalQuestions = questionnaireData.questions.length || 0;
+    const answeredQuestions = Object.keys(userAnswers).length;
+    if (totalQuestions === 0) return 0;
+    return Math.round((answeredQuestions / totalQuestions) * 100);
+}
+
 /**
  * 显示Toast提示
  */
@@ -830,7 +1018,9 @@ function showConfirmModal(title, message, callback) {
     confirmModal.classList.add('show');
     
     if (callback) {
-        confirmModal.dataset.callback = callback.name;
+        // 将回调挂到全局，避免名称丢失
+        window.__confirmCallback__ = callback;
+        confirmModal.dataset.callback = '__confirmCallback__';
     }
 }
 
@@ -846,6 +1036,8 @@ function closeModal() {
 window.selectRadioOption = function(questionId, optionIndex) {
     userAnswers[questionId] = optionIndex;
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.toggleCheckboxOption = function(questionId, optionIndex) {
@@ -860,11 +1052,15 @@ window.toggleCheckboxOption = function(questionId, optionIndex) {
         userAnswers[questionId].push(optionIndex);
     }
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.saveTextAnswer = function(questionId, value) {
     userAnswers[questionId] = value;
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.setRating = function(questionId, rating) {
@@ -878,6 +1074,8 @@ window.setRating = function(questionId, rating) {
     });
     
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.saveMatrixAnswer = function(questionId, rowIndex, colIndex) {
@@ -886,14 +1084,20 @@ window.saveMatrixAnswer = function(questionId, rowIndex, colIndex) {
     }
     userAnswers[questionId][rowIndex] = colIndex;
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.saveDateAnswer = function(questionId, value) {
     userAnswers[questionId] = value;
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 };
 
 window.saveTimeAnswer = function(questionId, value) {
     userAnswers[questionId] = value;
     updateProgress();
+    saveAnswers();
+    saveDraftDebounced();
 }; 

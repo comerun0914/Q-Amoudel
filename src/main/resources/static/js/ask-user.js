@@ -1,55 +1,8 @@
-// 模拟数据
-let recentQuestionnaires = [
-    {
-        id: 1,
-        title: "幼儿学习能力评估问卷",
-        description: "本问卷旨在了解幼儿的学习能力、认知发展水平和学习兴趣",
-        status: "in-progress",
-        progress: 60,
-        lastAccess: "2025-01-15 14:30"
-    },
-    {
-        id: 2,
-        title: "幼儿健康状况调查",
-        description: "了解幼儿的身体健康状况、饮食习惯和运动情况",
-        status: "completed",
-        progress: 100,
-        lastAccess: "2025-01-10 09:15"
-    }
-];
+// 从数据库获取的问卷数据
+let recentQuestionnaires = [];
 
-let historyQuestionnaires = [
-    {
-        id: 1,
-        title: "幼儿学习能力评估问卷",
-        description: "本问卷旨在了解幼儿的学习能力、认知发展水平和学习兴趣",
-        status: "in-progress",
-        progress: 60,
-        startDate: "2025-01-15",
-        lastAccess: "2025-01-15 14:30",
-        estimatedTime: "15分钟"
-    },
-    {
-        id: 2,
-        title: "幼儿健康状况调查",
-        description: "了解幼儿的身体健康状况、饮食习惯和运动情况",
-        status: "completed",
-        progress: 100,
-        startDate: "2025-01-10",
-        lastAccess: "2025-01-10 09:15",
-        estimatedTime: "10分钟"
-    },
-    {
-        id: 3,
-        title: "幼儿行为习惯观察问卷",
-        description: "通过观察和记录幼儿的日常行为习惯，分析其性格特点",
-        status: "expired",
-        progress: 30,
-        startDate: "2024-12-01",
-        lastAccess: "2024-12-15 16:45",
-        estimatedTime: "20分钟"
-    }
-];
+// 后端拉取的历史记录（提交+草稿）
+let historyQuestionnaires = [];
 
 // 二维码扫描器实例
 let html5QrcodeScanner = null;
@@ -80,7 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 检查用户登录状态
     checkUserLoginStatus();
     
-    renderRecentQuestionnaires();
+    // 从数据库获取问卷数据
+    loadQuestionnairesFromDatabase();
+    
     setupEventListeners();
     
     // 检测设备类型并显示相应的权限提示
@@ -98,6 +53,99 @@ function checkUserLoginStatus() {
         UTILS.displayUserInfo(userInfo);
         // 绑定用户下拉菜单事件
         UTILS.bindUserDropdown();
+    }
+}
+
+/**
+ * 从数据库加载问卷数据
+ */
+async function loadQuestionnairesFromDatabase() {
+    try {
+        showMessage('正在加载问卷数据...', 'info');
+        
+        // 获取当前用户信息
+        const userInfo = UTILS.getUserInfo();
+        if (!userInfo || !userInfo.id) {
+            showMessage('用户信息获取失败', 'error');
+            return;
+        }
+        
+        // 使用 /all 接口获取所有问卷，不传入用户ID
+        const url = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_ALL}?page=1&size=50`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.code === 200 && data.data) {
+            // 兼容不同的数据结构
+            const questionnaireList = data.data.list || data.data;
+            // 转换数据库数据为前端需要的格式
+            recentQuestionnaires = questionnaireList.map(questionnaire => ({
+                id: questionnaire.id,
+                title: questionnaire.title || '未命名问卷',
+                description: questionnaire.description || '暂无描述',
+                status: getQuestionnaireStatus(questionnaire.status),
+                progress: 0, // 默认进度为0
+                lastAccess: formatDateTime(questionnaire.createdTime),
+                startDate: questionnaire.startDate,
+                endDate: questionnaire.endDate,
+                creatorId: questionnaire.creatorId,
+                createdTime: questionnaire.createdTime,
+                updatedTime: questionnaire.updatedTime
+            }));
+            
+            showMessage('问卷数据加载成功', 'success');
+        } else {
+            showMessage(data.message || '加载问卷数据失败', 'error');
+        }
+    } catch (error) {
+        console.error('加载问卷数据失败:', error);
+        showMessage('加载问卷数据失败，请检查网络连接', 'error');
+    } finally {
+        // 渲染问卷列表
+        renderRecentQuestionnaires();
+    }
+}
+
+/**
+ * 获取问卷状态文本
+ */
+function getQuestionnaireStatus(status) {
+    switch (status) {
+        case 0:
+            return 'disabled';
+        case 1:
+            return 'active';
+        case 2:
+            return 'draft';
+        default:
+            return 'unknown';
+    }
+}
+
+/**
+ * 格式化日期时间
+ */
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '未知时间';
+    
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return '未知时间';
     }
 }
 
@@ -641,22 +689,63 @@ function renderRecentQuestionnaires() {
 function createRecentItem(questionnaire) {
     const statusText = getStatusText(questionnaire.status);
     const statusClass = `status-${questionnaire.status}`;
-    const buttonText = questionnaire.status === 'completed' ? '查看结果' : '继续填写';
-    const buttonAction = questionnaire.status === 'completed' ? 'viewResult' : 'continueFill';
+    const buttonText = getButtonText(questionnaire.status);
+    const buttonAction = getButtonAction(questionnaire.status);
 
     return `
         <div class="recent-item">
             <h3>${questionnaire.title}</h3>
             <p>${questionnaire.description}</p>
             <div class="recent-meta">
-                <span>进度: ${questionnaire.progress}%</span>
-                <span>${questionnaire.lastAccess}</span>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+                <span>创建时间: ${questionnaire.lastAccess}</span>
+            </div>
+            <div class="recent-meta">
+                <span>问卷ID: ${questionnaire.id}</span>
+                <span>创建者ID: ${questionnaire.creatorId || '未知'}</span>
             </div>
             <button class="btn-continue" onclick="${buttonAction}(${questionnaire.id})">
                 ${buttonText}
             </button>
         </div>
     `;
+}
+
+/**
+ * 获取按钮文本
+ */
+function getButtonText(status) {
+    switch (status) {
+        case 'active':
+            return '开始填写';
+        case 'disabled':
+            return '问卷已禁用';
+        case 'draft':
+            return '问卷草稿';
+        default:
+            return '查看详情';
+    }
+}
+
+/**
+ * 获取按钮动作
+ */
+function getButtonAction(status) {
+    switch (status) {
+        case 'active':
+            return 'startFill';
+        case 'disabled':
+            return 'showDisabledMessage';
+        case 'draft':
+            return 'showDraftMessage';
+        default:
+            return 'viewDetail';
+    }
+}
+
+// 开始填写问卷
+function startFill(questionnaireId) {
+    window.location.href = `${CONFIG.ROUTES.QUESTIONNAIRE_FILL}?id=${questionnaireId}`;
 }
 
 // 继续填写问卷
@@ -669,10 +758,28 @@ function viewResult(questionnaireId) {
     window.location.href = `${CONFIG.ROUTES.QUESTIONNAIRE_RESULT}?id=${questionnaireId}`;
 }
 
+// 显示禁用消息
+function showDisabledMessage(questionnaireId) {
+    showMessage('该问卷已被禁用，无法填写', 'warning');
+}
+
+// 显示草稿消息
+function showDraftMessage(questionnaireId) {
+    showMessage('该问卷为草稿状态，无法填写', 'warning');
+}
+
+// 查看问卷详情
+function viewDetail(questionnaireId) {
+    window.location.href = `${CONFIG.ROUTES.QUESTIONNAIRE_PREVIEW}?id=${questionnaireId}`;
+}
+
 // 打开历史记录模态框
 function openHistoryModal() {
     historyModal.classList.add('active');
-    renderHistoryList();
+    // 打开时刷新一次用户历史
+    loadHistoryForUser().then(() => {
+        renderHistoryList();
+    }).catch(() => renderHistoryList());
 }
 
 // 关闭历史记录模态框
@@ -697,6 +804,71 @@ function renderHistoryList() {
     historyList.innerHTML = filteredHistory.map(questionnaire => 
         createHistoryItem(questionnaire)
     ).join('');
+}
+
+// 按用户拉取历史记录（已提交+草稿）
+async function loadHistoryForUser() {
+    try {
+        const user = UTILS.getUserInfo();
+        if (!user || !user.id) return;
+
+        const results = [];
+
+        // 1) 查询最近可填写/曾经填写过的问卷列表（用于补全标题描述）
+        const allUrl = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_ALL}?page=1&size=200`;
+        const allRes = await fetch(allUrl, { headers: { 'Content-Type': 'application/json' } });
+        const allData = await allRes.json();
+        const questionnaireMap = new Map();
+        if (allData && allData.code === 200) {
+            const list = allData.data.list || allData.data || [];
+            list.forEach(q => questionnaireMap.set(q.id, q));
+        }
+
+        // 2) 查询用户是否提交（单个问卷的“是否提交”接口已存在：/submission/checkSubmission），
+        //    这里没有后端批量列表接口，前端临时用草稿+全部问卷拼装：
+        //    2.1 尝试为每个问卷获取自身草稿（有则视为进行中）
+        const drafts = [];
+        for (const [qid] of questionnaireMap) {
+            const params = new URLSearchParams();
+            params.set('questionnaireId', qid);
+            params.set('userId', user.id);
+            const draftUrl = `${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.SUBMISSION_GET_DRAFT}?${params.toString()}`;
+            try {
+                const res = await fetch(draftUrl, { headers: { 'Content-Type': 'application/json' } });
+                const data = await res.json();
+                if (data && data.code === 200 && data.data) {
+                    drafts.push({ questionnaireId: qid, draft: data.data });
+                }
+            } catch (e) {
+                // 忽略单个失败
+            }
+        }
+
+        // 3) 生成历史列表：优先展示有草稿的为进行中，其余仅展示可填写为普通项
+        const merged = [];
+        for (const [qid, q] of questionnaireMap) {
+            const draftInfo = drafts.find(d => d.questionnaireId === qid);
+            const isDraft = !!draftInfo;
+            merged.push({
+                id: qid,
+                title: (q && q.title) || '未命名问卷',
+                description: (q && q.description) || '暂无描述',
+                status: isDraft ? 'in-progress' : getQuestionnaireStatus(q && q.status),
+                progress: isDraft ? (draftInfo.draft.progress || 0) : 0,
+                startDate: q && q.startDate,
+                lastAccess: UTILS.formatDate(q && (q.updatedTime || q.createdTime) || Date.now()),
+                estimatedTime: '—'
+            });
+        }
+
+        // 4) 去重（以问卷ID为主键）
+        const unique = new Map();
+        merged.forEach(item => unique.set(item.id, item));
+        historyQuestionnaires = Array.from(unique.values());
+
+    } catch (e) {
+        console.warn('加载用户历史记录失败:', e);
+    }
 }
 
 // 创建历史记录项目
@@ -780,7 +952,11 @@ function getStatusText(status) {
     const statusMap = {
         'completed': '已完成',
         'in-progress': '进行中',
-        'expired': '已过期'
+        'expired': '已过期',
+        'active': '可填写',
+        'disabled': '已禁用',
+        'draft': '草稿',
+        'unknown': '未知状态'
     };
     return statusMap[status] || status;
 }

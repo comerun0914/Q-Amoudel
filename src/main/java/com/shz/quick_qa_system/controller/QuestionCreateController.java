@@ -153,6 +153,27 @@ public class QuestionCreateController {
     }
 
     /**
+     * 获取所有问卷列表（不按创建者筛选）
+     */
+    @GetMapping("/all")
+    public ApiResult getAllQuestionnaires(
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "50") Integer size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) Integer status,
+            @RequestParam(value = "dateFilter", required = false) String dateFilter) {
+        try {
+            // 调用服务层方法，不传入creatorId，获取所有问卷
+            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireList(page, size, keyword, status, dateFilter, null);
+            return ApiResult.success(result);
+        } catch (Exception e) {
+            System.err.println("获取所有问卷列表失败: " + e.getMessage());
+            e.printStackTrace();
+            return ApiResult.error("获取所有问卷列表失败: " + e.getMessage());
+        }
+    }
+
+    /**
      * 获取问卷详情
      */
     @GetMapping("/detail")
@@ -197,6 +218,8 @@ public class QuestionCreateController {
             return ApiResult.error("获取问卷问题失败: " + e.getMessage());
         }
     }
+
+
 
     /**
      * 删除问卷

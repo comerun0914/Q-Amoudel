@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>填写问卷 - 幼儿星</title>
+    <title>填写问卷 - Quick Q&A System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -62,25 +62,39 @@
                             <line x1="8" y1="2" x2="8" y2="6"/>
                             <line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
-                        开始时间: <span id="startTime">2025-01-15 14:30</span>
+                        开始时间: <span id="startTime">-</span>
                     </span>
                     <span class="meta-item">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"/>
                             <polyline points="12,6 12,12 16,14"/>
                         </svg>
-                        预计用时: <span id="estimatedTime">15分钟</span>
+                        预计用时: <span id="estimatedTime">-</span>
                     </span>
                 </div>
             </div>
 
+            <!-- 加载状态 -->
+            <div class="loading-container" id="loadingContainer">
+                <div class="loading-spinner"></div>
+                <p>正在加载问卷数据...</p>
+            </div>
+
+            <!-- 错误状态 -->
+            <div class="error-container" id="errorContainer" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h3>加载失败</h3>
+                <p id="errorMessage">无法加载问卷数据</p>
+                <button class="btn-primary" onclick="location.reload()">重试</button>
+            </div>
+
             <!-- 问题列表 -->
-            <div class="questions-container" id="questionsContainer">
+            <div class="questions-container" id="questionsContainer" style="display: none;">
                 <!-- 问题将通过JavaScript动态生成 -->
             </div>
 
             <!-- 导航按钮 -->
-            <div class="navigation-buttons">
+            <div class="navigation-buttons" id="navigationButtons" style="display: none;">
                 <button class="btn-nav btn-prev" id="btnPrev" disabled>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 18l-6-6 6-6"/>
@@ -147,4 +161,4 @@
     <script src="js/config.js"></script>
     <script src="js/questionnaire-fill.js"></script>
 </body>
-</html> 
+</html>
