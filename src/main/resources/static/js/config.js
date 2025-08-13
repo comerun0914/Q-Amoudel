@@ -1,7 +1,7 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    BACKEND_BASE_URL: 'http://localhost:7070/api',
+    BACKEND_BASE_URL: 'http://93d7k45123.goho.co:48134/api',
 
     // API端点配置
     API_ENDPOINTS: {
@@ -55,10 +55,13 @@ const CONFIG = {
         MULTIPLE_CHOICE_OPTION_DELETE_BY_QUESTION: '/multipleChoiceOption/deleteByQuestionId',
 
         // 登录历史
-        LOGIN_HISTORY: '/api/login-history',
+        LOGIN_HISTORY: '/login-history',
 
         // 文件上传
-        UPLOAD_FILE: '/api/upload/file'
+        UPLOAD_FILE: '/upload/file',
+        
+        // 二维码相关
+        QRCODE_GENERATE: '/code/generateQRcode'
     },
 
     // 题目类型配置
@@ -706,6 +709,500 @@ const UTILS = {
         });
 
         return await response.json();
+    },
+
+    // 二维码生成相关工具函数
+    // 生成二维码并返回图片URL
+    generateQRCode: async function(content, options = {}) {
+        try {
+            // 默认配置
+            const defaultOptions = {
+                width: 200,
+                height: 200,
+                format: 'png',
+                quality: 0.8
+            };
+            
+            const config = { ...defaultOptions, ...options };
+            
+            // 创建表单数据
+            const formData = new FormData();
+            formData.append('content', content);
+            
+            // 调用后端接口生成二维码
+            const response = await fetch(CONFIG.BACKEND_BASE_URL + CONFIG.API_ENDPOINTS.QRCODE_GENERATE, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`二维码生成失败: HTTP ${response.status}`);
+            }
+            
+            // 将响应转换为Blob
+            const blob = await response.blob();
+            
+            // 创建图片URL
+            const imageUrl = URL.createObjectURL(blob);
+            
+            return {
+                success: true,
+                imageUrl: imageUrl,
+                blob: blob,
+                size: blob.size,
+                content: content
+            };
+            
+        } catch (error) {
+            console.error('生成二维码失败:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    },
+
+    // 生成问卷分享二维码
+    generateQuestionnaireQRCode: async function(questionnaireId, baseUrl = window.location.origin) {
+        try {
+            // 构建问卷分享链接
+            const shareUrl = `${baseUrl}/questionnaire-fill.html?id=${questionnaireId}`;
+            
+            // 生成二维码
+            const result = await this.generateQRCode(shareUrl, {
+                width: 300,
+                height: 300
+            });
+            
+            if (result.success) {
+                return {
+                    ...result,
+                    shareUrl: shareUrl,
+                    questionnaireId: questionnaireId
+                };
+            } else {
+                throw new Error(result.error);
+            }
+            
+        } catch (error) {
+            console.error('生成问卷分享二维码失败:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    },
+
+    // 下载二维码图片
+    downloadQRCode: function(imageUrl, filename = 'qrcode.png') {
+        try {
+            // 创建一个临时的a标签来下载
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('下载二维码失败:', error);
+            this.showToast('下载失败，请稍后重试', 'error');
+        }
+    },
+
+    // 复制文本到剪贴板（统一接口）
+    copyToClipboard: async function(text) {
+        try {
+            // 优先使用现代 Clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                
+                // 验证复制是否成功（如果支持读取剪贴板）
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    try {
+                        const clipboardText = await navigator.clipboard.readText();
+                        return clipboardText === text;
+                    } catch (readError) {
+                        // 无法读取剪贴板，但 writeText 没有抛出错误，通常表示复制成功
+                        console.warn('无法验证剪贴板内容，但复制操作未报错:', readError);
+                        return true;
+                    }
+                }
+                // 如果浏览器不支持读取剪贴板，但 writeText 成功执行，通常表示复制成功
+                return true;
+            } else {
+                // 使用备用方法
+                return this.fallbackCopyTextToClipboard(text);
+            }
+        } catch (error) {
+            console.warn('Clipboard API 失败，尝试备用方法:', error);
+            return this.fallbackCopyTextToClipboard(text);
+        }
+    },
+
+    // 备用复制方法（兼容旧浏览器）
+    fallbackCopyTextToClipboard: function(text) {
+        try {
+            // 创建临时文本区域
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            
+            // 设置样式，使其不可见
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            textArea.style.opacity = '0';
+            textArea.style.pointerEvents = 'none';
+            textArea.style.zIndex = '-1';
+            
+            document.body.appendChild(textArea);
+            
+            // 选择文本并复制
+            textArea.focus();
+            textArea.select();
+            
+            const successful = document.execCommand('copy');
+            
+            // 移除临时元素
+            document.body.removeChild(textArea);
+            
+            if (successful) {
+                return true;
+            } else {
+                // 如果 execCommand 也失败，显示手动复制提示
+                this.showManualCopyPrompt(text);
+                return false;
+            }
+        } catch (err) {
+            console.error('备用复制方法失败:', err);
+            // 显示手动复制提示
+            this.showManualCopyPrompt(text);
+            return false;
+        }
+    },
+
+    // 显示手动复制提示
+    showManualCopyPrompt: function(text) {
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>手动复制链接</h3>
+                    <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>由于浏览器限制，无法自动复制链接。请手动复制以下链接：</p>
+                    <div class="copy-input-group">
+                        <input type="text" value="${text}" id="manualCopyInput" readonly>
+                        <button class="btn-primary" onclick="this.parentElement.parentElement.parentElement.remove()">关闭</button>
+                    </div>
+                    <p class="copy-tip">💡 提示：点击输入框，按 Ctrl+C (Windows) 或 Cmd+C (Mac) 复制</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    },
+
+    // 显示二维码弹窗
+    showQRCodeModal: function(qrCodeData, title = '二维码') {
+        // 创建弹窗样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .qrcode-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                backdrop-filter: blur(5px);
+            }
+            
+            .qrcode-modal-content {
+                background: white;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                text-align: center;
+                position: relative;
+                animation: modalSlideIn 0.3s ease-out;
+            }
+            
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            
+            .qrcode-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .qrcode-modal-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #333;
+                margin: 0;
+            }
+            
+            .qrcode-modal-close {
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #999;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.3s ease;
+            }
+            
+            .qrcode-modal-close:hover {
+                background: #f5f5f5;
+                color: #666;
+            }
+            
+            .qrcode-image-container {
+                margin: 20px 0;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border: 2px dashed #dee2e6;
+            }
+            
+            .qrcode-image {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }
+            
+            .qrcode-info {
+                margin: 15px 0;
+                text-align: left;
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #007bff;
+            }
+            
+            .qrcode-actions {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                margin-top: 20px;
+                flex-wrap: wrap;
+            }
+            
+            .qrcode-btn {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 25px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .qrcode-btn-primary {
+                background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+                color: white;
+                box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            }
+            
+            .qrcode-btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+            }
+            
+            .qrcode-btn-secondary {
+                background: #6c757d;
+                color: white;
+            }
+            
+            .qrcode-btn-secondary:hover {
+                background: #5a6268;
+                transform: translateY(-2px);
+            }
+            
+            .qrcode-btn-success {
+                background: #28a745;
+                color: white;
+            }
+            
+            .qrcode-btn-success:hover {
+                background: #218838;
+                transform: translateY(-2px);
+            }
+            
+            /* 手动复制提示样式 */
+            .modal.show {
+                display: flex !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            
+            .copy-input-group {
+                display: flex;
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+            
+            .copy-input-group input {
+                flex: 1;
+                padding: 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 0.5rem;
+                font-size: 0.9rem;
+                background-color: #f8f9fa;
+                color: #495057;
+            }
+            
+            .copy-tip {
+                font-size: 0.85rem;
+                color: #6c757d;
+                margin-top: 0.5rem;
+                text-align: center;
+                background-color: #e9ecef;
+                padding: 0.75rem;
+                border-radius: 0.5rem;
+                border-left: 3px solid #667eea;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 创建弹窗HTML
+        const modal = document.createElement('div');
+        modal.className = 'qrcode-modal';
+        modal.innerHTML = `
+            <div class="qrcode-modal-content">
+                <div class="qrcode-modal-header">
+                    <h3 class="qrcode-modal-title">${title}</h3>
+                    <button class="qrcode-modal-close" onclick="this.closest('.qrcode-modal').remove()">&times;</button>
+                </div>
+                
+                <div class="qrcode-image-container">
+                    <img src="${qrCodeData.imageUrl}" alt="二维码" class="qrcode-image">
+                </div>
+                
+                ${qrCodeData.shareUrl ? `
+                    <div class="qrcode-info">
+                        <strong>分享链接：</strong><br>
+                        <code style="word-break: break-all; background: #e9ecef; padding: 5px; border-radius: 3px;">${qrCodeData.shareUrl}</code>
+                    </div>
+                ` : ''}
+                
+                <div class="qrcode-actions">
+                    <button class="qrcode-btn qrcode-btn-success" onclick="UTILS.downloadQRCode('${qrCodeData.imageUrl}', 'qrcode_${Date.now()}.png')">
+                        📥 下载二维码
+                    </button>
+                    ${qrCodeData.shareUrl ? `
+                        <button class="qrcode-btn qrcode-btn-primary" id="copyLinkBtn" onclick="handleCopyLink('${qrCodeData.shareUrl}', this)">
+                            📋 复制链接
+                        </button>
+                        <a href="${qrCodeData.shareUrl}" target="_blank" class="qrcode-btn qrcode-btn-secondary">
+                            🔗 打开链接
+                        </a>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // 添加到页面
+        document.body.appendChild(modal);
+
+        // 点击背景关闭弹窗
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // 定义复制链接处理函数
+        window.handleCopyLink = async function(url, button) {
+            if (!button) return;
+            
+            // 保存原始按钮状态
+            const originalText = button.innerHTML;
+            const originalClass = button.className;
+            
+            // 显示复制中状态
+            button.innerHTML = '⏳ 复制中...';
+            button.disabled = true;
+            button.style.opacity = '0.7';
+            
+            try {
+                // 尝试复制
+                const success = await UTILS.copyToClipboard(url);
+                
+                if (success) {
+                    // 复制成功
+                    button.innerHTML = '✅ 已复制';
+                    button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-success');
+                    UTILS.showToast('链接已复制到剪贴板！', 'success');
+                    
+                    // 2秒后恢复原始状态
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = originalClass;
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }, 2000);
+                } else {
+                    // 复制失败
+                    button.innerHTML = '❌ 复制失败';
+                    button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-secondary');
+                    UTILS.showToast('复制失败，请手动复制', 'error');
+                    
+                    // 3秒后恢复原始状态
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = originalClass;
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('复制过程中发生错误:', error);
+                // 发生错误
+                button.innerHTML = '❌ 复制失败';
+                button.className = originalClass.replace('qrcode-btn-primary', 'qrcode-btn-secondary');
+                UTILS.showToast('复制失败，请手动复制', 'error');
+                
+                // 3秒后恢复原始状态
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.className = originalClass;
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                }, 3000);
+            }
+        };
     }
 };
 
@@ -729,4 +1226,27 @@ window.UTILS = UTILS;
  * // 使用工具函数获取完整API URL（自动添加userId）
  * const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.QUESTION_SAVE);
  * fetch(url, { method: 'POST', body: JSON.stringify(data) });
+ * 
+ * // 二维码生成使用示例：
+ * 
+ * // 生成普通二维码
+ * UTILS.generateQRCode('https://www.example.com').then(result => {
+ *   if (result.success) {
+ *     console.log('二维码生成成功:', result.imageUrl);
+ *     // 显示二维码弹窗
+ *     UTILS.showQRCodeModal(result, '示例二维码');
+ *   }
+ * });
+ * 
+ * // 生成问卷分享二维码
+ * UTILS.generateQuestionnaireQRCode('123').then(result => {
+ *   if (result.success) {
+ *     console.log('问卷二维码生成成功:', result.shareUrl);
+ *     // 显示二维码弹窗
+ *     UTILS.showQRCodeModal(result, '问卷分享二维码');
+ *   }
+ * });
+ * 
+ * // 下载二维码
+ * UTILS.downloadQRCode(imageUrl, 'my_qrcode.png');
  */

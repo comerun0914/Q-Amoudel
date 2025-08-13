@@ -66,6 +66,29 @@
                 <!-- 二维码扫描方式 -->
                 <div class="method-content" id="qr-method">
                     <div class="qr-section">
+                        <!-- 移动端权限提示 -->
+                        <div class="mobile-permission-hint" id="mobilePermissionHint">
+                            <div class="hint-content">
+                                <h3>📱 移动端使用提示</h3>
+                                <p>在移动设备上使用二维码扫描功能时，需要授予摄像头权限。</p>
+                                <div class="permission-tips">
+                                    <div class="tip-item">
+                                        <span class="tip-icon">🔒</span>
+                                        <span>首次使用时会弹出权限请求</span>
+                                    </div>
+                                    <div class="tip-item">
+                                        <span class="tip-icon">✅</span>
+                                        <span>选择"允许"即可正常使用</span>
+                                    </div>
+                                    <div class="tip-item">
+                                        <span class="tip-icon">⚙️</span>
+                                        <span>如被拒绝，可在设置中手动开启</span>
+                                    </div>
+                                </div>
+                                <button class="btn-secondary" onclick="hideMobilePermissionHint()">我知道了</button>
+                            </div>
+                        </div>
+                        
                         <div class="qr-container">
                             <div id="qr-reader"></div>
                             <div class="qr-overlay" id="qr-overlay">
@@ -75,9 +98,16 @@
                                 </div>
                             </div>
                         </div>
-                        <button class="btn-primary" id="start-scan">开始扫描</button>
-                        <button class="btn-secondary" id="stop-scan" style="display: none;">停止扫描</button>
-                        <p class="input-hint">将二维码对准摄像头进行扫描</p>
+                        
+                        <div class="qr-controls">
+                            <button class="btn-primary" id="start-scan">开始扫描</button>
+                            <button class="btn-secondary" id="stop-scan" style="display: none;">停止扫描</button>
+                            <button class="btn-secondary" id="switch-camera" style="display: none;" onclick="switchCamera()">🔄 切换摄像头</button>
+                            <button class="btn-info" onclick="PermissionChecker.showPermissionStatus()">🔍 检测权限</button>
+                            <button class="btn-info" onclick="BrowserDetector.showCompatibilityInfo()">🌐 浏览器兼容性</button>
+                            <button class="btn-info" onclick="BrowserDetector.showCameraInfo()">📷 摄像头信息</button>
+                            <p class="input-hint">将二维码对准摄像头进行扫描</p>
+                        </div>
                     </div>
                 </div>
             </div>

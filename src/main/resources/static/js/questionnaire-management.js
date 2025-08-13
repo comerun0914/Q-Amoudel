@@ -344,6 +344,12 @@ function renderQuestionnaireTable() {
                         <i class="fas fa-copy"></i>
                         复制
                     </button>
+                    ${questionnaire.status === 1 ? 
+                        `<button class="btn-action btn-qrcode" onclick="generateQuestionnaireQRCode(${questionnaire.id})" title="生成分享二维码">
+                            <i class="fas fa-qrcode"></i>
+                            二维码
+                        </button>` : ''
+                    }
                     ${questionnaire.status === 2 ? 
                         `<button class="btn-action btn-publish" onclick="publishQuestionnaire(${questionnaire.id})" title="发布问卷">
                             <i class="fas fa-paper-plane"></i>
@@ -1080,6 +1086,8 @@ async function publishQuestionnaire(id) {
         
         if (result.code === 200) {
             UTILS.showToast('问卷发布成功！', 'success');
+            // 显示发布成功弹窗，包含分享链接和复制功能
+            showPublishSuccessModal(id, result.data);
             // 重新加载数据
             loadQuestionnaireData();
         } else {
@@ -1123,6 +1131,461 @@ async function unpublishQuestionnaire(id) {
     }
 }
 
+/**
+ * 显示发布成功弹窗
+ */
+function showPublishSuccessModal(questionnaireId, accessUrl) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎉 问卷发布成功！</h3>
+                <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="share-section">
+                    <h4>分享链接</h4>
+                    <div class="url-input-group">
+                        <input type="text" id="shareUrl" value="${window.location.origin}${accessUrl || `/questionnaire-fill.html?id=${questionnaireId}`}" readonly>
+                        <button onclick="copyShareUrl()" class="btn-primary">复制链接</button>
+                    </div>
+                </div>
+                
+                <div class="qr-section">
+                    <h4>二维码</h4>
+                    <div id="qrCode"></div>
+                </div>
+                
+                <div class="stats-section">
+                    <h4>访问统计</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">访问次数</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">0</span>
+                            <span class="stat-label">填写次数</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn-secondary">关闭</button>
+                <button onclick="previewPublishedQuestionnaire('${accessUrl || `/questionnaire-fill.html?id=${questionnaireId}`}')" class="btn-primary">预览发布</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // 生成二维码
+    generateQRCodeForModal(accessUrl || `/questionnaire-fill.html?id=${questionnaireId}`);
+}
+
+/**
+ * 生成问卷分享二维码
+ */
+async function generateQuestionnaireQRCode(questionnaireId) {
+    try {
+        // 显示加载状态
+        UTILS.showToast('正在生成二维码...', 'info');
+        
+        // 构建问卷分享链接
+        const shareUrl = `${window.location.origin}/questionnaire-fill.html?id=${questionnaireId}`;
+        
+        // 使用UTILS工具函数生成二维码
+        const result = await UTILS.generateQuestionnaireQRCode(questionnaireId);
+        
+        if (result.success) {
+            // 显示二维码弹窗
+            UTILS.showQRCodeModal(result, '问卷分享二维码');
+        } else {
+            UTILS.showToast('二维码生成失败: ' + result.error, 'error');
+        }
+        
+    } catch (error) {
+        console.error('生成二维码失败:', error);
+        UTILS.showToast('二维码生成失败，请稍后重试', 'error');
+    }
+}
+
+/**
+ * 为弹窗生成二维码
+ */
+async function generateQRCodeForModal(accessUrl) {
+    try {
+        const qrContainer = document.getElementById('qrCode');
+        if (!qrContainer) return;
+        
+        const fullUrl = window.location.origin + accessUrl;
+        
+        // 显示加载状态
+        qrContainer.innerHTML = '<div class="loading">🔄 正在生成二维码...</div>';
+        
+        // 使用UTILS工具函数生成二维码
+        const result = await UTILS.generateQRCode(fullUrl, {
+            width: 200,
+            height: 200
+        });
+        
+        if (result.success) {
+            // 显示二维码图片和复制链接功能
+            qrContainer.innerHTML = `
+                <div class="qr-code-container">
+                    <img src="${result.imageUrl}" alt="问卷二维码" style="max-width: 200px; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <div class="qr-actions">
+                        <button onclick="copyQRCodeLink('${fullUrl}')" class="btn-copy-link" title="复制链接">
+                            <span class="icon">📋</span> 复制链接
+                        </button>
+                        <button onclick="downloadQRCode()" class="btn-secondary">下载二维码</button>
+                    </div>
+                    <div class="quick-share">
+                        <span class="share-label">快速分享：</span>
+                        <button onclick="shareToWeChat('${fullUrl}')" class="btn-share btn-wechat" title="分享到微信">
+                            <span class="icon">💬</span>
+                        </button>
+                        <button onclick="shareToQQ('${fullUrl}')" class="btn-share btn-qq" title="分享到QQ">
+                            <span class="icon">🐧</span>
+                        </button>
+                        <button onclick="shareToWeibo('${fullUrl}')" class="btn-share btn-weibo" title="分享到微博">
+                            <span class="icon">📱</span>
+                        </button>
+                    </div>
+                    <div class="qr-info">
+                        <p class="qr-tip">💡 扫描二维码或复制链接分享给他人</p>
+                        <p class="qr-url">${fullUrl}</p>
+                    </div>
+                </div>
+            `;
+            
+            // 更新下载按钮的onclick事件
+            const downloadBtn = qrContainer.querySelector('button[onclick="downloadQRCode()"]');
+            if (downloadBtn) {
+                downloadBtn.onclick = () => UTILS.downloadQRCode(result.imageUrl, `问卷二维码_${Date.now()}.png`);
+            }
+            
+        } else {
+            qrContainer.innerHTML = `<p style="color: #dc3545;">❌ 二维码生成失败: ${result.error}</p>`;
+        }
+        
+    } catch (error) {
+        console.error('生成二维码失败:', error);
+        const qrContainer = document.getElementById('qrCode');
+        if (qrContainer) {
+            qrContainer.innerHTML = `<p style="color: #dc3545;">❌ 二维码生成失败，请稍后重试</p>`;
+        }
+    }
+}
+
+/**
+ * 复制分享链接
+ */
+async function copyShareUrl() {
+    const urlInput = document.getElementById('shareUrl');
+    if (!urlInput) {
+        UTILS.showToast('找不到分享链接', 'error');
+        return;
+    }
+    
+    const url = urlInput.value;
+    
+    if (!url) {
+        showCopyError('没有可复制的链接');
+        return;
+    }
+    
+    try {
+        // 使用统一的复制接口
+        const success = await UTILS.copyToClipboard(url);
+        if (success) {
+            showCopySuccess('链接已复制到剪贴板！');
+        } else {
+            showCopyError('复制失败，请手动复制');
+        }
+    } catch (error) {
+        console.error('复制失败:', error);
+        showCopyError('复制失败，请手动复制');
+    }
+}
+
+/**
+ * 备用复制方法（兼容旧浏览器）
+ */
+function fallbackCopyTextToClipboard(text) {
+    try {
+        // 创建临时文本区域
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        
+        // 设置样式，使其不可见
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        textArea.style.opacity = '0';
+        textArea.style.pointerEvents = 'none';
+        textArea.style.zIndex = '-1';
+        
+        document.body.appendChild(textArea);
+        
+        // 选择文本并复制
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        
+        // 移除临时元素
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+            return true;
+        } else {
+            // 如果 execCommand 也失败，显示手动复制提示
+            showManualCopyPrompt(text);
+            return false;
+        }
+    } catch (err) {
+        console.error('备用复制方法失败:', err);
+        // 显示手动复制提示
+        showManualCopyPrompt(text);
+        return false;
+    }
+}
+
+/**
+ * 显示手动复制提示
+ */
+function showManualCopyPrompt(text) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>手动复制链接</h3>
+                <button class="btn-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>由于浏览器限制，无法自动复制链接。请手动复制以下链接：</p>
+                <div class="copy-input-group">
+                    <input type="text" value="${text}" id="manualCopyInput" readonly>
+                    <button class="btn-primary" onclick="selectAndCopyText()">选择并复制</button>
+                </div>
+                <p class="copy-tip">💡 提示：点击输入框，按 Ctrl+C (Windows) 或 Cmd+C (Mac) 复制</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+/**
+ * 选择并复制文本
+ */
+function selectAndCopyText() {
+    const input = document.getElementById('manualCopyInput');
+    if (input) {
+        input.select();
+        input.setSelectionRange(0, 99999); // 兼容移动设备
+        
+        try {
+            // 尝试使用现代 API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value).then(() => {
+                    showCopySuccess('链接已复制到剪贴板！');
+                    // 关闭手动复制提示
+                    const modal = document.querySelector('.modal.show');
+                    if (modal) {
+                        modal.remove();
+                    }
+                }).catch(() => {
+                    showCopyError('复制失败，请手动复制');
+                });
+            } else {
+                // 尝试使用 execCommand
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess('链接已复制到剪贴板！');
+                    // 关闭手动复制提示
+                    const modal = document.querySelector('.modal.show');
+                    if (modal) {
+                        modal.remove();
+                    }
+                } else {
+                    showCopyError('复制失败，请手动复制');
+                }
+            }
+        } catch (err) {
+            showCopyError('复制失败，请手动复制');
+        }
+    }
+}
+
+/**
+ * 显示复制成功提示
+ */
+function showCopySuccess(message) {
+    // 使用 UTILS.showToast 如果可用，否则使用 alert
+    if (typeof UTILS !== 'undefined' && UTILS.showToast) {
+        UTILS.showToast(message, 'success');
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * 显示复制错误提示
+ */
+function showCopyError(message) {
+    // 使用 UTILS.showToast 如果可用，否则使用 alert
+    if (typeof UTILS !== 'undefined' && UTILS.showToast) {
+        UTILS.showToast(message, 'error');
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * 下载二维码
+ */
+function downloadQRCode() {
+    const qrImage = document.querySelector('#qrCode img');
+    if (qrImage && qrImage.src) {
+        if (typeof UTILS !== 'undefined' && UTILS.downloadQRCode) {
+            UTILS.downloadQRCode(qrImage.src, `问卷二维码_${Date.now()}.png`);
+        } else {
+            // 备用下载方法
+            const link = document.createElement('a');
+            link.href = qrImage.src;
+            link.download = `问卷二维码_${Date.now()}.png`;
+            link.click();
+        }
+    } else {
+        showCopyError('请先生成二维码');
+    }
+}
+
+/**
+ * 预览已发布的问卷
+ */
+function previewPublishedQuestionnaire(accessUrl) {
+    const fullUrl = window.location.origin + accessUrl;
+    window.open(fullUrl, '_blank');
+}
+
+/**
+ * 复制二维码链接
+ */
+async function copyQRCodeLink(url) {
+    // 显示复制中状态
+    const copyBtn = event.target.closest('.btn-copy-link');
+    if (copyBtn) {
+        const originalText = copyBtn.innerHTML;
+        const originalBg = copyBtn.style.backgroundColor;
+        copyBtn.innerHTML = '<span class="icon">⏳</span> 复制中...';
+        copyBtn.disabled = true;
+        copyBtn.style.backgroundColor = '#6c757d';
+        
+        // 3秒后恢复按钮状态
+        setTimeout(() => {
+            copyBtn.innerHTML = originalText;
+            copyBtn.disabled = false;
+            copyBtn.style.backgroundColor = originalBg;
+        }, 3000);
+    }
+    
+    try {
+        // 使用统一的复制接口
+        const success = await UTILS.copyToClipboard(url);
+        
+        if (success) {
+            showCopySuccess('链接已复制到剪贴板！');
+            // 更新按钮状态
+            if (copyBtn) {
+                copyBtn.innerHTML = '<span class="icon">✅</span> 已复制';
+                copyBtn.style.backgroundColor = '#28a745';
+                // 2秒后恢复原始状态
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.style.backgroundColor = originalBg;
+                }, 2000);
+            }
+        } else {
+            showCopyError('复制失败，请手动复制');
+            // 恢复按钮状态
+            if (copyBtn) {
+                copyBtn.innerHTML = originalText;
+                copyBtn.disabled = false;
+                copyBtn.style.backgroundColor = originalBg;
+            }
+        }
+    } catch (error) {
+        console.error('复制失败:', error);
+        showCopyError('复制失败，请手动复制');
+        // 恢复按钮状态
+        if (copyBtn) {
+            copyBtn.innerHTML = originalText;
+            copyBtn.disabled = false;
+            copyBtn.style.backgroundColor = originalBg;
+        }
+    }
+}
+
+/**
+ * 复制文本到剪贴板（统一接口）
+ */
+async function copyToClipboard(text) {
+    try {
+        // 优先使用现代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            
+            // 验证复制是否成功（如果支持读取剪贴板）
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    const clipboardText = await navigator.clipboard.readText();
+                    return clipboardText === text;
+                } catch (readError) {
+                    // 无法读取剪贴板，假设复制成功
+                    console.warn('无法验证剪贴板内容:', readError);
+                    return true;
+                }
+            }
+            return true;
+        } else {
+            // 使用备用方法
+            return fallbackCopyTextToClipboard(text);
+        }
+    } catch (error) {
+        console.warn('Clipboard API 失败，尝试备用方法:', error);
+        return fallbackCopyTextToClipboard(text);
+    }
+}
+
+/**
+ * 分享到微信
+ */
+function shareToWeChat(url) {
+    const wechatShareUrl = `https://api.weixin.qq.com/sns/share/qrcode/show?access_token=YOUR_ACCESS_TOKEN&scene=1000&page_path=${encodeURIComponent(url)}`;
+    window.open(wechatShareUrl, '_blank');
+}
+
+/**
+ * 分享到QQ
+ */
+function shareToQQ(url) {
+    const qqShareUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(url)}`;
+    window.open(qqShareUrl, '_blank');
+}
+
+/**
+ * 分享到微博
+ */
+function shareToWeibo(url) {
+    const weiboShareUrl = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}`;
+    window.open(weiboShareUrl, '_blank');
+}
+
 // 导出函数到全局作用域，以便HTML中的onclick事件可以调用
 window.loadQuestionnaireData = loadQuestionnaireData;
 window.editQuestionnaire = editQuestionnaire;
@@ -1133,6 +1596,15 @@ window.toggleQuestionnaireStatus = toggleQuestionnaireStatus;
 window.deleteQuestionnaire = deleteQuestionnaire;
 window.publishQuestionnaire = publishQuestionnaire;
 window.unpublishQuestionnaire = unpublishQuestionnaire;
+window.generateQuestionnaireQRCode = generateQuestionnaireQRCode;
+window.copyShareUrl = copyShareUrl;
+window.downloadQRCode = downloadQRCode;
+window.selectAndCopyText = selectAndCopyText;
+window.copyQRCodeLink = copyQRCodeLink; // 新增复制二维码链接的函数
+window.copyToClipboard = copyToClipboard; // 新增统一复制接口
+window.shareToWeChat = shareToWeChat;
+window.shareToQQ = shareToQQ;
+window.shareToWeibo = shareToWeibo;
 
 // 确保所有函数都在全局作用域中可用
 window.handleSearch = handleSearch;

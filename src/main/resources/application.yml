@@ -91,7 +91,7 @@ logging:
 server:
   port: 7070 # 服务器端口
   servlet:
-    context-path: /api # 应用上下文路径，移除 /api 前缀
+    context-path: /api
     encoding:
       charset: UTF-8
       force: true

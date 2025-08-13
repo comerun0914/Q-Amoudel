@@ -48,139 +48,257 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * 初始化问卷
  */
-function initQuestionnaire() {
-    // 从URL参数获取问卷信息
-    const urlParams = new URLSearchParams(window.location.search);
-    const questionnaireId = urlParams.get('id');
-    const link = urlParams.get('link');
-    const code = urlParams.get('code');
-    
-    // 加载问卷数据
-    loadQuestionnaireData(questionnaireId, link, code);
-    
-    // 加载保存的答案
-    loadSavedAnswers();
-    
-    // 渲染问卷
-    renderQuestionnaire();
-    
-    // 显示第一个问题
-    showQuestion(0);
-    
-    // 更新进度
-    updateProgress();
+async function initQuestionnaire() {
+    try {
+        // 从URL参数获取问卷信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const questionnaireId = urlParams.get('id');
+        const link = urlParams.get('link');
+        const code = urlParams.get('code');
+        
+        // 加载问卷数据
+        await loadQuestionnaireData(questionnaireId, link, code);
+        
+        // 加载保存的答案
+        loadSavedAnswers();
+        
+        // 渲染问卷
+        renderQuestionnaire();
+        
+        // 显示第一个问题
+        showQuestion(0);
+        
+        // 更新进度
+        updateProgress();
+    } catch (error) {
+        console.error('初始化问卷失败:', error);
+        showErrorMessage('初始化问卷失败，请刷新页面重试');
+    }
 }
 
 /**
  * 加载问卷数据
  */
-function loadQuestionnaireData(id, link, code) {
-    // 模拟从后端获取问卷数据
-    // 实际项目中应该发送AJAX请求
-    if (id) {
-        questionnaireData = getQuestionnaireById(id);
-    } else if (link) {
-        questionnaireData = getQuestionnaireByLink(link);
-    } else if (code) {
-        questionnaireData = getQuestionnaireByCode(code);
-    } else {
-        // 使用示例数据
-        questionnaireData = {
-            id: 'demo-001',
-            title: '幼儿学习能力评估问卷',
-            description: '本问卷旨在了解幼儿的学习能力、认知发展水平和学习兴趣，为制定个性化教育方案提供依据。',
-            questions: [
-                {
-                    id: 1,
-                    type: 'single',
-                    text: '您的孩子年龄是？',
-                    options: ['2-3岁', '3-4岁', '4-5岁', '5-6岁'],
-                    required: true
-                },
-                {
-                    id: 2,
-                    type: 'multiple',
-                    text: '您的孩子喜欢哪些活动？（可多选）',
-                    options: ['绘画', '音乐', '运动', '阅读', '拼图', '积木'],
-                    required: false
-                },
-                {
-                    id: 3,
-                    type: 'text',
-                    text: '请描述您孩子最喜欢的学习方式：',
-                    required: false
-                },
-                {
-                    id: 4,
-                    type: 'rating',
-                    text: '您对孩子当前的学习能力满意度如何？',
-                    maxRating: 5,
-                    required: true
-                },
-                {
-                    id: 5,
-                    type: 'matrix',
-                    text: '请评价以下各项能力：',
-                    rows: ['语言表达', '数学思维', '社交能力', '创造力'],
-                    columns: ['很差', '较差', '一般', '较好', '很好'],
-                    required: true
-                }
-            ],
-            startTime: new Date().toLocaleString('zh-CN'),
-            estimatedTime: '10分钟'
-        };
+async function loadQuestionnaireData(id, link, code) {
+    try {
+        if (id) {
+            // 调用后端 API 获取问卷信息
+            const questionnaireInfo = await fetchQuestionnaireInfo(id);
+            const questions = await fetchQuestionnaireQuestions(id);
+            
+            if (questionnaireInfo && questions) {
+                questionnaireData = {
+                    id: questionnaireInfo.id,
+                    title: questionnaireInfo.title,
+                    description: questionnaireInfo.description,
+                    questions: questions,
+                    startTime: new Date().toLocaleString('zh-CN'),
+                    estimatedTime: '15分钟'
+                };
+            } else {
+                throw new Error('获取问卷数据失败');
+            }
+        } else if (link) {
+            // 通过链接获取问卷（暂时使用模拟数据）
+            questionnaireData = getQuestionnaireByLink(link);
+        } else if (code) {
+            // 通过代码获取问卷（暂时使用模拟数据）
+            questionnaireData = getQuestionnaireByCode(code);
+        } else {
+            // 使用示例数据（开发测试用）
+            questionnaireData = {
+                id: 'demo-001',
+                title: '幼儿学习能力评估问卷',
+                description: '本问卷旨在了解幼儿的学习能力、认知发展水平和学习兴趣，为制定个性化教育方案提供依据。',
+                questions: [
+                    {
+                        id: 1,
+                        type: 'single',
+                        text: '您的孩子年龄是？',
+                        options: ['2-3岁', '3-4岁', '4-5岁', '5-6岁'],
+                        required: true
+                    },
+                    {
+                        id: 2,
+                        type: 'multiple',
+                        text: '您的孩子喜欢哪些活动？（可多选）',
+                        options: ['绘画', '音乐', '运动', '阅读', '拼图', '积木'],
+                        required: false
+                    },
+                    {
+                        id: 3,
+                        type: 'text',
+                        text: '请描述您孩子最喜欢的学习方式：',
+                        required: false
+                    },
+                    {
+                        id: 4,
+                        type: 'rating',
+                        text: '您对孩子当前的学习能力满意度如何？',
+                        maxRating: 5,
+                        required: true
+                    },
+                    {
+                        id: 5,
+                        type: 'matrix',
+                        text: '请评价以下各项能力：',
+                        rows: ['语言表达', '数学思维', '社交能力', '创造力'],
+                        columns: ['很差', '较差', '一般', '较好', '很好'],
+                        required: true
+                    }
+                ],
+                startTime: new Date().toLocaleString('zh-CN'),
+                estimatedTime: '10分钟'
+            };
+        }
+        
+        // 设置问卷信息
+        document.getElementById('questionnaireTitle').textContent = questionnaireData.title;
+        document.getElementById('questionnaireDescription').textContent = questionnaireData.description;
+        document.getElementById('startTime').textContent = questionnaireData.startTime;
+        document.getElementById('estimatedTime').textContent = questionnaireData.estimatedTime;
+        
+    } catch (error) {
+        console.error('加载问卷数据失败:', error);
+        // 显示错误信息
+        showErrorMessage('加载问卷数据失败，请检查网络连接或联系管理员');
+    }
+}
+
+/**
+ * 从后端获取问卷基本信息
+ */
+async function fetchQuestionnaireInfo(questionnaireId) {
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_GETINFOBYID}?id=${questionnaireId}`);
+        const result = await response.json();
+        
+        if (result.code === 200 && result.data) {
+            return result.data;
+        } else {
+            throw new Error(result.message || '获取问卷信息失败');
+        }
+    } catch (error) {
+        console.error('获取问卷信息失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 从后端获取问卷问题列表
+ */
+async function fetchQuestionnaireQuestions(questionnaireId) {
+    try {
+        const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_QUESTIONS}?questionnaireId=${questionnaireId}`);
+        const result = await response.json();
+        
+        if (result.code === 200 && result.data) {
+            // 将后端数据转换为前端需要的格式
+            return result.data.map(question => convertBackendQuestionToFrontend(question));
+        } else {
+            throw new Error(result.message || '获取问题列表失败');
+        }
+    } catch (error) {
+        console.error('获取问题列表失败:', error);
+        throw error;
+    }
+}
+
+/**
+ * 将后端问题数据转换为前端格式
+ */
+function convertBackendQuestionToFrontend(backendQuestion) {
+    const frontendQuestion = {
+        id: backendQuestion.id,
+        type: getQuestionTypeFromBackend(backendQuestion.questionType),
+        text: backendQuestion.content,
+        required: backendQuestion.isRequired === 1
+    };
+    
+    // 根据问题类型添加特定配置
+    switch (backendQuestion.questionType) {
+        case 1: // 单选题
+        case 2: // 多选题
+            if (backendQuestion.options && backendQuestion.options.length > 0) {
+                frontendQuestion.options = backendQuestion.options.map(option => option.optionContent);
+            } else {
+                frontendQuestion.options = [];
+            }
+            break;
+            
+        case 3: // 问答题
+            if (backendQuestion.textQuestionConfig) {
+                frontendQuestion.maxLength = backendQuestion.textQuestionConfig.maxLength || 500;
+                frontendQuestion.hintText = backendQuestion.textQuestionConfig.hintText || '';
+            }
+            break;
+            
+        case 4: // 评分题
+            if (backendQuestion.ratingQuestionConfig) {
+                frontendQuestion.maxRating = backendQuestion.ratingQuestionConfig.maxScore || 5;
+                frontendQuestion.minRating = backendQuestion.ratingQuestionConfig.minScore || 1;
+                frontendQuestion.minLabel = backendQuestion.ratingQuestionConfig.minLabel || '非常不满意';
+                frontendQuestion.maxLabel = backendQuestion.ratingQuestionConfig.maxLabel || '非常满意';
+            }
+            break;
+            
+        case 5: // 矩阵题
+            if (backendQuestion.matrixQuestionConfig) {
+                frontendQuestion.rows = backendQuestion.matrixQuestionConfig.rows?.map(row => row.rowContent) || [];
+                frontendQuestion.columns = backendQuestion.matrixQuestionConfig.columns?.map(col => col.columnContent) || [];
+            }
+            break;
     }
     
-    // 设置问卷信息
-    document.getElementById('questionnaireTitle').textContent = questionnaireData.title;
-    document.getElementById('questionnaireDescription').textContent = questionnaireData.description;
-    document.getElementById('startTime').textContent = questionnaireData.startTime;
-    document.getElementById('estimatedTime').textContent = questionnaireData.estimatedTime;
+    return frontendQuestion;
 }
 
 /**
- * 根据ID获取问卷数据
+ * 根据后端问题类型ID获取前端类型字符串
  */
-function getQuestionnaireById(id) {
-    // 模拟API调用
-    return {
-        id: id,
-        title: '示例问卷',
-        description: '这是一个示例问卷',
-        questions: [],
-        startTime: new Date().toLocaleString('zh-CN'),
-        estimatedTime: '15分钟'
+function getQuestionTypeFromBackend(questionTypeId) {
+    const typeMap = {
+        1: 'single',      // 单选题
+        2: 'multiple',    // 多选题
+        3: 'text',        // 问答题
+        4: 'rating',      // 评分题
+        5: 'matrix',      // 矩阵题
+        6: 'date',        // 日期题
+        7: 'time'         // 时间题
     };
+    return typeMap[questionTypeId] || 'unknown';
 }
 
 /**
- * 根据链接获取问卷数据
+ * 显示错误信息
  */
-function getQuestionnaireByLink(link) {
-    // 模拟API调用
-    return {
-        id: 'link-' + Date.now(),
-        title: '链接问卷',
-        description: '通过链接访问的问卷',
-        questions: [],
-        startTime: new Date().toLocaleString('zh-CN'),
-        estimatedTime: '10分钟'
-    };
-}
-
-/**
- * 根据代码获取问卷数据
- */
-function getQuestionnaireByCode(code) {
-    // 模拟API调用
-    return {
-        id: 'code-' + code,
-        title: '代码问卷',
-        description: '通过代码访问的问卷',
-        questions: [],
-        startTime: new Date().toLocaleString('zh-CN'),
-        estimatedTime: '12分钟'
-    };
+function showErrorMessage(message) {
+    // 创建错误提示元素
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.innerHTML = `
+        <div class="error-content">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // 插入到页面顶部
+    const container = document.querySelector('.questionnaire-container');
+    if (container) {
+        container.insertBefore(errorDiv, container.firstChild);
+    }
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (errorDiv.parentNode) {
+            errorDiv.parentNode.removeChild(errorDiv);
+        }
+    }, 3000);
 }
 
 /**
@@ -296,8 +414,17 @@ function createCheckboxOptions(question) {
  */
 function createTextInput(question) {
     const isShort = question.text.length < 50;
+    const maxLength = question.maxLength || 500;
+    const hintText = question.hintText || '';
+    
+    let placeholder = hintText || '请输入您的答案...';
+    if (maxLength && maxLength !== 500) {
+        placeholder += `（最多${maxLength}字）`;
+    }
+    
     return `<textarea class="text-input ${isShort ? 'short' : ''}" 
-                      placeholder="请输入您的答案..." 
+                      placeholder="${placeholder}" 
+                      maxlength="${maxLength}"
                       onchange="saveTextAnswer(${question.id}, this.value)"></textarea>`;
 }
 
@@ -306,11 +433,21 @@ function createTextInput(question) {
  */
 function createRatingInput(question) {
     const maxRating = question.maxRating || 5;
+    const minRating = question.minRating || 1;
+    const minLabel = question.minLabel || '非常不满意';
+    const maxLabel = question.maxLabel || '非常满意';
+    
     const starsHtml = Array.from({length: maxRating}, (_, i) => `
         <span class="rating-star" onclick="setRating(${question.id}, ${i + 1})">★</span>
     `).join('');
     
-    return `<div class="rating-container">${starsHtml}</div>`;
+    return `<div class="rating-container">
+        <div class="rating-labels">
+            <span class="rating-label min">${minLabel}</span>
+            <span class="rating-label max">${maxLabel}</span>
+        </div>
+        <div class="rating-stars">${starsHtml}</div>
+    </div>`;
 }
 
 /**
