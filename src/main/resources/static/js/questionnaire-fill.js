@@ -422,6 +422,27 @@ function createCheckboxOptions(question) {
     return `<div class="options-container">${optionsHtml}</div>`;
 }
 
+// 读取DOM中多选题已勾选的索引数组
+function getCheckedMultipleIndices(questionId) {
+    const nodes = document.querySelectorAll(`input[type="checkbox"][name="question-${questionId}"]:checked`);
+    const result = [];
+    nodes.forEach(n => {
+        const v = Number(n.value);
+        if (!Number.isNaN(v)) result.push(v);
+    });
+    return result;
+}
+
+// 将DOM勾选状态与内存数组同步，保证一致性
+function syncMultipleFromDom(questionId, stateArr) {
+    const inputs = document.querySelectorAll(`input[type="checkbox"][name="question-${questionId}"]`);
+    const set = new Set((stateArr || []).map(Number));
+    inputs.forEach(inp => {
+        const v = Number(inp.value);
+        inp.checked = set.has(v);
+    });
+}
+
 /**
  * 创建文本输入
  */
@@ -888,8 +909,25 @@ function buildBackendAnswers() {
             one.answerValue = typeof ans === 'number' ? ans : null;
             one.answerText = null;
         } else if (q.type === 'multiple') {
-            const arr = Array.isArray(ans) ? ans : [];
-            one.answerJson = JSON.stringify(arr);
+            // 合并状态中的选择与DOM中当前勾选，避免只记录最后一次点击
+            const stateArr = Array.isArray(ans) ? ans.slice() : [];
+            const domArr = getCheckedMultipleIndices(q.id);
+            const merged = [];
+            const seen = new Set();
+            [...stateArr, ...domArr].forEach(v => {
+                const n = Number(v);
+                if (!Number.isNaN(n) && !seen.has(n)) {
+                    seen.add(n);
+                    merged.push(n);
+                }
+            });
+            // 将多选答案从数组改为 {"1":idx1, "2":idx2, ...} 的对象映射
+            const obj = {};
+            for (let i = 0; i < merged.length; i++) {
+                const orderKey = String(i + 1);
+                obj[orderKey] = merged[i];
+            }
+            one.answerJson = JSON.stringify(obj);
             one.answerText = null;
         } else if (q.type === 'text' || q.type === 'date' || q.type === 'time') {
             one.answerText = String(ans);
@@ -1041,16 +1079,16 @@ window.selectRadioOption = function(questionId, optionIndex) {
 };
 
 window.toggleCheckboxOption = function(questionId, optionIndex) {
-    if (!userAnswers[questionId]) {
+    if (!Array.isArray(userAnswers[questionId])) {
         userAnswers[questionId] = [];
     }
-    
-    const index = userAnswers[questionId].indexOf(optionIndex);
-    if (index > -1) {
-        userAnswers[questionId].splice(index, 1);
-    } else {
-        userAnswers[questionId].push(optionIndex);
-    }
+    // 规范化为数字并去重
+    const current = userAnswers[questionId];
+    const n = Number(optionIndex);
+    const idx = current.indexOf(n);
+    if (idx > -1) current.splice(idx, 1); else current.push(n);
+    // 与DOM同步，确保状态一致
+    syncMultipleFromDom(questionId, current);
     updateProgress();
     saveAnswers();
     saveDraftDebounced();

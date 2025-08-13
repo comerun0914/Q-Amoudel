@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @TableName("questionnaire_submission")
 public class QuestionnaireSubmission {
     
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.INPUT)
     private Integer id;
     
     /**
