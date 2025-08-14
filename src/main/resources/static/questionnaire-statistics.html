@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计 - 幼儿星</title>
+    <link rel="stylesheet" href="css/questionnaire-statistics.css">
+    <link rel="stylesheet" href="//at.alicdn.com/t/font_8d5l8fzk5b87iudi.css">
+    <!-- 引入Chart.js用于图表展示 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入ECharts用于高级图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">幼儿星</div>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="questionnaire-management.html">问卷管理</a>
+                <a href="questionnaire-statistics.html" class="active">数据统计</a>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="用户头像" class="user-avatar" id="userAvatar">
+                    <span class="user-name" id="userName">用户名</span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="#" class="dropdown-item" id="userCenter">用户中心</a>
+                        <a href="#" class="dropdown-item" id="logoutBtn">退出登录</a>
+                    </div>
+                </div>
+                <a href="login.html" class="btn-login" id="loginBtn">登录</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="statistics-container">
+            <!-- 页面标题和操作按钮 -->
+            <div class="page-header">
+                <div class="header-left">
+                    <h1>数据统计</h1>
+                    <span class="subtitle">深入了解问卷数据和用户行为</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-export" id="exportData">
+                        <i class="iconfont icon-download"></i>
+                        导出数据
+                    </button>
+                    <button class="btn-refresh" id="refreshData">
+                        <i class="iconfont icon-refresh"></i>
+                        刷新数据
+                    </button>
+                </div>
+            </div>
+
+            <!-- 时间筛选区域 -->
+            <div class="time-filter-section">
+                <div class="filter-group">
+                    <label>时间范围：</label>
+                    <select id="timeRange" class="filter-select">
+                        <option value="7">最近7天</option>
+                        <option value="30" selected>最近30天</option>
+                        <option value="90">最近3个月</option>
+                        <option value="365">最近一年</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                    <div id="customDateRange" class="custom-date-range" style="display: none;">
+                        <input type="date" id="startDate" class="date-input">
+                        <span>至</span>
+                        <input type="date" id="endDate" class="date-input">
+                        <button class="btn-apply" id="applyCustomDate">应用</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心统计卡片 -->
+            <div class="core-stats-section">
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="iconfont icon-questionnaire"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalQuestionnaires">0</div>
+                        <div class="stat-label">总问卷数</div>
+                        <div class="stat-change positive" id="totalChange">+0%</div>
+                    </div>
+                </div>
+                <div class="stat-card submissions">
+                    <div class="stat-icon">
+                        <i class="iconfont icon-submit"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="totalSubmissions">0</div>
+                        <div class="stat-label">总提交数</div>
+                        <div class="stat-change positive" id="submissionsChange">+0%</div>
+                    </div>
+                </div>
+                <div class="stat-card completion">
+                    <div class="stat-icon">
+                        <i class="iconfont icon-complete"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="completionRate">0%</div>
+                        <div class="stat-label">完成率</div>
+                        <div class="stat-change positive" id="completionChange">+0%</div>
+                    </div>
+                </div>
+                <div class="stat-card users">
+                    <div class="stat-icon">
+                        <i class="iconfont icon-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number" id="uniqueUsers">0</div>
+                        <div class="stat-label">独立用户</div>
+                        <div class="stat-change positive" id="usersChange">+0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-section">
+                <!-- 趋势图表 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>问卷提交趋势</h3>
+                        <div class="chart-controls">
+                            <select id="trendMetric" class="chart-select">
+                                <option value="submissions">提交数量</option>
+                                <option value="completions">完成数量</option>
+                                <option value="users">用户数量</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <canvas id="trendChart" width="100%" height="100%"></canvas>
+                    </div>
+                </div>
+
+                <!-- 问卷分布图表 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>问卷状态分布</h3>
+                    </div>
+                    <div class="chart-content">
+                        <div id="statusChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 热门问卷排行 -->
+            <div class="ranking-section">
+                <div class="chart-container ranking-container">
+                    <div class="chart-header">
+                        <h3>热门问卷排行</h3>
+                        <div class="chart-controls">
+                            <select id="rankingMetric" class="chart-select">
+                                <option value="submissions">按提交数</option>
+                                <option value="completions">按完成数</option>
+                                <option value="views">按浏览量</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <div id="rankingChart" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细数据表格 -->
+            <div class="data-table-section">
+                <div class="table-header">
+                    <h3>详细数据</h3>
+                    <div class="table-controls">
+                        <select id="tableMetric" class="table-select">
+                            <option value="questionnaire">问卷数据</option>
+                            <option value="user">用户数据</option>
+                            <option value="submission">提交数据</option>
+                        </select>
+                        <button class="btn-export-table" id="exportTableData">导出表格</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="dataTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>问卷名称</th>
+                                <th>状态</th>
+                                <th>创建时间</th>
+                                <th>提交数</th>
+                                <th>完成数</th>
+                                <th>完成率</th>
+                                <th>平均用时</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <!-- 数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-pagination">
+                    <div class="pagination-info">
+                        <span>显示 <span id="startIndex">1</span> 到 <span id="endIndex">10</span> 条，共 <span id="totalCount">0</span> 条</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button id="prevPage" class="btn-page">上一页</button>
+                        <div id="pageNumbers" class="page-numbers"></div>
+                        <button id="nextPage" class="btn-page">下一页</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 实时监控 -->
+            <div class="realtime-section">
+                <div class="realtime-header">
+                    <h3>实时监控</h3>
+                    <div class="realtime-status">
+                        <span class="status-indicator active"></span>
+                        <span>实时更新中</span>
+                    </div>
+                </div>
+                <div class="realtime-content">
+                    <div class="realtime-card">
+                        <div class="realtime-title">当前在线用户</div>
+                        <div class="realtime-number" id="onlineUsers">0</div>
+                        <div class="realtime-change">+0</div>
+                    </div>
+                    <div class="realtime-card">
+                        <div class="realtime-title">今日新增提交</div>
+                        <div class="realtime-number" id="todaySubmissions">0</div>
+                        <div class="realtime-change">+0</div>
+                    </div>
+                    <div class="realtime-card">
+                        <div class="realtime-title">系统响应时间</div>
+                        <div class="realtime-number" id="responseTime">0ms</div>
+                        <div class="realtime-change">-0ms</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 加载状态 -->
+    <div id="loading" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <i class="iconfont icon-loading"></i>
+            <p>正在加载统计数据...</p>
+        </div>
+    </div>
+
+    <!-- 脚本引用 -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/questionnaire-statistics.js"></script>
+</body>
+</html>
