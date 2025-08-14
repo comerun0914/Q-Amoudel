@@ -15,7 +15,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/submission")
-@CrossOrigin(origins = {"http://localhost:3000","http://localhost:8080","http://127.0.0.1:3000","http://127.0.0.1:8080"}, allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:3000","http://localhost:8080","http://127.0.0.1:3000","http://127.0.0.1:8080","http://localhost:3000,http://93d7k45123.goho.co:44966"}, allowCredentials = "true")
 public class QuestionnaireSubmissionController {
     
     @Autowired

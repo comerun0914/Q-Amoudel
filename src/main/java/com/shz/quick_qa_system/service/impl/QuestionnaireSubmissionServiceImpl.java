@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,14 +41,36 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
     @Autowired
     private UsersService usersService;
 
-    
+
     @Override
     @Transactional
     public Integer submitQuestionnaire(Map<String, Object> submissionData) {
         try {
-            // 1. 创建提交记录
+            Integer questionnaireId = (Integer) submissionData.get("questionnaireId");
+            
+            // 1. 检查问卷是否存在且在有效期内
+            QuestionCreate questionInfo = questionCreateService.getById(questionnaireId);
+            if (questionInfo == null) {
+                throw new RuntimeException("问卷不存在");
+            }
+            
+            // 检查问卷状态
+            if (questionInfo.getStatus() == null || questionInfo.getStatus() != 1) {
+                throw new RuntimeException("问卷已禁用或未启用");
+            }
+            
+            // 检查问卷有效期
+            LocalDate currentDate = LocalDate.now();
+            if (questionInfo.getStartDate() != null && currentDate.isBefore(questionInfo.getStartDate())) {
+                throw new RuntimeException("问卷还未开始，开始时间：" + questionInfo.getStartDate());
+            }
+            if (questionInfo.getEndDate() != null && currentDate.isAfter(questionInfo.getEndDate())) {
+                throw new RuntimeException("问卷已结束，结束时间：" + questionInfo.getEndDate());
+            }
+            
+            // 2. 创建提交记录
             QuestionnaireSubmission submission = new QuestionnaireSubmission();
-            submission.setQuestionnaireId((Integer) submissionData.get("questionnaireId"));
+            submission.setQuestionnaireId(questionnaireId);
             submission.setUserId((Integer) submissionData.get("userId"));
             submission.setSubmitterName((String) submissionData.get("submitterName"));
             submission.setSubmitterEmail((String) submissionData.get("submitterEmail"));
@@ -70,7 +93,7 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
             // 保存提交记录（使用手动ID）
             save(submission);
             
-            // 2. 保存答案数据
+            // 3. 保存答案数据
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> answers = (List<Map<String, Object>>) submissionData.get("answers");
             if (answers != null && !answers.isEmpty()) {
@@ -187,7 +210,7 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
                .eq("ip_address", ipAddress)
                .eq("status", 1);
         
-        return count(wrapper) > 0;
+        return questionnaireSubmissionMapper.exists(wrapper);
     }
 
     @Override
@@ -293,6 +316,20 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
             QuestionCreate questionInfo = questionCreateService.getById(questionnaireId);
             if (questionInfo == null) {
                 throw new RuntimeException("问卷不存在");
+            }
+            
+            // 检查问卷状态
+            if (questionInfo.getStatus() == null || questionInfo.getStatus() != 1) {
+                throw new RuntimeException("问卷已禁用或未启用");
+            }
+            
+            // 检查问卷有效期
+            LocalDate currentDate = LocalDate.now();
+            if (questionInfo.getStartDate() != null && currentDate.isBefore(questionInfo.getStartDate())) {
+                throw new RuntimeException("问卷还未开始，开始时间：" + questionInfo.getStartDate());
+            }
+            if (questionInfo.getEndDate() != null && currentDate.isAfter(questionInfo.getEndDate())) {
+                throw new RuntimeException("问卷已结束，结束时间：" + questionInfo.getEndDate());
             }
             
             // 获取问卷的提交次数限制

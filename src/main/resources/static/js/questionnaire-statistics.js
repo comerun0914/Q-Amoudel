@@ -244,14 +244,14 @@ function loadStatisticsData() {
         params.append('endDate', customEndDate);
     }
     
-    // 发送请求到后端
-    const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.STATISTICS, false) + '?' + params.toString();
+    // 发送请求到新的统计API
+    const url = UTILS.getApiUrl(CONFIG.API_ENDPOINTS.STATISTICS_DASHBOARD, false) + '?' + params.toString();
     console.log('Requesting statistics URL:', url);
     
     fetch(url, {
         method: 'GET',
         headers: {
-            'Authorization': `Bearer ${UTILS.getStorage(CONFIG.STORAGE_KEYS.TOKEN)}`
+            'Content-Type': 'application/json'
         }
     })
     .then(response => {
@@ -266,6 +266,8 @@ function loadStatisticsData() {
         
         if (data.code === 200) {
             statisticsData = data.data || {};
+            console.log('Processed statistics data:', statisticsData);
+            console.log('Changes data:', statisticsData.changes);
             
             // 更新核心统计卡片
             updateCoreStats();
@@ -278,6 +280,7 @@ function loadStatisticsData() {
             
         } else {
             UTILS.showToast(data.message || '加载统计数据失败', 'error');
+            console.error('API returned error:', data);
             // 使用模拟数据
             loadMockData();
         }
@@ -297,13 +300,20 @@ function loadStatisticsData() {
 function loadMockData() {
     console.log('Loading mock data...');
     
-    // 模拟统计数据
+    // 模拟统计数据 - 数据结构与后端返回的格式保持一致
     statisticsData = {
-        coreStats: {
-            totalQuestionnaires: 25,
-            totalSubmissions: 156,
-            completionRate: 78.5,
-            uniqueUsers: 89
+        totalQuestionnaires: 25,
+        totalSubmissions: 156,
+        completionRate: 78.5,
+        uniqueUsers: 89,
+        changes: {
+            totalChange: '+12%',
+            submissionsChange: '+8%',
+            completionChange: '+3%',
+            usersChange: '+15%',
+            timeRange: 30,
+            currentPeriod: '2024-01-01 至 2024-01-31',
+            previousPeriod: '2024-12-01 至 2024-12-31'
         },
         trends: {
             dates: ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05'],
@@ -322,8 +332,7 @@ function loadMockData() {
             { name: '课程质量评估', submissions: 32, completions: 28, views: 85 },
             { name: '教师评价表', submissions: 28, completions: 25, views: 76 },
             { name: '设施使用调查', submissions: 24, completions: 20, views: 65 }
-        ],
-
+        ]
     };
     
     // 更新核心统计卡片
@@ -340,7 +349,7 @@ function loadMockData() {
  * 更新核心统计卡片
  */
 function updateCoreStats() {
-    const stats = statisticsData.coreStats || {};
+    const stats = statisticsData || {};
     
     // 更新总问卷数
     const totalElement = document.getElementById('totalQuestionnaires');
@@ -354,40 +363,67 @@ function updateCoreStats() {
         submissionsElement.textContent = stats.totalSubmissions || 0;
     }
     
-    // 更新完成率
+    // 更新完成率（用户个人提交的问卷与整体人员的占比）
     const completionElement = document.getElementById('completionRate');
     if (completionElement) {
-        completionElement.textContent = (stats.completionRate || 0) + '%';
+        const rate = stats.completionRate || 0;
+        completionElement.textContent = rate + '%';
+        
+        // 更新完成率标签说明
+        const completionLabel = document.querySelector('.stat-card.completion .stat-label');
+        if (completionLabel) {
+            completionLabel.textContent = '个人完成率';
+            completionLabel.title = '用户个人提交的问卷与整体人员的占比';
+        }
     }
     
-    // 更新独立用户数
+    // 更新独立用户数（只统计角色是用户的）
     const usersElement = document.getElementById('uniqueUsers');
     if (usersElement) {
         usersElement.textContent = stats.uniqueUsers || 0;
+        
+        // 更新独立用户标签说明
+        const usersLabel = document.querySelector('.stat-card.users .stat-label');
+        if (usersLabel) {
+            usersLabel.textContent = '普通用户数';
+            usersLabel.title = '只统计角色是普通用户的用户数量';
+        }
     }
     
-    // 更新变化率（模拟数据）
-    updateChangeRates();
+    // 更新变化率
+    updateChangeRates(stats.changes);
 }
 
 /**
  * 更新变化率
  */
-function updateChangeRates() {
-    const changes = [
-        { id: 'totalChange', value: '+12%', isPositive: true },
-        { id: 'submissionsChange', value: '+8%', isPositive: true },
-        { id: 'completionChange', value: '+3%', isPositive: true },
-        { id: 'usersChange', value: '+15%', isPositive: true }
-    ];
+function updateChangeRates(changes = {}) {
+    if (!changes || typeof changes !== 'object') {
+        console.warn('Invalid changes data:', changes);
+        return;
+    }
     
-    changes.forEach(change => {
-        const element = document.getElementById(change.id);
-        if (element) {
-            element.textContent = change.value;
-            element.className = `stat-change ${change.isPositive ? 'positive' : 'negative'}`;
+    // 处理后端返回的变化率数据
+    const changeFields = ['totalChange', 'submissionsChange', 'completionChange', 'usersChange'];
+    
+    changeFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (element && changes[field]) {
+            const changeValue = changes[field];
+            element.textContent = changeValue;
+            
+            // 判断是正增长还是负增长
+            const isPositive = changeValue.startsWith('+') || 
+                             (changeValue.includes('%') && !changeValue.startsWith('-'));
+            element.className = `stat-change ${isPositive ? 'positive' : 'negative'}`;
         }
     });
+    
+    // 如果有时间段信息，可以显示在页面上
+    if (changes.currentPeriod && changes.previousPeriod) {
+        console.log('当前时间段:', changes.currentPeriod);
+        console.log('对比时间段:', changes.previousPeriod);
+    }
 }
 
 /**
@@ -1120,6 +1156,27 @@ window.previewQuestionnaire = previewQuestionnaire;
 window.editQuestionnaire = editQuestionnaire;
 window.changePage = changePage;
 window.handleLogout = handleLogout;
+
+// 测试函数 - 用于调试变化率显示
+window.testChangeRates = function() {
+    console.log('Testing change rates display...');
+    
+    // 测试数据
+    const testChanges = {
+        totalChange: '+15.5%',
+        submissionsChange: '+8.2%',
+        completionChange: '-2.1%',
+        usersChange: '+0%',
+        timeRange: 30,
+        currentPeriod: '2024-01-01 至 2024-01-31',
+        previousPeriod: '2024-12-01 至 2024-12-31'
+    };
+    
+    // 更新变化率显示
+    updateChangeRates(testChanges);
+    
+    console.log('Test completed. Check the page for updated change rates.');
+};
 
 // 页面卸载时清理定时器
 window.addEventListener('beforeunload', function() {

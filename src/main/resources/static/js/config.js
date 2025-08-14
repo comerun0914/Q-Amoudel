@@ -1,9 +1,9 @@
 // 全局配置文件
 const CONFIG = {
     // 后台服务配置
-    // BACKEND_BASE_URL: 'http://93d7k45123.goho.co:48134/api',
+    BACKEND_BASE_URL: 'http://93d7k45123.goho.co:48134/api',
     // 测试专用
-    BACKEND_BASE_URL: 'http://localhost:7070/api',
+    // BACKEND_BASE_URL: 'http://localhost:7070/api',
     // API端点配置
     API_ENDPOINTS: {
         // 用户相关
@@ -38,6 +38,11 @@ const CONFIG = {
 		SUBMISSION_GET_DRAFT: '/submission/getDraft',
 		SUBMISSION_CHECK: '/submission/checkSubmission',
 		SUBMISSION_USER_SUBMITTED: '/submission/userSubmitted',
+		
+		// 统计相关
+		STATISTICS_DASHBOARD: '/statistics/dashboard',
+		STATISTICS_COMPLETION_RATE: '/statistics/completion-rate',
+		STATISTICS_UNIQUE_USERS: '/statistics/unique-users',
 
         // 题目相关
         QUESTION_SAVE: '/question/save',
