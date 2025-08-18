@@ -4,7 +4,18 @@
     <div class="page-header">
       <div class="header-content">
         <div class="title-section">
-          <h1 class="page-title">问卷管理</h1>
+          <div class="title-with-back">
+            <a-button 
+              type="link" 
+              size="large" 
+              @click="goToHome"
+              class="back-home-btn"
+            >
+              <HomeOutlined />
+              主页
+            </a-button>
+            <h1 class="page-title">问卷管理</h1>
+          </div>
           <p class="page-subtitle">管理您的所有问卷，包括创建、编辑、删除和数据分析</p>
         </div>
         <div class="action-buttons">
@@ -147,6 +158,8 @@
           :pagination="pagination"
           @change="handleTableChange"
           row-key="id"
+          :scroll="{ x: 1000 }"
+          :size="tableSize"
         >
           <!-- 问卷标题列 -->
           <template #bodyCell="{ column, record }">
@@ -201,7 +214,7 @@
 
             <!-- 操作列 -->
             <template v-else-if="column.key === 'action'">
-              <a-space>
+              <a-space size="small" wrap>
                 <a-button type="link" size="small" @click="editQuestionnaire(record)">
                   <EditOutlined />
                   编辑
@@ -301,7 +314,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '../stores/user';
 import { message } from 'ant-design-vue';
@@ -321,7 +334,8 @@ import {
   ReloadOutlined,
   WechatOutlined,
   WeiboOutlined,
-  MailOutlined
+  MailOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue';
 import { CONFIG, UTILS } from '../api/config';
 import { api } from '../utils/request';
@@ -330,6 +344,18 @@ import { Statistic } from 'ant-design-vue';
 // 响应式数据
 const router = useRouter();
 const userStore = useUserStore();
+const tableSize = ref('middle')
+
+// 响应式表格尺寸控制
+const updateTableSize = () => {
+  if (window.innerWidth < 768) {
+    tableSize.value = 'small'
+  } else if (window.innerWidth < 1200) {
+    tableSize.value = 'middle'
+  } else {
+    tableSize.value = 'default'
+  }
+}
 
 // 工具函数：从本地存储获取用户ID
 const getCurrentUserId = () => {
@@ -393,43 +419,51 @@ const tableColumns = [
     title: '问卷标题',
     dataIndex: 'title',
     key: 'title',
-    width: 200,
-    ellipsis: true
+    width: 160,
+    ellipsis: true,
+    fixed: 'left',
+    responsive: ['md']
   },
   {
     title: '创建者',
     dataIndex: 'creator_id', // 对应数据库creator_id字段
     key: 'creator_id',
-    width: 120
+    width: 90,
+    responsive: ['md']
   },
   {
     title: '状态',
     dataIndex: 'status',
     key: 'status',
-    width: 100
+    width: 70,
+    responsive: ['sm']
   },
   {
     title: '时间范围',
     dataIndex: 'dateRange',
     key: 'dateRange',
-    width: 180
+    width: 120,
+    responsive: ['lg']
   },
   {
     title: '参与统计',
     key: 'participation',
-    width: 150
+    width: 100,
+    responsive: ['lg']
   },
   {
     title: '创建时间',
     dataIndex: 'created_time', // 对应数据库created_time字段
     key: 'created_time',
-    width: 150
+    width: 110,
+    responsive: ['md']
   },
   {
     title: '操作',
     key: 'action',
-    width: 400,
-    fixed: 'right'
+    width: 240,
+    fixed: 'right',
+    responsive: ['sm']
   }
 ];
 
@@ -715,9 +749,9 @@ const fetchQuestionnaires = async () => {
 // 获取统计信息 - 基于数据库表结构修正
 const fetchStatistics = async () => {
   try {
-    // 根据数据库表结构，从questionnaire_submission表获取统计信息
+    // 首先尝试从新的统计接口获取数据
     const response = await api.get(CONFIG.API_ENDPOINTS.STATISTICS_DASHBOARD)
-
+    
     if (response.code === 200) {
       const data = response.data || {}
       statistics.total = data.totalQuestionnaires || 0
@@ -727,18 +761,91 @@ const fetchStatistics = async () => {
       statistics.totalQuestions = data.totalQuestions || 0
       statistics.avgCompletionRate = data.avgCompletionRate || 0
       statistics.avgDuration = data.avgDuration || 0
+      
+      console.log('获取到统计信息:', data)
+      console.log('统计数据显示:', {
+        total: statistics.total,
+        published: statistics.published,
+        draft: statistics.draft,
+        totalParticipants: statistics.totalParticipants
+      })
+    } else {
+      // 如果新接口失败，尝试从问卷列表接口获取基础统计
+      console.warn('统计接口返回失败，尝试从问卷列表获取基础统计')
+      await fetchBasicStatistics()
     }
   } catch (error) {
     console.error('获取统计信息失败:', error)
+    // 如果统计接口失败，尝试从问卷列表接口获取基础统计
+    console.warn('统计接口调用失败，尝试从问卷列表获取基础统计')
+    await fetchBasicStatistics()
   }
 }
 
+// 从问卷列表获取基础统计信息
+const fetchBasicStatistics = async () => {
+  try {
+    // 获取问卷列表来计算基础统计
+    const params = {
+      creatorId: getCurrentUserId(),
+      page: 1,
+      size: 1000, // 获取足够多的数据来计算统计
+      keyword: '',
+      status: '',
+      dateFilter: ''
+    }
+    
+    const response = await api.get(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_LIST, params)
+    
+    if (response.code === 200) {
+      const questionnaires = response.data.list || []
+      
+      // 计算基础统计 - 根据数据库状态值映射
+      statistics.total = questionnaires.length
+      statistics.published = questionnaires.filter(q => q.status === 1).length  // status = 1 表示已发布
+      statistics.draft = questionnaires.filter(q => q.status === 2).length     // status = 2 表示草稿
+      statistics.totalParticipants = 0 // 暂时设为0，需要从提交记录中获取
+      statistics.totalQuestions = 0 // 暂时设为0，需要从问题表中获取
+      statistics.avgCompletionRate = 0 // 暂时设为0，需要从提交记录中获取
+      statistics.avgDuration = 0 // 暂时设为0，需要从提交记录中获取
+      
+      console.log('从问卷列表计算的基础统计:', {
+        total: statistics.total,
+        published: statistics.published,
+        draft: statistics.draft,
+        questionnaires: questionnaires.map(q => ({ id: q.id, title: q.title, status: q.status }))
+      })
+    }
+  } catch (error) {
+    console.error('获取基础统计失败:', error)
+    // 设置默认值
+    statistics.total = 0
+    statistics.published = 0
+    statistics.draft = 0
+    statistics.totalParticipants = 0
+    statistics.totalQuestions = 0
+    statistics.avgCompletionRate = 0
+    statistics.avgDuration = 0
+  }
+}
+
+// 返回主页方法
+const goToHome = () => {
+  router.push('/');
+};
+
 // 生命周期
 onMounted(() => {
+  updateTableSize()
+  window.addEventListener('resize', updateTableSize)
   // 获取数据 - 基于数据库表结构修正
   fetchQuestionnaireList();
   fetchStatistics();
 });
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateTableSize)
+})
 </script>
 
 <style scoped>
@@ -751,34 +858,97 @@ onMounted(() => {
 /* 页面头部样式 */
 .page-header {
   background: white;
-  border-radius: 8px;
+  color: #1a1a1a;
   padding: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title-section {
+  flex: 1;
+}
+
+.title-with-back {
+  display: flex;
   align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
 }
 
-.title-section h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
+.back-home-btn {
+  color: #1890ff !important;
+  font-size: 16px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
-.title-section p {
-  color: #6b7280;
+.back-home-btn:hover {
+  background: #f0f8ff !important;
+  color: #1890ff !important;
+}
+
+.back-home-btn .anticon {
+  margin-right: 4px;
+}
+
+.page-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #1a1a1a;
+  text-shadow: none;
+}
+
+.page-subtitle {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
 }
 
 .action-buttons {
   display: flex;
   gap: 12px;
+}
+
+.action-buttons .ant-btn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.action-buttons .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.action-buttons .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.action-buttons .ant-btn:not(.ant-btn-primary) {
+  border-color: #d9d9d9;
+  color: #595959;
+}
+
+.action-buttons .ant-btn:not(.ant-btn-primary):hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+  transform: translateY(-1px);
 }
 
 /* 搜索筛选区域样式 */
@@ -816,23 +986,51 @@ onMounted(() => {
   padding: 0;
 }
 
-/* 自定义列样式 */
+/* 表格样式优化 */
+.table-section {
+  margin-top: 24px;
+}
+
+.table-section .ant-table {
+  font-size: 14px;
+}
+
+.table-section .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #374151;
+  padding: 12px 8px;
+  white-space: nowrap;
+}
+
+.table-section .ant-table-tbody > tr > td {
+  padding: 12px 8px;
+  vertical-align: top;
+}
+
+/* 问卷标题列样式 */
 .questionnaire-title {
-  padding: 4px 0;
+  max-width: 160px;
 }
 
 .title-text {
   font-weight: 500;
   color: #1f2937;
   margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title-desc {
   font-size: 12px;
   color: #6b7280;
-  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* 创建者列样式 */
 .creator-info {
   display: flex;
   align-items: center;
@@ -840,10 +1038,15 @@ onMounted(() => {
 }
 
 .creator-name {
+  font-size: 13px;
   color: #374151;
-  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80px;
 }
 
+/* 时间范围列样式 */
 .date-range {
   font-size: 12px;
   color: #6b7280;
@@ -852,8 +1055,12 @@ onMounted(() => {
 
 .date-range div {
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* 参与统计列样式 */
 .participation-stats {
   font-size: 12px;
 }
@@ -871,6 +1078,18 @@ onMounted(() => {
 .stat-value {
   color: #1f2937;
   font-weight: 500;
+}
+
+/* 操作列样式 */
+.ant-table .ant-space {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ant-table .ant-btn-link {
+  padding: 2px 6px;
+  height: auto;
+  font-size: 12px;
 }
 
 /* 弹窗样式 */
@@ -939,5 +1158,24 @@ onMounted(() => {
   .search-filter-section .ant-col {
     margin-bottom: 12px;
   }
+}
+
+/* 表格滚动条样式 */
+.ant-table-body::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ant-table-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>

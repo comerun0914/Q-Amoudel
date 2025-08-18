@@ -4,12 +4,20 @@
     <header class="fill-header">
       <div class="header-content">
         <div class="header-left">
-          <a-button class="btn-back" @click="goBack" :loading="backLoading">
-            <template #icon>
-              <ArrowLeftOutlined />
-            </template>
-            返回
-          </a-button>
+          <div class="back-buttons">
+            <a-button class="btn-home" @click="goToHome">
+              <template #icon>
+                <HomeOutlined />
+              </template>
+              主页
+            </a-button>
+            <a-button class="btn-back" @click="goBack" :loading="backLoading">
+              <template #icon>
+                <ArrowLeftOutlined />
+              </template>
+              返回
+            </a-button>
+          </div>
           <div class="progress-info">
             <span class="progress-text">进度: <span>{{ progressText }}</span></span>
             <a-progress
@@ -251,7 +259,8 @@ import {
   SaveOutlined,
   ClockCircleOutlined,
   CalendarOutlined,
-  SendOutlined
+  SendOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { questionnaireApi, questionnaireUtils } from '@/api/questionnaire'
 import { CONFIG } from '@/api/config'
@@ -387,6 +396,10 @@ const goBack = () => {
   } else {
     router.back()
   }
+}
+
+const goToHome = () => {
+  router.push('/')
 }
 
 // 加载问卷
@@ -680,6 +693,21 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 24px;
+}
+
+.back-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-home {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
 }
 
 .btn-back {
@@ -984,6 +1012,12 @@ onUnmounted(() => {
   }
 
   .header-left {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .back-buttons {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;

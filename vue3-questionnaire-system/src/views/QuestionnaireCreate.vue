@@ -2,7 +2,18 @@
   <div class="questionnaire-create">
     <div class="page-header">
       <div class="header-left">
-        <h1>创建问卷</h1>
+        <div class="title-with-back">
+          <a-button 
+            type="link" 
+            size="large" 
+            @click="goToHome"
+            class="back-home-btn"
+          >
+            <HomeOutlined />
+            主页
+          </a-button>
+          <h1>创建问卷</h1>
+        </div>
         <p>设计您的问卷内容，支持多种题型</p>
       </div>
       <div class="header-actions">
@@ -361,7 +372,8 @@ import {
   UploadOutlined,
   SaveOutlined,
   RocketOutlined,
-  DragOutlined
+  DragOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG, UTILS } from '@/api/config'
 import { api } from '@/utils/request'
@@ -405,6 +417,22 @@ const getCurrentUserId = () => {
     }
   }
   return 1; // 默认值
+};
+
+// 工具函数：从本地存储获取用户信息
+const getCurrentUserInfo = () => {
+  const userInfoStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO);
+  if (userInfoStr) {
+    try {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo && userInfo.id) {
+        return userInfo;
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error);
+    }
+  }
+  return null;
 };
 
 // 问卷基本信息
@@ -728,8 +756,31 @@ const saveAsDraft = async () => {
 
     if (response.code === 200) {
       message.success('草稿保存成功')
+      
       // 保存到本地存储作为备份
       localStorage.setItem('questionnaire_draft', JSON.stringify(saveData))
+      
+      // 跳转到问卷成功界面，显示问卷信息
+      const questionnaireId = response.data?.id || response.data?.questionnaireId
+      if (questionnaireId) {
+        router.push({
+          path: '/questionnaire/success',
+          query: {
+            id: questionnaireId,
+            title: questionnaireInfo.title,
+            description: questionnaireInfo.description,
+            totalQuestions: questions.value.length,
+            startDate: questionnaireInfo.startDate,
+            endDate: questionnaireInfo.endDate,
+            creator: getCurrentUserInfo()?.username || '当前用户',
+            creationTime: new Date().toISOString(),
+            action: 'draft' // 标识是保存草稿操作
+          }
+        })
+      } else {
+        // 如果没有返回ID，跳转到问卷管理页面
+        router.push('/questionnaire/management')
+      }
     } else {
       message.error(response.message || '保存草稿失败')
     }
@@ -783,7 +834,19 @@ const publishQuestionnaire = async () => {
           questionType: getQuestionTypeCode(q.type),
           sortNum: index + 1,
           isRequired: q.required ? 1 : 0,
-          options: q.options || [],
+          options: (q.options || []).map((opt, optIndex) => {
+            const mappedOption = {
+              optionContent: opt.text,
+              optionContent: opt.text,
+              sortNum: optIndex + 1,
+              isDefault: opt.isDefault || 0
+            };
+            console.log(`问题 ${index + 1} 选项 ${optIndex + 1} 映射:`, {
+              original: opt,
+              mapped: mappedOption
+            });
+            return mappedOption;
+          }),
           minLength: q.minLength,
           maxLength: q.maxLength,
           maxRating: q.maxRating
@@ -827,6 +890,10 @@ const publishQuestionnaire = async () => {
       })
     }
 
+    // 添加调试日志
+    console.log('发布问卷数据:', publishData);
+    console.log('问题数据详情:', publishData.questions);
+    
     // 调用发布API
     const response = await api.post(CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE, publishData)
 
@@ -836,8 +903,27 @@ const publishQuestionnaire = async () => {
       // 清除本地草稿
       localStorage.removeItem('questionnaire_draft')
 
-      // 跳转到问卷管理页面
-      router.push('/questionnaire/management')
+      // 跳转到问卷成功界面，显示问卷信息
+      const questionnaireId = response.data?.id || response.data?.questionnaireId
+      if (questionnaireId) {
+        router.push({
+          path: '/questionnaire/success',
+          query: {
+            id: questionnaireId,
+            title: questionnaireInfo.title,
+            description: questionnaireInfo.description,
+            totalQuestions: questions.value.length,
+            startDate: questionnaireInfo.startDate,
+            endDate: questionnaireInfo.endDate,
+            creator: getCurrentUserInfo()?.username || '当前用户',
+            creationTime: new Date().toISOString(),
+            action: 'publish' // 标识是发布问卷操作
+          }
+        })
+      } else {
+        // 如果没有返回ID，跳转到问卷管理页面
+        router.push('/questionnaire/management')
+      }
     } else {
       message.error(response.message || '发布问卷失败')
     }
@@ -1188,6 +1274,9 @@ onMounted(async () => {
   }
 })
 
+const goToHome = () => {
+  router.push('/')
+}
 
 </script>
 

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单导航测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .nav-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .nav-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简单导航测试</h1>
+        
+        <div class="status">
+            当前页面: <span id="currentPage"></span><br>
+            时间: <span id="currentTime"></span>
+        </div>
+        
+        <div class="test-section">
+            <h3>基本导航测试</h3>
+            <a href="/home" class="nav-button">跳转到 /home</a>
+            <a href="/ask-user" class="nav-button">跳转到 /ask-user</a>
+            <a href="/login" class="nav-button">跳转到 /login</a>
+        </div>
+        
+        <div class="test-section">
+            <h3>JavaScript导航测试</h3>
+            <button onclick="navigateTo('/home')" class="nav-button">JS跳转到 /home</button>
+            <button onclick="navigateTo('/ask-user')" class="nav-button">JS跳转到 /ask-user</button>
+            <button onclick="navigateTo('/login')" class="nav-button">JS跳转到 /login</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>模拟登录后跳转</h3>
+            <button onclick="simulateLoginAndNavigate()" class="nav-button">模拟登录后跳转到首页</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>检查Vue应用状态</h3>
+            <button onclick="checkVueApp()" class="nav-button">检查Vue应用状态</button>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前页面信息
+        function updatePageInfo() {
+            document.getElementById('currentPage').textContent = window.location.pathname;
+            document.getElementById('currentTime').textContent = new Date().toLocaleString();
+        }
+        
+        // 更新页面信息
+        updatePageInfo();
+        setInterval(updatePageInfo, 1000);
+        
+        // JavaScript导航函数
+        function navigateTo(path) {
+            console.log(`尝试跳转到: ${path}`);
+            try {
+                // 方法1: 使用window.location.href
+                window.location.href = path;
+            } catch (error) {
+                console.error(`跳转失败: ${error.message}`);
+                // 方法2: 使用window.location.replace
+                try {
+                    window.location.replace(path);
+                } catch (error2) {
+                    console.error(`替换跳转也失败: ${error2.message}`);
+                    alert(`无法跳转到 ${path}`);
+                }
+            }
+        }
+        
+        // 模拟登录后跳转
+        function simulateLoginAndNavigate() {
+            console.log('模拟登录后跳转...');
+            
+            // 模拟保存用户信息
+            const mockUser = {
+                id: 1,
+                username: 'admin',
+                role: 1
+            };
+            
+            localStorage.setItem('user_info', JSON.stringify(mockUser));
+            localStorage.setItem('user_token', 'mock_token_123');
+            
+            console.log('模拟用户信息已保存');
+            
+            // 延迟跳转
+            setTimeout(() => {
+                console.log('开始跳转到首页...');
+                navigateTo('/home');
+            }, 500);
+        }
+        
+        // 检查Vue应用状态
+        function checkVueApp() {
+            console.log('检查Vue应用状态...');
+            
+            // 检查是否有Vue应用挂载
+            const appElement = document.getElementById('app');
+            if (appElement) {
+                console.log('找到Vue应用挂载点:', appElement);
+                console.log('Vue应用内容:', appElement.innerHTML);
+            } else {
+                console.log('未找到Vue应用挂载点');
+            }
+            
+            // 检查localStorage
+            console.log('localStorage内容:');
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                console.log(`${key}: ${value}`);
+            }
+            
+            // 检查当前URL
+            console.log('当前URL:', window.location.href);
+            console.log('当前路径:', window.location.pathname);
+            console.log('当前域名:', window.location.hostname);
+            console.log('当前端口:', window.location.port);
+        }
+        
+        // 页面加载完成后的处理
+        window.onload = function() {
+            console.log('页面加载完成');
+            console.log('当前路径:', window.location.pathname);
+            
+            // 检查是否是Vue应用的路由
+            if (window.location.pathname !== '/') {
+                console.log('检测到非根路径，可能是Vue路由');
+                console.log('尝试检查Vue应用状态...');
+                
+                // 延迟检查，给Vue应用一些时间加载
+                setTimeout(() => {
+                    checkVueApp();
+                }, 1000);
+            }
+        };
+        
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                console.log('页面变为可见');
+                updatePageInfo();
+            }
+        });
+        
+        // 监听页面加载状态
+        window.addEventListener('load', function() {
+            console.log('页面完全加载');
+        });
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM内容加载完成');
+        });
+    </script>
+</body>
+</html>

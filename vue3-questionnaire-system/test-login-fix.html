@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录功能测试 - 幼儿星</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #40a9ff;
+        }
+        .test-button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .log-area {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .status.error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .status.info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+        .status.warning {
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+            color: #fa8c16;
+        }
+    </style>
+</head>
+<body>
+    <h1>登录功能测试 - 幼儿星</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <p>此页面用于测试登录功能修复后的效果：</p>
+        <ul>
+            <li>1. 登录成功后应该能正确跳转到首页</li>
+            <li>2. 首页的主页键应该能返回首页而不是退出登录</li>
+            <li>3. 用户角色应该能正确识别和跳转</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>后端连接状态</h2>
+        <div id="backendStatus"></div>
+        <button class="test-button" onclick="checkBackendStatus()">检查后端连接</button>
+        <button class="test-button" onclick="testBackendHealth()">测试后端健康状态</button>
+    </div>
+
+    <div class="test-section">
+        <h2>当前状态检查</h2>
+        <div id="currentStatus"></div>
+        <button class="test-button" onclick="checkCurrentStatus()">检查当前状态</button>
+    </div>
+
+    <div class="test-section">
+        <h2>登录测试</h2>
+        <p>测试账号：admin / admin123 (角色1 - 教师/管理员)</p>
+        <button class="test-button" id="loginBtn" onclick="testLogin()">测试登录</button>
+        <button class="test-button" onclick="testLogout()">测试登出</button>
+    </div>
+
+    <div class="test-section">
+        <h2>路由跳转测试</h2>
+        <button class="test-button" onclick="testRouteToHome()">跳转到首页</button>
+        <button class="test-button" onclick="testRouteToAskUser()">跳转到用户端</button>
+        <button class="test-button" onclick="testRouteToLogin()">跳转到登录页</button>
+    </div>
+
+    <div class="test-section">
+        <h2>测试日志</h2>
+        <div id="logArea" class="log-area"></div>
+        <button class="test-button" onclick="clearLog()">清空日志</button>
+    </div>
+
+    <script>
+        // API配置
+        const API_CONFIG = {
+            BACKEND_BASE_URL: 'http://localhost:7070/api',
+            LOGIN_ENDPOINT: '/users/login',
+            HEALTH_ENDPOINT: '/health'
+        };
+
+        // 日志功能
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            logArea.textContent += logEntry;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(logEntry);
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').textContent = '';
+        }
+
+        // 状态显示
+        function showStatus(elementId, message, type = 'info') {
+            const statusDiv = document.getElementById(elementId);
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        // 检查后端连接状态
+        async function checkBackendStatus() {
+            try {
+                log('检查后端连接状态...');
+                const response = await fetch(API_CONFIG.BACKEND_BASE_URL + API_CONFIG.HEALTH_ENDPOINT, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    showStatus('backendStatus', '✅ 后端服务连接正常', 'success');
+                    log('后端服务连接正常');
+                    document.getElementById('loginBtn').disabled = false;
+                } else {
+                    showStatus('backendStatus', `⚠️ 后端服务响应异常 (${response.status})`, 'warning');
+                    log(`后端服务响应异常: ${response.status}`);
+                    document.getElementById('loginBtn').disabled = true;
+                }
+            } catch (error) {
+                showStatus('backendStatus', '❌ 无法连接到后端服务', 'error');
+                log(`后端连接失败: ${error.message}`, 'error');
+                document.getElementById('loginBtn').disabled = true;
+            }
+        }
+
+        // 测试后端健康状态
+        async function testBackendHealth() {
+            try {
+                log('测试后端健康状态...');
+                
+                // 尝试访问根路径
+                const response = await fetch('http://localhost:7070/', {
+                    method: 'GET'
+                });
+                
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        showStatus('backendStatus', '✅ 后端服务运行正常，返回JSON数据', 'success');
+                        log('后端服务运行正常，返回JSON数据');
+                    } else {
+                        showStatus('backendStatus', '⚠️ 后端服务运行，但返回非JSON数据', 'warning');
+                        log(`后端服务运行，但返回非JSON数据: ${contentType}`);
+                    }
+                } else {
+                    showStatus('backendStatus', `⚠️ 后端服务响应异常 (${response.status})`, 'warning');
+                    log(`后端服务响应异常: ${response.status}`);
+                }
+            } catch (error) {
+                showStatus('backendStatus', '❌ 无法连接到后端服务', 'error');
+                log(`后端连接失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 检查当前状态
+        function checkCurrentStatus() {
+            const token = localStorage.getItem('user_token');
+            const userInfo = localStorage.getItem('user_info');
+            
+            let status = '';
+            if (token) {
+                status += `✅ Token: ${token.substring(0, 20)}...<br>`;
+            } else {
+                status += `❌ Token: 未找到<br>`;
+            }
+            
+            if (userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    status += `✅ 用户信息: ${user.username || user.name || '未知'} (角色: ${user.role || '未知'})<br>`;
+                } catch (e) {
+                    status += `❌ 用户信息: 解析失败<br>`;
+                }
+            } else {
+                status += `❌ 用户信息: 未找到<br>`;
+            }
+            
+            showStatus('currentStatus', status, token ? 'success' : 'info');
+            log('当前状态检查完成');
+        }
+
+        // 测试登录
+        async function testLogin() {
+            try {
+                log('开始测试登录...');
+                
+                const loginUrl = API_CONFIG.BACKEND_BASE_URL + API_CONFIG.LOGIN_ENDPOINT;
+                log(`登录URL: ${loginUrl}`);
+                
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+
+                log(`响应状态: ${response.status} ${response.statusText}`);
+                log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+
+                const contentType = response.headers.get('content-type');
+                log(`响应内容类型: ${contentType}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // 检查响应内容类型
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    log(`响应内容 (非JSON): ${text.substring(0, 200)}...`);
+                    throw new Error('后端返回的不是JSON数据，可能是HTML错误页面');
+                }
+
+                const data = await response.json();
+                log(`登录响应: ${JSON.stringify(data, null, 2)}`);
+
+                if (data.code === 200) {
+                    showStatus('currentStatus', '登录成功！', 'success');
+                    log('登录成功，准备跳转...');
+                    
+                    // 保存token和用户信息
+                    if (data.data) {
+                        localStorage.setItem('user_token', data.data.token || 'test-token');
+                        localStorage.setItem('user_info', JSON.stringify(data.data));
+                    }
+                    
+                    // 根据角色跳转
+                    const role = data.returnCode || data.data?.role || 0;
+                    let targetPage = '';
+                    
+                    if (role === 1) {
+                        targetPage = '/home';
+                        log('用户角色为教师/管理员，跳转到管理端首页');
+                    } else {
+                        targetPage = '/ask-user';
+                        log('用户角色为普通用户，跳转到用户端页面');
+                    }
+                    
+                    // 延迟跳转，确保数据保存完成
+                    setTimeout(() => {
+                        log(`跳转到: ${targetPage}`);
+                        window.location.href = targetPage;
+                    }, 1000);
+                    
+                } else {
+                    showStatus('currentStatus', `登录失败: ${data.message || '未知错误'}`, 'error');
+                    log(`登录失败: ${data.message || '未知错误'}`);
+                }
+                
+            } catch (error) {
+                showStatus('currentStatus', `登录异常: ${error.message}`, 'error');
+                log(`登录异常: ${error.message}`, 'error');
+                
+                // 如果是连接问题，建议检查后端
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    log('建议检查后端服务是否启动，以及端口7070是否正确', 'warning');
+                }
+            }
+        }
+
+        // 测试登出
+        function testLogout() {
+            localStorage.removeItem('user_token');
+            localStorage.removeItem('user_info');
+            showStatus('currentStatus', '已清除登录状态', 'info');
+            log('已清除登录状态');
+        }
+
+        // 路由跳转测试
+        function testRouteToHome() {
+            log('测试跳转到首页');
+            window.location.href = '/home';
+        }
+
+        function testRouteToAskUser() {
+            log('测试跳转到用户端');
+            window.location.href = '/ask-user';
+        }
+
+        function testRouteToLogin() {
+            log('测试跳转到登录页');
+            window.location.href = '/login';
+        }
+
+        // 页面加载时检查状态
+        window.onload = function() {
+            log('测试页面加载完成');
+            log(`API配置: ${API_CONFIG.BACKEND_BASE_URL}`);
+            checkBackendStatus();
+            checkCurrentStatus();
+        };
+    </script>
+</body>
+</html>

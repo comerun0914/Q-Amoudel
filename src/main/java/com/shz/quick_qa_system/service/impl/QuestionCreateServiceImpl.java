@@ -249,8 +249,15 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
      * 保存选项数据
      */
     private void saveOptions(Integer questionId, Integer questionType, List<Map<String, Object>> options) {
+        System.out.println("=== 开始保存选项数据 ===");
+        System.out.println("问题ID: " + questionId);
+        System.out.println("问题类型: " + questionType);
+        System.out.println("选项数量: " + options.size());
+        System.out.println("选项数据: " + options);
+        
         for (int i = 0; i < options.size(); i++) {
             Map<String, Object> optionData = options.get(i);
+            System.out.println("处理第 " + (i + 1) + " 个选项，数据: " + optionData);
 
             if (questionType == 1) { // 单选题
                 SingleChoiceOption option = new SingleChoiceOption();
@@ -261,10 +268,26 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 }
                 option.setId(sid);
                 option.setQuestionId(questionId);
-                option.setOptionContent((String) optionData.get("optionContent"));
-                option.setSortNum((Integer) optionData.get("sortNum"));
-                option.setIsDefault((Integer) optionData.get("isDefault"));
+                
+                String optionContent = (String) optionData.get("optionContent");
+                System.out.println("单选题选项内容: " + optionContent);
+                if (optionContent == null || optionContent.trim().isEmpty()) {
+                    throw new IllegalArgumentException("单选题选项内容不能为空，选项数据: " + optionData);
+                }
+                option.setOptionContent(optionContent);
+                
+                Integer sortNum = (Integer) optionData.get("sortNum");
+                System.out.println("单选题选项排序号: " + sortNum);
+                option.setSortNum(sortNum != null ? sortNum : i + 1);
+                
+                Integer isDefault = (Integer) optionData.get("isDefault");
+                System.out.println("单选题选项是否默认: " + isDefault);
+                option.setIsDefault(isDefault != null ? isDefault : 0);
+                
+                System.out.println("准备插入单选题选项: " + option);
                 singleChoiceOptionMapper.insert(option);
+                System.out.println("单选题选项插入成功");
+                
             } else if (questionType == 2) { // 多选题
                 MultipleChoiceOption option = new MultipleChoiceOption();
                 // 生成唯一ID
@@ -274,12 +297,24 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 }
                 option.setId(mid);
                 option.setQuestionId(questionId);
-                option.setOptionContent((String) optionData.get("optionContent"));
-                option.setSortNum((Integer) optionData.get("sortNum"));
-                // MultipleChoiceOption doesn't have isDefault field, so we skip it
+                
+                String optionContent = (String) optionData.get("optionContent");
+                System.out.println("多选题选项内容: " + optionContent);
+                if (optionContent == null || optionContent.trim().isEmpty()) {
+                    throw new IllegalArgumentException("多选题选项内容不能为空，选项数据: " + optionData);
+                }
+                option.setOptionContent(optionContent);
+                
+                Integer sortNum = (Integer) optionData.get("sortNum");
+                System.out.println("多选题选项排序号: " + sortNum);
+                option.setSortNum(sortNum != null ? sortNum : i + 1);
+                
+                System.out.println("准备插入多选题选项: " + option);
                 multipleChoiceOptionMapper.insert(option);
+                System.out.println("多选题选项插入成功");
             }
         }
+        System.out.println("=== 选项数据保存完成 ===");
     }
 
     /**
@@ -978,21 +1013,29 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         // 统计总数
         long total = count(queryWrapper);
 
-        // 统计启用状态
-        QueryWrapper<QuestionCreate> activeWrapper = new QueryWrapper<>();
-        activeWrapper.eq("status", true);
+        // 统计已发布状态 (status = 1)
+        QueryWrapper<QuestionCreate> publishedWrapper = new QueryWrapper<>();
+        publishedWrapper.eq("status", 1);
         if (creatorId != null) {
-            activeWrapper.eq("creator_id", creatorId);
+            publishedWrapper.eq("creator_id", creatorId);
         }
-        long active = count(activeWrapper);
+        long published = count(publishedWrapper);
 
-        // 统计禁用状态
-        QueryWrapper<QuestionCreate> inactiveWrapper = new QueryWrapper<>();
-        inactiveWrapper.eq("status", false);
+        // 统计草稿状态 (status = 2)
+        QueryWrapper<QuestionCreate> draftWrapper = new QueryWrapper<>();
+        draftWrapper.eq("status", 2);
         if (creatorId != null) {
-            inactiveWrapper.eq("creator_id", creatorId);
+            draftWrapper.eq("creator_id", creatorId);
         }
-        long inactive = count(inactiveWrapper);
+        long draft = count(draftWrapper);
+
+        // 统计禁用状态 (status = 0)
+        QueryWrapper<QuestionCreate> disabledWrapper = new QueryWrapper<>();
+        disabledWrapper.eq("status", 0);
+        if (creatorId != null) {
+            disabledWrapper.eq("creator_id", creatorId);
+        }
+        long disabled = count(disabledWrapper);
 
         // 统计过期问卷
         QueryWrapper<QuestionCreate> expiredWrapper = new QueryWrapper<>();
@@ -1004,9 +1047,10 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
 
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("total", total);
-        statistics.put("active", active);
-        statistics.put("inactive", inactive);
-        statistics.put("expired", expired);
+        statistics.put("published", published);  // 已发布
+        statistics.put("draft", draft);         // 草稿
+        statistics.put("disabled", disabled);   // 已禁用
+        statistics.put("expired", expired);     // 已过期
 
         return statistics;
     }

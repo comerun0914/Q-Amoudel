@@ -7,6 +7,7 @@ import com.shz.quick_qa_system.entity.Question;
 import com.shz.quick_qa_system.dto.QuestionOrderUpdateDto;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -65,4 +66,11 @@ public interface QuestionService extends IService<Question> {
      * @return 问题数据
      */
     QuestionDto getQuestionById(Integer questionId);
+
+    /**
+     * 获取问题统计信息
+     * @param creatorId 创建者ID
+     * @return 问题统计信息
+     */
+    Map<String, Object> getQuestionStatistics(Integer creatorId);
 }

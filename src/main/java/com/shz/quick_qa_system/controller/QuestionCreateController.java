@@ -296,11 +296,22 @@ public class QuestionCreateController {
     @GetMapping("/statistics")
     public ApiResult getQuestionnaireStatistics(HttpServletRequest request) {
         try {
-//            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireStatistics();
-            return ApiResult.success(null);
+            // 从请求中获取用户ID，如果没有则使用默认值1
+            Integer userId = getUserIdFromRequest(request);
+            Map<String, Object> result = questionCreateServiceImpl.getQuestionnaireStatistics(userId);
+            return ApiResult.success(result);
         } catch (Exception e) {
             return ApiResult.error("获取统计信息失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 从请求中获取用户ID
+     */
+    private Integer getUserIdFromRequest(HttpServletRequest request) {
+        // 这里可以根据实际的用户认证机制来获取用户ID
+        // 暂时返回默认值1
+        return 1;
     }
 
     /**

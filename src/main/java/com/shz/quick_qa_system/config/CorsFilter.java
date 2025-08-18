@@ -20,7 +20,7 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorsFilter implements Filter {
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173}")
     private String allowedOrigins;
 
     @Value("${spring.profiles.active:dev}")
@@ -77,9 +77,26 @@ public class CorsFilter implements Filter {
 
         List<String> allowedOriginsList = Arrays.asList(allowedOrigins.split(","));
         return allowedOriginsList.stream()
-                .anyMatch(allowed -> origin.equals(allowed.trim()) ||
-                        (allowed.trim().startsWith("http://localhost") && origin.contains("localhost")) ||
-                        (allowed.trim().startsWith("http://127.0.0.1") && origin.contains("127.0.0.1")));
+                .anyMatch(allowed -> {
+                    String trimmedAllowed = allowed.trim();
+                    // 精确匹配
+                    if (origin.equals(trimmedAllowed)) {
+                        return true;
+                    }
+                    // 匹配localhost的各种端口
+                    if (trimmedAllowed.startsWith("http://localhost") && origin.contains("localhost")) {
+                        return true;
+                    }
+                    // 匹配127.0.0.1的各种端口
+                    if (trimmedAllowed.startsWith("http://127.0.0.1") && origin.contains("127.0.0.1")) {
+                        return true;
+                    }
+                    // 匹配file://协议（用于本地文件测试）
+                    if (origin.startsWith("file://")) {
+                        return true;
+                    }
+                    return false;
+                });
     }
 
     @Override

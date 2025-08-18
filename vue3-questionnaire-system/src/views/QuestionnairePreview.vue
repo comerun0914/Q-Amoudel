@@ -2,7 +2,18 @@
   <div class="questionnaire-preview">
     <div class="page-header">
       <div class="header-left">
-        <h1>问卷预览</h1>
+        <div class="title-with-back">
+          <a-button 
+            type="link" 
+            size="large" 
+            @click="goToHome"
+            class="back-home-btn"
+          >
+            <HomeOutlined />
+            主页
+          </a-button>
+          <h1>问卷预览</h1>
+        </div>
         <p>预览问卷的完整内容和填写界面</p>
       </div>
       <div class="header-actions">
@@ -139,7 +150,8 @@ import { message } from 'ant-design-vue'
 import {
   ArrowLeftOutlined,
   EyeOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG } from '@/api/config'
 import { api } from '@/utils/request'
@@ -488,6 +500,11 @@ const startFill = () => {
   router.push(`/questionnaire/fill/${questionnaireId.value}`)
 }
 
+// 返回主页
+const goToHome = () => {
+  router.push('/')
+}
+
 // 生命周期
 onMounted(() => {
   if (questionnaireId.value) {
@@ -515,6 +532,25 @@ onMounted(() => {
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Added gap for spacing between back button and title */
+}
+
+.title-with-back {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Added gap for spacing between back button and title */
+}
+
+.back-home-btn {
+  padding: 0; /* Remove default padding */
+  height: auto; /* Allow height to adjust */
+  line-height: 1; /* Adjust line height */
+  font-size: 16px; /* Adjust font size */
 }
 
 .header-left h1 {
@@ -743,6 +779,22 @@ onMounted(() => {
 
   .header-actions .ant-btn {
     flex: 1;
+  }
+
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .title-with-back {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .back-home-btn {
+    width: 100%;
   }
 
   .question-header {

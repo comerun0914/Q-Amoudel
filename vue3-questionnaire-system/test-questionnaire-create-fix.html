@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷创建问题修复测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 24px;
+            padding: 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        .result-box {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .error-box {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        .log-container {
+            background: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .question-item {
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        .option-item {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>问卷创建问题修复测试</h1>
+        
+        <div class="test-section">
+            <h3>1. 创建测试问卷</h3>
+            <form id="questionnaireForm">
+                <div class="form-group">
+                    <label>问卷标题</label>
+                    <input type="text" id="title" value="测试问卷 - 问题数据保存验证" required>
+                </div>
+                <div class="form-group">
+                    <label>问卷描述</label>
+                    <textarea id="description" rows="3">这是一个用于测试问题数据保存功能的问卷</textarea>
+                </div>
+                <div class="form-group">
+                    <label>开始时间</label>
+                    <input type="date" id="startDate" value="2025-08-18">
+                </div>
+                <div class="form-group">
+                    <label>结束时间</label>
+                    <input type="date" id="endDate" value="2025-12-31">
+                </div>
+                
+                <h4>添加问题</h4>
+                <div id="questionsContainer">
+                    <!-- 问题将在这里动态添加 -->
+                </div>
+                
+                <button type="button" onclick="addQuestion()">添加问题</button>
+                <button type="button" onclick="createQuestionnaire()">创建问卷</button>
+            </form>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. 测试结果</h3>
+            <div id="testResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. 验证问题数据</h3>
+            <button onclick="verifyQuestions()">验证问题数据</button>
+            <div id="verificationResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. 测试日志</h3>
+            <button onclick="clearLog()">清空日志</button>
+            <div id="testLog" class="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            BACKEND_BASE_URL: 'http://localhost:7070/api',
+            API_ENDPOINTS: {
+                QUESTIONNAIRE_CREATE: '/questionCreate/createWithQuestions',
+                QUESTIONNAIRE_DETAIL: '/questionCreate/detail',
+                QUESTIONS_LIST: '/questionCreate/questions'
+            }
+        };
+
+        let createdQuestionnaireId = null;
+        let questionCounter = 0;
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#ff4d4f' : type === 'warn' ? '#faad14' : '#52c41a';
+            logEntry.style.marginBottom = '4px';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        // 添加问题
+        function addQuestion() {
+            questionCounter++;
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-item';
+            questionDiv.innerHTML = `
+                <h5>问题 ${questionCounter}</h5>
+                <div class="form-group">
+                    <label>问题标题</label>
+                    <input type="text" class="question-title" value="测试问题 ${questionCounter}" required>
+                </div>
+                <div class="form-group">
+                    <label>问题类型</label>
+                    <select class="question-type" onchange="toggleOptions(this)">
+                        <option value="1">单选题</option>
+                        <option value="2">多选题</option>
+                        <option value="3">问答题</option>
+                        <option value="4">评分题</option>
+                        <option value="5">矩阵题</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>是否必填</label>
+                    <select class="question-required">
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </div>
+                <div class="options-container" id="options-${questionCounter}">
+                    <div class="option-item">
+                        <input type="text" class="option-content" value="选项1" placeholder="选项内容">
+                        <input type="number" class="option-sort" value="1" placeholder="排序">
+                    </div>
+                    <div class="option-item">
+                        <input type="text" class="option-content" value="选项2" placeholder="选项内容">
+                        <input type="number" class="option-sort" value="2" placeholder="排序">
+                    </div>
+                </div>
+                <button type="button" onclick="addOption(this)">添加选项</button>
+                <button type="button" onclick="removeQuestion(this)">删除问题</button>
+            `;
+            
+            document.getElementById('questionsContainer').appendChild(questionDiv);
+            log(`添加了问题 ${questionCounter}`, 'info');
+        }
+
+        // 切换选项显示
+        function toggleOptions(select) {
+            const questionItem = select.closest('.question-item');
+            const optionsContainer = questionItem.querySelector('.options-container');
+            const questionType = parseInt(select.value);
+            
+            if (questionType === 1 || questionType === 2) {
+                optionsContainer.style.display = 'block';
+            } else {
+                optionsContainer.style.display = 'none';
+            }
+        }
+
+        // 添加选项
+        function addOption(button) {
+            const questionItem = button.closest('.question-item');
+            const optionsContainer = questionItem.querySelector('.options-container');
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option-item';
+            optionDiv.innerHTML = `
+                <input type="text" class="option-content" placeholder="选项内容">
+                <input type="number" class="option-sort" placeholder="排序">
+                <button type="button" onclick="removeOption(this)">删除</button>
+            `;
+            optionsContainer.appendChild(optionDiv);
+        }
+
+        // 删除选项
+        function removeOption(button) {
+            button.closest('.option-item').remove();
+        }
+
+        // 删除问题
+        function removeQuestion(button) {
+            button.closest('.question-item').remove();
+        }
+
+        // 创建问卷
+        async function createQuestionnaire() {
+            try {
+                log('开始创建问卷...');
+                
+                // 收集表单数据
+                const formData = {
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    startDate: document.getElementById('startDate').value,
+                    endDate: document.getElementById('endDate').value,
+                    status: 1,
+                    creatorId: 1,
+                    submissionLimit: 100,
+                    questions: []
+                };
+
+                // 收集问题数据
+                const questionItems = document.querySelectorAll('.question-item');
+                questionItems.forEach((item, index) => {
+                    const questionData = {
+                        content: item.querySelector('.question-title').value,
+                        questionType: parseInt(item.querySelector('.question-type').value),
+                        sortNum: index + 1,
+                        isRequired: parseInt(item.querySelector('.question-required').value)
+                    };
+
+                    // 收集选项数据（仅单选题和多选题）
+                    if (questionData.questionType === 1 || questionData.questionType === 2) {
+                        const options = [];
+                        const optionItems = item.querySelectorAll('.option-item');
+                        optionItems.forEach((optionItem, optionIndex) => {
+                            const optionContent = optionItem.querySelector('.option-content').value;
+                            const optionSort = optionItem.querySelector('.option-sort').value;
+                            if (optionContent.trim()) {
+                                options.push({
+                                    optionContent: optionContent,
+                                    sortNum: parseInt(optionSort) || optionIndex + 1,
+                                    isDefault: 0
+                                });
+                            }
+                        });
+                        questionData.options = options;
+                    }
+
+                    formData.questions.push(questionData);
+                });
+
+                log('问卷数据准备完成:', formData);
+
+                // 调用API
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_CREATE}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok && result.code === 200) {
+                    createdQuestionnaireId = result.data.id;
+                    document.getElementById('testResult').innerHTML = `
+                        <div class="result-box">
+                            ✅ 问卷创建成功！<br>
+                            问卷ID: ${createdQuestionnaireId}<br>
+                            标题: ${result.data.title}<br>
+                            问题数量: ${formData.questions.length}
+                        </div>
+                    `;
+                    log(`问卷创建成功，ID: ${createdQuestionnaireId}`, 'info');
+                } else {
+                    document.getElementById('testResult').innerHTML = `
+                        <div class="error-box">
+                            ❌ 问卷创建失败！<br>
+                            错误信息: ${result.message || '未知错误'}
+                        </div>
+                    `;
+                    log(`问卷创建失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('testResult').innerHTML = `
+                    <div class="error-box">
+                        ❌ 问卷创建异常！<br>
+                        错误信息: ${error.message}
+                    </div>
+                `;
+                log(`问卷创建异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 验证问题数据
+        async function verifyQuestions() {
+            if (!createdQuestionnaireId) {
+                document.getElementById('verificationResult').innerHTML = `
+                    <div class="error-box">请先创建问卷</div>
+                `;
+                return;
+            }
+
+            try {
+                log(`开始验证问题数据，问卷ID: ${createdQuestionnaireId}`);
+                
+                // 获取问卷详情
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_DETAIL}/${createdQuestionnaireId}`);
+                const result = await response.json();
+                
+                if (response.ok && result.code === 200) {
+                    const questionnaire = result.data;
+                    log(`问卷详情获取成功: ${JSON.stringify(questionnaire)}`);
+                    
+                    // 检查是否有问题数据
+                    if (questionnaire.questions && questionnaire.questions.length > 0) {
+                        document.getElementById('verificationResult').innerHTML = `
+                            <div class="result-box">
+                                ✅ 问题数据验证成功！<br>
+                                问卷ID: ${questionnaire.id}<br>
+                                问题数量: ${questionnaire.questions.length}<br>
+                                问题详情: <pre>${JSON.stringify(questionnaire.questions, null, 2)}</pre>
+                            </div>
+                        `;
+                        log(`问题数据验证成功，共 ${questionnaire.questions.length} 个问题`, 'info');
+                    } else {
+                        document.getElementById('verificationResult').innerHTML = `
+                            <div class="error-box">
+                                ⚠️ 问题数据验证失败！<br>
+                                问卷创建成功，但没有找到问题数据<br>
+                                问卷详情: <pre>${JSON.stringify(questionnaire, null, 2)}</pre>
+                            </div>
+                        `;
+                        log('问题数据验证失败：没有找到问题数据', 'warn');
+                    }
+                } else {
+                    document.getElementById('verificationResult').innerHTML = `
+                        <div class="error-box">
+                            ❌ 获取问卷详情失败！<br>
+                            错误信息: ${result.message || '未知错误'}
+                        </div>
+                    `;
+                    log(`获取问卷详情失败: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                document.getElementById('verificationResult').innerHTML = `
+                    <div class="error-box">
+                        ❌ 验证问题数据异常！<br>
+                        错误信息: ${error.message}
+                    </div>
+                `;
+                log(`验证问题数据异常: ${error.message}`, 'error');
+            }
+        }
+
+        // 清空日志
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '';
+            log('日志已清空');
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            log('页面加载完成，问卷创建问题修复测试页面已就绪');
+            log('请按照以下步骤测试：');
+            log('1. 填写问卷基本信息');
+            log('2. 添加几个测试问题（建议包含单选题、多选题等）');
+            log('3. 点击"创建问卷"按钮');
+            log('4. 创建成功后点击"验证问题数据"按钮');
+            
+            // 自动添加一个示例问题
+            addQuestion();
+        });
+    </script>
+</body>
+</html>

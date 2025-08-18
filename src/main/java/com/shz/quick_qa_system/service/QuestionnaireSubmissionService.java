@@ -39,4 +39,25 @@ public interface QuestionnaireSubmissionService extends IService<QuestionnaireSu
      * @return 是否已提交
      */
     boolean hasIpSubmitted(Integer questionnaireId, String ipAddress);
+
+    /**
+     * 获取参与统计信息
+     * @param creatorId 创建者ID
+     * @return 参与统计信息
+     */
+    Map<String, Object> getParticipationStatistics(Integer creatorId);
+
+    /**
+     * 获取完成率统计
+     * @param creatorId 创建者ID
+     * @return 完成率统计信息
+     */
+    Map<String, Object> getCompletionRateStatistics(Integer creatorId);
+
+    /**
+     * 获取唯一用户统计
+     * @param creatorId 创建者ID
+     * @return 唯一用户统计信息
+     */
+    Map<String, Object> getUniqueUsersStatistics(Integer creatorId);
 }

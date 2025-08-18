@@ -2,7 +2,18 @@
   <div class="questionnaire-edit">
     <div class="page-header">
       <div class="header-left">
-        <h1>编辑问卷</h1>
+        <div class="title-with-back">
+          <a-button 
+            type="link" 
+            size="large" 
+            @click="goToHome"
+            class="back-home-btn"
+          >
+            <HomeOutlined />
+            主页
+          </a-button>
+          <h1>编辑问卷</h1>
+        </div>
         <p>修改问卷内容和设置</p>
       </div>
       <div class="header-actions">
@@ -309,7 +320,8 @@ import {
   DeleteOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
-  DragOutlined
+  DragOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG } from '@/api/config'
 import { api } from '@/utils/request'
@@ -392,8 +404,24 @@ const getQuestionTypeCode = (type) => {
     rating: 4,
     matrix: 5
   }
-  return typeCodes[type] || 3 // 默认值为3 (问答题)
+  return typeCodes[type] || 1
 }
+
+// 工具函数：从本地存储获取用户信息
+const getCurrentUserInfo = () => {
+  const userInfoStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO);
+  if (userInfoStr) {
+    try {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo && userInfo.id) {
+        return userInfo;
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error);
+    }
+  }
+  return null;
+};
 
 // 获取问题类型名称（根据代码）
 const getQuestionTypeNameByCode = (code) => {
@@ -662,6 +690,22 @@ const saveAsDraft = async () => {
 
     if (response.code === 200) {
       message.success('草稿保存成功')
+      
+      // 跳转到问卷成功界面，显示问卷信息
+      router.push({
+        path: '/questionnaire/success',
+        query: {
+          id: questionnaireInfo.id,
+          title: questionnaireInfo.title,
+          description: questionnaireInfo.description,
+          totalQuestions: questions.value.length,
+          startDate: questionnaireInfo.startDate,
+          endDate: questionnaireInfo.endDate,
+          creator: getCurrentUserInfo()?.username || '当前用户',
+          creationTime: new Date().toISOString(),
+          action: 'update_draft' // 标识是更新草稿操作
+        }
+      })
     } else {
       message.error(response.message || '保存失败')
     }
@@ -778,8 +822,21 @@ const updateQuestionnaire = async () => {
     if (response.code === 200) {
       message.success('问卷更新成功')
 
-      // 跳转到问卷管理页面
-      router.push('/questionnaire/management')
+      // 跳转到问卷成功界面，显示问卷信息
+      router.push({
+        path: '/questionnaire/success',
+        query: {
+          id: questionnaireInfo.id,
+          title: questionnaireInfo.title,
+          description: questionnaireInfo.description,
+          totalQuestions: questions.value.length,
+          startDate: questionnaireInfo.startDate,
+          endDate: questionnaireInfo.endDate,
+          creator: getCurrentUserInfo()?.username || '当前用户',
+          creationTime: new Date().toISOString(),
+          action: 'update' // 标识是更新问卷操作
+        }
+      })
     } else {
       message.error(response.message || '更新失败')
     }
@@ -876,6 +933,11 @@ const handleQuestionDrop = (index, event) => {
     questions.value[index] = temp
     message.success('问题顺序已调整')
   }
+}
+
+// 返回主页
+const goToHome = () => {
+  router.push('/')
 }
 
 // 生命周期

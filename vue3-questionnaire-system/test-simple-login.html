@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单登录测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>简单登录测试</h1>
+        
+        <div class="form-group">
+            <label>用户名:</label>
+            <input type="text" id="username" value="admin">
+        </div>
+        
+        <div class="form-group">
+            <label>密码:</label>
+            <input type="password" id="password" value="admin123">
+        </div>
+        
+        <button onclick="testLogin()">测试登录</button>
+        <button onclick="clearResult()">清除结果</button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = '正在测试登录...';
+
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                console.log('开始登录请求...');
+                
+                const response = await fetch('http://localhost:7070/api/users/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                console.log('收到响应:', response);
+                console.log('响应状态:', response.status);
+                console.log('响应头:', Object.fromEntries(response.headers.entries()));
+
+                const data = await response.json();
+                console.log('响应数据:', data);
+
+                if (response.ok && data.code === 200) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 登录成功！
+
+响应数据:
+- code: ${data.code}
+- message: ${data.message}
+- returnCode: ${data.returnCode}
+- data: ${JSON.stringify(data.data, null, 2)}
+
+用户角色: ${data.returnCode === 1 ? '管理员/教师' : '普通用户'}
+应该跳转到: ${data.returnCode === 1 ? '/home (管理端)' : '/ask-user (用户端)'}
+
+准备跳转...`;
+
+                    // 模拟Vue应用的路由跳转
+                    setTimeout(() => {
+                        const targetPage = data.returnCode === 1 ? '/home' : '/ask-user';
+                        console.log(`准备跳转到: ${targetPage}`);
+                        
+                        // 尝试使用Vue Router跳转（如果可用）
+                        if (window.router) {
+                            console.log('使用Vue Router跳转');
+                            window.router.push(targetPage);
+                        } else {
+                            console.log('Vue Router不可用，使用window.location跳转');
+                            window.location.href = targetPage;
+                        }
+                    }, 2000);
+
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 登录失败:
+- status: ${response.status}
+- message: ${data.message || '未知错误'}
+- data: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                console.error('登录请求失败:', error);
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 请求失败: ${error.message}`;
+            }
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = 'result';
+        }
+
+        // 页面加载时检查Vue应用状态
+        window.addEventListener('load', () => {
+            console.log('页面加载完成');
+            console.log('当前URL:', window.location.href);
+            console.log('Vue Router状态:', !!window.router);
+            
+            // 检查是否有Vue应用
+            if (window.location.href.includes('vue3-questionnaire-system')) {
+                console.log('检测到Vue应用环境');
+            } else {
+                console.log('当前不在Vue应用环境中');
+            }
+        });
+    </script>
+</body>
+</html>

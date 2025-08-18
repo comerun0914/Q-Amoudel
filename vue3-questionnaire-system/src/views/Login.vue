@@ -109,85 +109,32 @@ const handleSubmit = async (values) => {
       password: values.password
     });
 
-    if (response.code === 200) {
+    console.log('登录成功，完整响应数据:', response);
+    console.log('响应code字段:', response.code);
+    console.log('响应data字段:', response.data);
+    console.log('响应returnCode字段:', response.returnCode);
+
+    if (response.success && response.code === 200) {
       message.success(`登录成功！欢迎回来，${values.username}`);
 
-      // 获取登录响应数据，参考login.js的逻辑
+      // 获取登录响应数据
       const loginData = response.data;
-      console.log('登录成功，完整响应数据:', response);
-      console.log('响应数据类型:', typeof response);
-      console.log('响应数据结构:', Object.keys(response));
-      console.log('响应code字段:', response.code);
-      console.log('响应data字段:', response.data);
-      console.log('响应returnCode字段:', response.returnCode);
-
-      // 等待一下确保store中的数据已更新
+      
+      // 确保store中的数据已更新
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // 检查store中的用户信息
       console.log('Store中的用户信息:', userStore.userInfo);
       console.log('Store中的token:', userStore.token);
 
-      // 尝试多种可能的数据结构来获取角色信息，参考login.js的逻辑
-      let userRole = null;
-
-      // 从ApiResult的returnCode获取角色（优先级最高）
-      if (response.returnCode !== undefined && response.returnCode !== null) {
-        userRole = response.returnCode;
-        console.log('从 response.returnCode 获取到角色:', userRole);
-      }
-      // 尝试从data中获取角色
-      else if (loginData && loginData.role !== undefined && loginData.role !== null) {
-        userRole = loginData.role;
-        console.log('从 loginData.role 获取到角色:', userRole);
-      }
-      // 尝试从嵌套的user对象获取角色
-      else if (loginData && loginData.user && loginData.user.role !== undefined && loginData.user.role !== null) {
-        userRole = loginData.user.role;
-        console.log('从 loginData.user.role 获取到角色:', userRole);
-      }
-      // 尝试从其他可能的路径获取角色
-      else if (loginData && loginData.userRole !== undefined && loginData.userRole !== null) {
-        userRole = loginData.userRole;
-        console.log('从 loginData.userRole 获取到角色:', userRole);
-      }
-
-      // 如果从响应数据中获取不到角色，尝试从store中获取
-      if (userRole === null || userRole === undefined) {
-        userRole = userStore.userInfo?.role || 0;
-        console.log('从 userStore 获取到角色:', userRole);
-      }
-
-      // 如果还是获取不到角色，尝试从localStorage获取
-      if (userRole === null || userRole === undefined) {
-        try {
-          const storedUserInfo = localStorage.getItem('user_info');
-          if (storedUserInfo) {
-            const parsedUserInfo = JSON.parse(storedUserInfo);
-            userRole = parsedUserInfo.role;
-            console.log('从 localStorage 获取到角色:', userRole);
-          }
-        } catch (e) {
-          console.error('解析localStorage中的用户信息失败:', e);
-        }
-      }
-
-      // 如果所有方法都获取不到角色，使用默认值
-      if (userRole === null || userRole === undefined) {
-        userRole = 0; // 默认普通用户
-        console.log('使用默认角色:', userRole);
-      }
-
-      console.log('最终确定的用户角色:', userRole, '类型:', typeof userRole);
-
-      // 确保角色是数字类型进行比较
-      const roleNum = Number(userRole);
-      console.log('转换后的角色数字:', roleNum);
+      // 直接使用response.returnCode获取角色
+      const userRole = response.returnCode;
+      console.log('用户角色:', userRole, '类型:', typeof userRole);
 
       let targetPage = '';
 
-      // 根据角色确定跳转页面，参考login.js的逻辑
-      switch (roleNum) {
+      // 根据角色确定跳转页面
+      switch (userRole) {
         case 1:
           // 问卷管理员/教师 - 跳转到管理端首页
           console.log('跳转到管理端首页');
@@ -200,30 +147,35 @@ const handleSubmit = async (values) => {
           break;
         default:
           // 默认跳转到用户端页面
-          console.warn('未知用户角色:', roleNum, '默认跳转到用户端页面');
+          console.warn('未知用户角色:', userRole, '默认跳转到用户端页面');
           targetPage = '/ask-user';
           break;
       }
 
       console.log('准备跳转到页面:', targetPage);
 
-      // 尝试使用路由跳转
+      // 使用多种跳转方式确保跳转成功
       try {
-        console.log('开始尝试路由跳转...');
+        console.log('开始路由跳转...');
+        
+        // 方法1：使用router.push
         await router.push(targetPage);
         console.log('路由跳转成功');
-      } catch (error) {
-        console.error('路由跳转失败:', error);
-        // 如果路由跳转失败，使用window.location（参考login.js）
-        console.log('使用window.location跳转');
+        
+        // 跳转成功后显示成功提示，不刷新页面
+        message.success(`跳转成功！正在前往${targetPage === '/home' ? '管理端首页' : '用户端页面'}`);
+        
+      } catch (routerError) {
+        console.error('路由跳转失败:', routerError);
+        
+        // 方法2：使用window.location.href作为备选方案
+        console.log('使用window.location.href跳转');
         try {
           window.location.href = targetPage;
-          console.log('window.location跳转成功');
-        } catch (windowError) {
-          console.error('window.location跳转也失败:', windowError);
-          // 最后的备选方案：直接修改URL
-          window.history.pushState({}, '', targetPage);
-          window.location.reload();
+        } catch (locationError) {
+          console.error('window.location跳转也失败:', locationError);
+          // 如果两种方法都失败，提供手动导航的提示
+          message.warning(`自动跳转失败，请手动点击导航到${targetPage === '/home' ? '管理端首页' : '用户端页面'}`);
         }
       }
 

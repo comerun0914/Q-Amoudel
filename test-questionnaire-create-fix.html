@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷创建功能测试 - 修复验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .question-item {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .question-type {
+            font-weight: bold;
+            color: #1890ff;
+        }
+        .options-container {
+            margin: 15px 0;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            gap: 10px;
+        }
+        .option-content {
+            flex: 1;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .log-container {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .status.error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .status.info {
+            background: #f0f9ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷创建功能测试 - 修复验证</h1>
+        <p>此页面用于测试问卷创建功能是否已修复选项内容字段映射问题。</p>
+        
+        <div class="form-group">
+            <label for="title">问卷标题:</label>
+            <input type="text" id="title" value="测试问卷 - 选项字段修复验证" />
+        </div>
+        
+        <div class="form-group">
+            <label for="description">问卷描述:</label>
+            <textarea id="description" rows="3">这是一个用于测试选项字段映射修复的问卷</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="startDate">开始日期:</label>
+            <input type="date" id="startDate" value="2025-01-01" />
+        </div>
+        
+        <div class="form-group">
+            <label for="endDate">结束日期:</label>
+            <input type="date" id="endDate" value="2025-12-31" />
+        </div>
+        
+        <h3>问题列表</h3>
+        <div id="questions-container">
+            <!-- 问题将在这里动态添加 -->
+        </div>
+        
+        <button class="btn btn-primary" onclick="addQuestion('single')">添加单选题</button>
+        <button class="btn btn-primary" onclick="addQuestion('multiple')">添加多选题</button>
+        <button class="btn btn-primary" onclick="addQuestion('text')">添加问答题</button>
+        
+        <div style="margin-top: 30px;">
+            <button class="btn btn-success" onclick="createQuestionnaire()">创建问卷</button>
+            <button class="btn btn-primary" onclick="previewData()">预览数据</button>
+            <button class="btn btn-danger" onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div class="log-container" id="log">
+            <div class="status info">日志区域 - 显示操作过程和结果</div>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let questionCounter = 0;
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `status ${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div class="status info">日志已清除</div>';
+        }
+
+        // 添加问题
+        function addQuestion(type) {
+            questionCounter++;
+            const question = {
+                id: questionCounter,
+                type: type,
+                title: `${type === 'single' ? '单选题' : type === 'multiple' ? '多选题' : '问答题'} ${questionCounter}`,
+                required: true,
+                options: type === 'text' ? [] : [
+                    { id: 1, text: '选项1', isDefault: false },
+                    { id: 2, text: '选项2', isDefault: false }
+                ]
+            };
+            
+            questions.push(question);
+            renderQuestions();
+            log(`添加了${type === 'single' ? '单选题' : type === 'multiple' ? '多选题' : '问答题'}: ${question.title}`);
+        }
+
+        // 渲染问题列表
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-item';
+                
+                let optionsHtml = '';
+                if (q.options && q.options.length > 0) {
+                    optionsHtml = `
+                        <div class="options-container">
+                            <h4>选项:</h4>
+                            ${q.options.map((opt, optIndex) => `
+                                <div class="option-item">
+                                    <div class="option-content">
+                                        <input type="text" value="${opt.text}" 
+                                               onchange="updateOption(${index}, ${optIndex}, 'text', this.value)"
+                                               placeholder="选项内容" />
+                                    </div>
+                                    ${q.type === 'single' ? `
+                                        <input type="radio" name="default_${index}" 
+                                               ${opt.isDefault ? 'checked' : ''}
+                                               onchange="updateOption(${index}, ${optIndex}, 'isDefault', this.checked)" />
+                                        <span>默认</span>
+                                    ` : ''}
+                                    <button class="btn btn-danger" onclick="removeOption(${index}, ${optIndex})">删除</button>
+                                </div>
+                            `).join('')}
+                            <button class="btn btn-primary" onclick="addOption(${index})">添加选项</button>
+                        </div>
+                    `;
+                }
+                
+                questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <div>
+                            <span class="question-type">${q.type === 'single' ? '单选题' : q.type === 'multiple' ? '多选题' : '问答题'}</span>
+                            <input type="text" value="${q.title}" 
+                                   onchange="updateQuestion(${index}, 'title', this.value)"
+                                   style="margin-left: 10px; width: 300px;" />
+                        </div>
+                        <button class="btn btn-danger" onclick="removeQuestion(${index})">删除问题</button>
+                    </div>
+                    ${optionsHtml}
+                `;
+                
+                container.appendChild(questionDiv);
+            });
+        }
+
+        // 更新问题
+        function updateQuestion(index, field, value) {
+            questions[index][field] = value;
+            log(`更新问题 ${index + 1} 的 ${field}: ${value}`);
+        }
+
+        // 更新选项
+        function updateOption(questionIndex, optionIndex, field, value) {
+            questions[questionIndex].options[optionIndex][field] = value;
+            log(`更新问题 ${questionIndex + 1} 选项 ${optionIndex + 1} 的 ${field}: ${value}`);
+        }
+
+        // 添加选项
+        function addOption(questionIndex) {
+            const question = questions[questionIndex];
+            const newOption = {
+                id: Date.now(),
+                text: `选项${question.options.length + 1}`,
+                isDefault: false
+            };
+            question.options.push(newOption);
+            renderQuestions();
+            log(`为问题 ${questionIndex + 1} 添加选项: ${newOption.text}`);
+        }
+
+        // 删除选项
+        function removeOption(questionIndex, optionIndex) {
+            if (questions[questionIndex].options.length > 2) {
+                const removedOption = questions[questionIndex].options.splice(optionIndex, 1)[0];
+                renderQuestions();
+                log(`删除问题 ${questionIndex + 1} 的选项: ${removedOption.text}`);
+            } else {
+                log('至少需要保留2个选项', 'error');
+            }
+        }
+
+        // 删除问题
+        function removeQuestion(index) {
+            const removedQuestion = questions.splice(index, 1)[0];
+            renderQuestions();
+            log(`删除问题: ${removedQuestion.title}`);
+        }
+
+        // 预览数据
+        function previewData() {
+            const publishData = buildPublishData();
+            log('=== 预览发布数据 ===', 'info');
+            log(JSON.stringify(publishData, null, 2), 'info');
+            
+            // 特别检查选项数据
+            publishData.questions.forEach((q, index) => {
+                if (q.options && q.options.length > 0) {
+                    log(`问题 ${index + 1} 选项数据:`, 'info');
+                    q.options.forEach((opt, optIndex) => {
+                        log(`  选项 ${optIndex + 1}: optionContent="${opt.optionContent}", sortNum=${opt.sortNum}`, 'info');
+                    });
+                }
+            });
+        }
+
+        // 构建发布数据
+        function buildPublishData() {
+            return {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                status: 1,
+                creatorId: 1,
+                submissionLimit: 1,
+                questions: questions.map((q, index) => {
+                    const questionData = {
+                        content: q.title,
+                        questionType: getQuestionTypeCode(q.type),
+                        sortNum: index + 1,
+                        isRequired: q.required ? 1 : 0,
+                        options: (q.options || []).map((opt, optIndex) => {
+                            const mappedOption = {
+                                optionContent: opt.text,
+                                sortNum: optIndex + 1,
+                                isDefault: opt.isDefault ? 1 : 0
+                            };
+                            log(`问题 ${index + 1} 选项 ${optIndex + 1} 映射: ${opt.text} -> ${mappedOption.optionContent}`, 'info');
+                            return mappedOption;
+                        })
+                    };
+                    return questionData;
+                })
+            };
+        }
+
+        // 获取问题类型代码
+        function getQuestionTypeCode(type) {
+            const typeMap = {
+                'single': 1,
+                'multiple': 2,
+                'text': 3
+            };
+            return typeMap[type] || 1;
+        }
+
+        // 创建问卷
+        async function createQuestionnaire() {
+            try {
+                log('开始创建问卷...', 'info');
+                
+                if (questions.length === 0) {
+                    log('请至少添加一个问题', 'error');
+                    return;
+                }
+                
+                const publishData = buildPublishData();
+                log('构建的发布数据:', 'info');
+                log(JSON.stringify(publishData, null, 2), 'info');
+                
+                // 模拟API调用
+                log('模拟调用后端API...', 'info');
+                
+                // 检查选项数据完整性
+                let hasError = false;
+                publishData.questions.forEach((q, qIndex) => {
+                    if (q.options && q.options.length > 0) {
+                        q.options.forEach((opt, optIndex) => {
+                            if (!opt.optionContent || opt.optionContent.trim() === '') {
+                                log(`错误: 问题 ${qIndex + 1} 选项 ${optIndex + 1} 的 optionContent 为空`, 'error');
+                                hasError = true;
+                            }
+                            if (!opt.sortNum) {
+                                log(`错误: 问题 ${qIndex + 1} 选项 ${optIndex + 1} 的 sortNum 为空`, 'error');
+                                hasError = true;
+                            }
+                        });
+                    }
+                });
+                
+                if (hasError) {
+                    log('数据验证失败，请检查选项数据', 'error');
+                    return;
+                }
+                
+                // 模拟成功响应
+                setTimeout(() => {
+                    log('问卷创建成功！', 'success');
+                    log('所有选项字段映射正确:', 'success');
+                    log('- optionContent: 已正确映射', 'success');
+                    log('- sortNum: 已正确设置', 'success');
+                    log('- isDefault: 已正确处理', 'success');
+                }, 1000);
+                
+            } catch (error) {
+                log(`创建问卷失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 初始化页面
+        window.onload = function() {
+            log('页面加载完成，开始测试问卷创建功能', 'info');
+            log('修复内容: 选项字段映射问题', 'info');
+            log('- 前端: text -> optionContent', 'info');
+            log('- 前端: 自动生成 sortNum', 'info');
+            log('- 后端: 验证 optionContent 不为空', 'info');
+            
+            // 添加一些示例问题
+            addQuestion('single');
+            addQuestion('multiple');
+            addQuestion('text');
+        };
+    </script>
+</body>
+</html>

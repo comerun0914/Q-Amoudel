@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试问卷创建成功界面</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .test-title {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 24px;
+        }
+        .test-section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #1890ff;
+            margin-bottom: 16px;
+        }
+        .test-button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            background: #40a9ff;
+            transform: translateY(-1px);
+        }
+        .test-button.secondary {
+            background: #6c757d;
+        }
+        .test-button.secondary:hover {
+            background: #5a6268;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .info-box h4 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .info-box p {
+            margin: 8px 0;
+            color: #424242;
+        }
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">问卷创建成功界面测试</h1>
+        
+        <div class="test-section">
+            <h3>功能说明</h3>
+            <div class="info-box">
+                <h4>主要功能</h4>
+                <p>✅ 显示问卷创建成功信息</p>
+                <p>✅ 展示问卷ID和基本信息</p>
+                <p>✅ 提供问卷填写和预览链接</p>
+                <p>✅ 支持链接复制功能</p>
+                <p>✅ 包含分享问卷功能</p>
+                <p>✅ 提供打印和导出功能</p>
+                <p>✅ 支持多种操作类型（创建、保存草稿、发布、更新）</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试链接</h3>
+            <p>点击以下按钮测试不同的问卷创建成功场景：</p>
+            
+            <button class="test-button" onclick="testBasicSuccess()">
+                基础成功场景
+            </button>
+            
+            <button class="test-button" onclick="testWithData()">
+                带完整数据的成功场景
+            </button>
+            
+            <button class="test-button" onclick="testDraftSave()">
+                保存草稿成功
+            </button>
+            
+            <button class="test-button" onclick="testPublishSuccess()">
+                发布问卷成功
+            </button>
+            
+            <button class="test-button" onclick="testUpdateSuccess()">
+                更新问卷成功
+            </button>
+            
+            <button class="test-button secondary" onclick="testVueApp()">
+                在Vue应用中测试
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>操作类型说明</h3>
+            <div class="info-box">
+                <h4>支持的操作类型</h4>
+                <p><strong>create:</strong> 问卷创建成功</p>
+                <p><strong>draft:</strong> 保存草稿成功</p>
+                <p><strong>publish:</strong> 发布问卷成功</p>
+                <p><strong>update:</strong> 更新问卷成功</p>
+                <p><strong>update_draft:</strong> 更新草稿成功</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>路由参数说明</h3>
+            <div class="code-block">
+// 基础参数
+/questionnaire/success?id=123&title=测试问卷
+
+// 完整参数
+/questionnaire/success?id=123&title=测试问卷&description=这是一个测试问卷&totalQuestions=10&startDate=2025-01-15&endDate=2025-01-30&creator=张三&creationTime=2025-01-15T10:30:00&action=publish
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Vue组件特性</h3>
+            <div class="info-box">
+                <h4>技术特点</h4>
+                <p>🎨 参考 questionnaire-result.html 的设计风格</p>
+                <p>📱 完全响应式设计，支持移动端</p>
+                <p>🔗 自动生成问卷填写和预览链接</p>
+                <p>📋 支持链接一键复制到剪贴板</p>
+                <p>🖨️ 支持打印问卷信息</p>
+                <p>💾 支持导出问卷信息为JSON文件</p>
+                <p>📤 包含多种分享方式（复制、邮件、微信）</p>
+                <p>🔄 支持多种操作类型的成功提示</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>使用说明</h3>
+            <ol>
+                <li><strong>在问卷操作完成后跳转：</strong>使用 <code>router.push('/questionnaire/success')</code> 并传递相应参数</li>
+                <li><strong>传递问卷信息：</strong>通过路由参数或查询字符串传递问卷的详细信息</li>
+                <li><strong>设置操作类型：</strong>通过 <code>action</code> 参数指定操作类型</li>
+                <li><strong>自动生成链接：</strong>组件会自动根据问卷ID生成填写和预览链接</li>
+                <li><strong>响应式设计：</strong>界面会自动适应不同屏幕尺寸</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function testBasicSuccess() {
+            const url = '/questionnaire/success?id=123&title=测试问卷';
+            window.open(url, '_blank');
+        }
+
+        function testWithData() {
+            const params = new URLSearchParams({
+                id: '456',
+                title: '完整信息问卷',
+                description: '这是一个包含完整信息的测试问卷',
+                totalQuestions: '15',
+                startDate: '2025-01-15',
+                endDate: '2025-01-30',
+                creator: '张三',
+                creationTime: '2025-01-15T10:30:00'
+            });
+            
+            const url = `/questionnaire/success?${params.toString()}`;
+            window.open(url, '_blank');
+        }
+
+        function testDraftSave() {
+            const params = new URLSearchParams({
+                id: '789',
+                title: '用户满意度调查草稿',
+                description: '这是一个保存为草稿的问卷',
+                totalQuestions: '8',
+                startDate: '2025-01-20',
+                endDate: '2025-02-20',
+                creator: '李四',
+                creationTime: '2025-01-20T14:30:00',
+                action: 'draft'
+            });
+            
+            const url = `/questionnaire/success?${params.toString()}`;
+            window.open(url, '_blank');
+        }
+
+        function testPublishSuccess() {
+            const params = new URLSearchParams({
+                id: '790',
+                title: '产品功能评估问卷',
+                description: '这是一个已发布的问卷',
+                totalQuestions: '12',
+                startDate: '2025-01-20',
+                endDate: '2025-02-20',
+                creator: '王五',
+                creationTime: '2025-01-20T15:45:00',
+                action: 'publish'
+            });
+            
+            const url = `/questionnaire/success?${params.toString()}`;
+            window.open(url, '_blank');
+        }
+
+        function testUpdateSuccess() {
+            const params = new URLSearchParams({
+                id: '791',
+                title: '员工培训反馈问卷（已更新）',
+                description: '这是一个已更新的问卷',
+                totalQuestions: '15',
+                startDate: '2025-01-20',
+                endDate: '2025-02-20',
+                creator: '赵六',
+                creationTime: '2025-01-20T16:20:00',
+                action: 'update'
+            });
+            
+            const url = `/questionnaire/success?${params.toString()}`;
+            window.open(url, '_blank');
+        }
+
+        function testVueApp() {
+            // 检查Vue应用是否运行
+            const vueAppUrl = 'http://localhost:3000/questionnaire/success?id=789&title=Vue应用测试';
+            
+            // 尝试打开Vue应用
+            const testWindow = window.open(vueAppUrl, '_blank');
+            
+            // 如果无法打开，显示提示
+            setTimeout(() => {
+                if (testWindow.closed) {
+                    alert('无法打开Vue应用，请确保Vue开发服务器正在运行（端口3000）');
+                }
+            }, 1000);
+        }
+
+        // 页面加载完成后的提示
+        window.addEventListener('load', () => {
+            console.log('问卷创建成功界面测试页面已加载');
+            console.log('可以点击测试按钮来验证不同的场景');
+        });
+    </script>
+</body>
+</html>

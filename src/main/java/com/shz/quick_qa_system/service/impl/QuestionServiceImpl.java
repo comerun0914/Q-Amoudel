@@ -37,6 +37,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * <p>
@@ -494,5 +496,37 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             BeanUtils.copyProperties(option, optionDto);
             return optionDto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> getQuestionStatistics(Integer creatorId) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        try {
+            // 获取总问题数
+            QueryWrapper<Question> questionWrapper = new QueryWrapper<>();
+            if (creatorId != null) {
+                // 如果指定了创建者ID，需要关联查询该创建者的问卷中的问题
+                // TODO: 实现关联查询逻辑
+                statistics.put("totalQuestions", 0L);
+                statistics.put("answeredQuestions", 0L);
+            } else {
+                // 统计所有问题
+                long totalQuestions = count(questionWrapper);
+                
+                // 统计已回答的问题数（通过question_answer表）
+                // TODO: 实现关联查询逻辑
+                long answeredQuestions = 0L;
+                
+                statistics.put("totalQuestions", totalQuestions);
+                statistics.put("answeredQuestions", answeredQuestions);
+            }
+        } catch (Exception e) {
+            // 如果出错，返回默认值
+            statistics.put("totalQuestions", 0L);
+            statistics.put("answeredQuestions", 0L);
+        }
+        
+        return statistics;
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shz.quick_qa_system.dao.QuestionAnswerMapper;
 import com.shz.quick_qa_system.dao.QuestionnaireSubmissionMapper;
+import com.shz.quick_qa_system.dao.QuestionCreateMapper;
 import com.shz.quick_qa_system.entity.QuestionAnswer;
 import com.shz.quick_qa_system.entity.QuestionnaireSubmission;
 import com.shz.quick_qa_system.service.QuestionnaireSubmissionService;
@@ -20,6 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.shz.quick_qa_system.utils.RandomIdUtil;
 
+import java.util.ArrayList;
+import com.shz.quick_qa_system.entity.QuestionCreate;
+import java.util.stream.Collectors;
+
 /**
  * 问卷提交记录Service实现类
  */
@@ -28,6 +33,9 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
     
     @Autowired
     private QuestionAnswerMapper questionAnswerMapper;
+    
+    @Autowired
+    private QuestionCreateMapper questionCreateMapper;
     
     @Override
     @Transactional
@@ -183,5 +191,144 @@ public class QuestionnaireSubmissionServiceImpl extends ServiceImpl<Questionnair
                .eq("status", 1);
         
         return count(wrapper) > 0;
+    }
+
+    @Override
+    public Map<String, Object> getParticipationStatistics(Integer creatorId) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        try {
+            // 获取总参与人数（通过问卷ID关联）
+            QueryWrapper<QuestionnaireSubmission> wrapper = new QueryWrapper<>();
+            wrapper.eq("status", 1);
+            
+            // 如果指定了创建者ID，需要先获取该创建者的问卷ID列表
+            if (creatorId != null) {
+                // 获取该创建者的所有问卷ID
+                List<Integer> questionnaireIds = getQuestionnaireIdsByCreator(creatorId);
+                if (!questionnaireIds.isEmpty()) {
+                    wrapper.in("questionnaire_id", questionnaireIds);
+                } else {
+                    // 如果没有问卷，返回0
+                    statistics.put("totalParticipants", 0L);
+                    statistics.put("totalSubmissions", 0L);
+                    statistics.put("completedSubmissions", 0L);
+                    statistics.put("avgDuration", 0.0);
+                    return statistics;
+                }
+            }
+            
+            // 统计总提交数
+            long totalSubmissions = count(wrapper);
+            
+            // 统计完整提交数
+            long completedSubmissions = count(new QueryWrapper<QuestionnaireSubmission>()
+                    .eq("status", 1)
+                    .eq("is_complete", 1)
+                    .in(creatorId != null ? "questionnaire_id" : null, 
+                        creatorId != null ? getQuestionnaireIdsByCreator(creatorId) : null));
+            
+            // 统计唯一参与人数（去重user_id）
+            long uniqueParticipants = 0;
+            if (totalSubmissions > 0) {
+                QueryWrapper<QuestionnaireSubmission> uniqueWrapper = new QueryWrapper<>();
+                uniqueWrapper.eq("status", 1)
+                           .select("DISTINCT user_id");
+                if (creatorId != null) {
+                    uniqueWrapper.in("questionnaire_id", getQuestionnaireIdsByCreator(creatorId));
+                }
+                uniqueParticipants = count(uniqueWrapper);
+            }
+            
+            // 计算平均用时
+            List<QuestionnaireSubmission> submissions = list(new QueryWrapper<QuestionnaireSubmission>()
+                    .eq("status", 1)
+                    .isNotNull("duration_seconds")
+                    .in(creatorId != null ? "questionnaire_id" : null, 
+                        creatorId != null ? getQuestionnaireIdsByCreator(creatorId) : null));
+            
+            double avgDuration = submissions.stream()
+                    .mapToInt(s -> s.getDurationSeconds() != null ? s.getDurationSeconds() : 0)
+                    .average()
+                    .orElse(0.0);
+            
+            statistics.put("totalParticipants", uniqueParticipants);
+            statistics.put("totalSubmissions", totalSubmissions);
+            statistics.put("completedSubmissions", completedSubmissions);
+            statistics.put("avgDuration", Math.round(avgDuration * 100.0) / 100.0);
+            
+        } catch (Exception e) {
+            // 如果出错，返回默认值
+            statistics.put("totalParticipants", 0L);
+            statistics.put("totalSubmissions", 0L);
+            statistics.put("completedSubmissions", 0L);
+            statistics.put("avgDuration", 0.0);
+        }
+        
+        return statistics;
+    }
+
+    /**
+     * 根据创建者ID获取问卷ID列表
+     */
+    private List<Integer> getQuestionnaireIdsByCreator(Integer creatorId) {
+        try {
+            QueryWrapper<QuestionCreate> wrapper = new QueryWrapper<>();
+            wrapper.eq("creator_id", creatorId)
+                   .select("id");
+            
+            List<QuestionCreate> questionnaires = questionCreateMapper.selectList(wrapper);
+            return questionnaires.stream()
+                    .map(QuestionCreate::getId)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public Map<String, Object> getCompletionRateStatistics(Integer creatorId) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        try {
+            QueryWrapper<QuestionnaireSubmission> wrapper = new QueryWrapper<>();
+            wrapper.eq("status", 1);
+            
+            long totalSubmissions = count(wrapper);
+            long completedSubmissions = count(new QueryWrapper<QuestionnaireSubmission>()
+                    .eq("status", 1)
+                    .eq("is_complete", 1));
+            
+            double completionRate = totalSubmissions > 0 ? (double) completedSubmissions / totalSubmissions * 100 : 0.0;
+            
+            statistics.put("totalSubmissions", totalSubmissions);
+            statistics.put("completedSubmissions", completedSubmissions);
+            statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
+        } catch (Exception e) {
+            statistics.put("totalSubmissions", 0L);
+            statistics.put("completedSubmissions", 0L);
+            statistics.put("completionRate", 0.0);
+        }
+        
+        return statistics;
+    }
+
+    @Override
+    public Map<String, Object> getUniqueUsersStatistics(Integer creatorId) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        try {
+            QueryWrapper<QuestionnaireSubmission> wrapper = new QueryWrapper<>();
+            wrapper.eq("status", 1)
+                   .select("DISTINCT user_id");
+            
+            long uniqueUsers = count(wrapper);
+            
+            statistics.put("uniqueUsers", uniqueUsers);
+        } catch (Exception e) {
+            statistics.put("uniqueUsers", 0L);
+        }
+        
+        return statistics;
     }
 }

@@ -1,23 +1,33 @@
 <template>
-  <div class="ask-user-container">
+  <div class="ask-user-page">
     <!-- 导航栏 -->
-    <a-layout-header class="navbar">
-      <div class="logo">幼儿星</div>
-      <div class="nav-links">
-        <router-link to="/user" class="nav-link">用户中心</router-link>
-        <router-link to="/ask-user" class="nav-link active">问卷填写</router-link>
-        <a class="nav-link" @click="showHistory">我的记录</a>
-        <div class="user-info" @click="toggleUserDropdown">
-          <a-avatar :src="userAvatar" class="user-avatar" />
-          <span class="user-name">{{ userName }}</span>
-          <a-dropdown v-model:open="userDropdownOpen" placement="bottomRight">
+    <a-layout-header class="header">
+      <div class="navbar">
+        <div class="logo">幼儿星</div>
+        <div class="nav-links">
+          <a href="#" class="nav-link" @click="goToHome">首页</a>
+          <a href="#" class="nav-link" @click="goToUserCenter">用户中心</a>
+        </div>
+        <div class="user-info">
+          <a-dropdown>
+            <a class="ant-dropdown-link" @click.prevent>
+              <a-avatar :src="userAvatar" class="user-avatar" />
+              <span class="username">{{ username }}</span>
+              <span class="user-role">({{ userRoleText }})</span>
+              <DownOutlined />
+            </a>
             <template #overlay>
               <a-menu>
+                <a-menu-item key="home" @click="goToHome">
+                  <HomeOutlined />
+                  返回首页
+                </a-menu-item>
                 <a-menu-item key="userCenter" @click="goToUserCenter">
                   <UserOutlined />
                   用户中心
                 </a-menu-item>
-                <a-menu-item key="logout" @click="logout">
+                <a-menu-divider />
+                <a-menu-item key="logout" @click="handleLogout">
                   <LogoutOutlined />
                   退出登录
                 </a-menu-item>
@@ -28,168 +38,195 @@
       </div>
     </a-layout-header>
 
-    <main class="main-content">
-      <div class="ask-container">
-        <h1>我的问卷记录</h1>
-        <p class="page-description">查看您已填写过的问卷记录</p>
+    <!-- 主要内容 -->
+    <a-layout-content class="main-content">
+      <div class="welcome-section">
+        <h1>欢迎填写问卷，{{ username }}！</h1>
+        <p>请选择以下方式之一来参与问卷调查</p>
+        <p class="role-info">当前身份：{{ userRoleText }}</p>
+      </div>
 
-        <!-- 问卷输入方式选择 -->
-        <div class="input-methods">
-          <a-tabs v-model:activeKey="activeMethod" class="method-tabs">
-            <a-tab-pane key="link" tab="链接输入">
-              <div class="method-content">
-                <div class="input-section">
-                  <a-form-item label="问卷链接">
-                    <a-input-group compact>
-                      <a-input
-                        v-model:value="questionnaireLink"
-                        placeholder="请输入问卷链接，例如：https://example.com/questionnaire/123"
-                        style="width: calc(100% - 120px)"
-                      />
-                      <a-button type="primary" @click="submitLink" :loading="linkLoading">
-                        开始填写
-                      </a-button>
-                    </a-input-group>
-                  </a-form-item>
-                  <p class="input-hint">请从问卷发布者处获取完整的问卷链接</p>
-                </div>
-              </div>
-            </a-tab-pane>
+      <div class="questionnaire-methods">
+        <h2>问卷填写方式</h2>
+        <div class="method-cards">
+          <!-- 链接输入方式 -->
+          <a-card class="method-card" @click="showLinkMethod">
+            <template #cover>
+              <div class="card-icon">🔗</div>
+            </template>
+            <a-card-meta title="链接输入" description="通过问卷链接直接填写" />
+          </a-card>
 
-            <a-tab-pane key="code" tab="问卷代码">
-              <div class="method-content">
-                <div class="input-section">
-                  <a-form-item label="问卷代码">
-                    <a-input-group compact>
-                      <a-input
-                        v-model:value="questionnaireCode"
-                        placeholder="请输入6位问卷代码，例如：ABC123"
-                        style="width: calc(100% - 120px)"
-                        maxlength="6"
-                      />
-                      <a-button type="primary" @click="submitCode" :loading="codeLoading">
-                        开始填写
-                      </a-button>
-                    </a-input-group>
-                  </a-form-item>
-                  <p class="input-hint">问卷代码通常为6位字母数字组合</p>
-                </div>
-              </div>
-            </a-tab-pane>
+          <!-- 问卷代码方式 -->
+          <a-card class="method-card" @click="showCodeMethod">
+            <template #cover>
+              <div class="card-icon">🔢</div>
+            </template>
+            <a-card-meta title="问卷代码" description="输入6位问卷代码快速填写" />
+          </a-card>
 
-            <a-tab-pane key="qr" tab="二维码扫描">
-              <div class="method-content">
-                <div class="qr-section">
-                  <!-- 移动端权限提示 -->
-                  <a-alert
-                    v-if="showMobilePermissionHint"
-                    message="📱 移动端使用提示"
-                    description="在移动设备上使用二维码扫描功能时，需要授予摄像头权限。首次使用时会弹出权限请求，选择'允许'即可正常使用。如被拒绝，可在设置中手动开启。"
-                    type="info"
-                    show-icon
-                    closable
-                    @close="hideMobilePermissionHint"
-                    class="mobile-permission-hint"
-                  />
+          <!-- 二维码扫描方式 -->
+          <a-card class="method-card" @click="showQRMethod">
+            <template #cover>
+              <div class="card-icon">📱</div>
+            </template>
+            <a-card-meta title="二维码扫描" description="扫描二维码快速填写问卷" />
+          </a-card>
+        </div>
+      </div>
 
-                  <div class="qr-container">
-                    <div id="qr-reader" ref="qrReader"></div>
-                    <div v-if="!isScanning" class="qr-overlay" @click="startScan">
-                      <div class="qr-placeholder">
-                        <div class="qr-icon">📱</div>
-                        <p>点击开始扫描二维码</p>
-                      </div>
+      <!-- 最近填写的问卷 -->
+      <div class="recent-section">
+        <h2>最近填写的问卷</h2>
+        <div class="recent-list">
+          <a-empty v-if="recentQuestionnaires.length === 0" description="暂无填写记录" />
+          <a-list
+            v-else
+            :data-source="recentQuestionnaires"
+            :loading="recentLoading"
+            item-layout="horizontal"
+          >
+            <template #renderItem="{ item }">
+              <a-list-item>
+                <a-list-item-meta>
+                  <template #title>
+                    <a @click="goToQuestionnaire(item.id)">{{ item.title }}</a>
+                  </template>
+                  <template #description>
+                    <div class="questionnaire-meta">
+                      <span>填写时间: {{ formatDate(item.fillTime) }}</span>
+                      <a-tag :color="getStatusColor(item.status)">
+                        {{ getStatusText(item.status) }}
+                      </a-tag>
                     </div>
-                  </div>
-
-                  <div class="qr-controls">
-                    <a-space>
-                      <a-button
-                        v-if="!isScanning"
-                        type="primary"
-                        @click="startScan"
-                        :loading="scanLoading"
-                      >
-                        <ScanOutlined />
-                        开始扫描
-                      </a-button>
-                      <a-button
-                        v-else
-                        @click="stopScan"
-                      >
-                        <StopOutlined />
-                        停止扫描
-                      </a-button>
-                      <a-button @click="switchCamera" v-if="isScanning">
-                        <ReloadOutlined />
-                        切换摄像头
-                      </a-button>
-                      <a-button @click="checkPermissionStatus">
-                        <EyeOutlined />
-                        检测权限
-                      </a-button>
-                      <a-button @click="showCompatibilityInfo">
-                        <InfoCircleOutlined />
-                        浏览器兼容性
-                      </a-button>
-                      <a-button @click="showCameraInfo">
-                        <CameraOutlined />
-                        摄像头信息
-                      </a-button>
-                    </a-space>
-                    <p class="input-hint">将二维码对准摄像头进行扫描</p>
-                  </div>
-                </div>
-              </div>
-            </a-tab-pane>
-          </a-tabs>
+                  </template>
+                </a-list-item-meta>
+                <template #actions>
+                  <a-button type="link" @click="goToQuestionnaire(item.id)">
+                    继续填写
+                  </a-button>
+                </template>
+              </a-list-item>
+            </template>
+          </a-list>
         </div>
 
-        <!-- 最近填写的问卷 -->
-        <div class="recent-section">
-          <h2>最近填写的问卷</h2>
-          <div class="recent-list">
-            <a-empty v-if="recentQuestionnaires.length === 0" description="暂无填写记录" />
-            <a-list
-              v-else
-              :data-source="recentQuestionnaires"
-              :loading="recentLoading"
-              item-layout="horizontal"
-            >
-              <template #renderItem="{ item }">
-                <a-list-item>
-                  <a-list-item-meta>
-                    <template #title>
-                      <a @click="goToQuestionnaire(item.id)">{{ item.title }}</a>
-                    </template>
-                    <template #description>
-                      <div class="questionnaire-meta">
-                        <span>填写时间: {{ formatDate(item.fillTime) }}</span>
-                        <a-tag :color="getStatusColor(item.status)">
-                          {{ getStatusText(item.status) }}
-                        </a-tag>
-                      </div>
-                    </template>
-                  </a-list-item-meta>
-                  <template #actions>
-                    <a-button type="link" @click="goToQuestionnaire(item.id)">
-                      继续填写
-                    </a-button>
-                  </template>
-                </a-list-item>
-              </template>
-            </a-list>
+        <!-- 历史记录按钮 -->
+        <div class="history-section">
+          <a-button @click="showHistory" type="default">
+            查看所有历史记录
+          </a-button>
+        </div>
+      </div>
+    </a-layout-content>
+
+    <!-- 链接输入弹窗 -->
+    <a-modal
+      v-model:open="linkModalVisible"
+      title="通过链接填写问卷"
+      width="600px"
+      @ok="submitLink"
+      @cancel="linkModalVisible = false"
+      :confirm-loading="linkLoading"
+    >
+      <div class="method-content">
+        <div class="input-section">
+          <a-form-item label="问卷链接">
+            <a-input
+              v-model:value="questionnaireLink"
+              placeholder="请输入问卷链接，例如：https://example.com/questionnaire/123"
+              size="large"
+            />
+          </a-form-item>
+          <p class="input-hint">请从问卷发布者处获取完整的问卷链接</p>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 问卷代码弹窗 -->
+    <a-modal
+      v-model:open="codeModalVisible"
+      title="通过代码填写问卷"
+      width="600px"
+      @ok="submitCode"
+      @cancel="codeModalVisible = false"
+      :confirm-loading="codeLoading"
+    >
+      <div class="method-content">
+        <div class="input-section">
+          <a-form-item label="问卷代码">
+            <a-input
+              v-model:value="questionnaireCode"
+              placeholder="请输入6位问卷代码，例如：ABC123"
+              size="large"
+              maxlength="6"
+            />
+          </a-form-item>
+          <p class="input-hint">问卷代码通常为6位字母数字组合</p>
+        </div>
+      </div>
+    </a-modal>
+
+    <!-- 二维码扫描弹窗 -->
+    <a-modal
+      v-model:open="qrModalVisible"
+      title="扫描二维码填写问卷"
+      width="600px"
+      @cancel="qrModalVisible = false"
+      :footer="null"
+    >
+      <div class="method-content">
+        <div class="qr-section">
+          <!-- 移动端权限提示 -->
+          <a-alert
+            v-if="showMobilePermissionHint"
+            message="📱 移动端使用提示"
+            description="在移动设备上使用二维码扫描功能时，需要授予摄像头权限。首次使用时会弹出权限请求，选择'允许'即可正常使用。如被拒绝，可在设置中手动开启。"
+            type="info"
+            show-icon
+            closable
+            @close="hideMobilePermissionHint"
+            class="mobile-permission-hint"
+          />
+
+          <div class="qr-container">
+            <div id="qr-reader" ref="qrReader"></div>
+            <div v-if="!isScanning" class="qr-overlay" @click="startScan">
+              <div class="qr-placeholder">
+                <div class="qr-icon">📱</div>
+                <p>点击开始扫描二维码</p>
+              </div>
+            </div>
           </div>
 
-          <!-- 历史记录按钮 -->
-          <div class="history-section">
-            <a-button @click="showHistory" type="default">
-              查看所有历史记录
-            </a-button>
+          <div class="qr-controls">
+            <a-space>
+              <a-button
+                v-if="!isScanning"
+                type="primary"
+                @click="startScan"
+                :loading="scanLoading"
+              >
+                <ScanOutlined />
+                开始扫描
+              </a-button>
+              <a-button
+                v-else
+                @click="stopScan"
+              >
+                <StopOutlined />
+                停止扫描
+              </a-button>
+              <a-button @click="switchCamera" v-if="isScanning">
+                <ReloadOutlined />
+                切换摄像头
+              </a-button>
+            </a-space>
+            <p class="input-hint">将二维码对准摄像头进行扫描</p>
           </div>
         </div>
       </div>
-    </main>
+    </a-modal>
 
     <!-- 历史记录模态框 -->
     <a-modal
@@ -259,16 +296,13 @@
         </template>
       </a-list>
     </a-modal>
-
-    <footer class="footer">
-      <div class="copyright">© 2025 湖北工程学院. 保留所有权利</div>
-    </footer>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user'
 import { message, Modal } from 'ant-design-vue'
 import {
   UserOutlined,
@@ -276,27 +310,29 @@ import {
   ScanOutlined,
   StopOutlined,
   ReloadOutlined,
-  EyeOutlined,
-  InfoCircleOutlined,
-  CameraOutlined
+  HomeOutlined,
+  DownOutlined
 } from '@ant-design/icons-vue'
-import { api } from '@/utils/request'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 // 响应式数据
-const activeMethod = ref('link')
 const questionnaireLink = ref('')
 const questionnaireCode = ref('')
 const linkLoading = ref(false)
 const codeLoading = ref(false)
 const scanLoading = ref(false)
 const isScanning = ref(false)
-const userDropdownOpen = ref(false)
 const historyModalVisible = ref(false)
 const historySearch = ref('')
 const historyStatusFilter = ref('')
 const showMobilePermissionHint = ref(true)
+
+// 弹窗状态
+const linkModalVisible = ref(false)
+const codeModalVisible = ref(false)
+const qrModalVisible = ref(false)
 
 // 数据列表
 const recentQuestionnaires = ref([])
@@ -305,8 +341,9 @@ const recentLoading = ref(false)
 const historyLoading = ref(false)
 
 // 用户信息
-const userName = ref('用户名')
-const userAvatar = ref('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjZFRkEiLz4KPHBhdGggZD0iTTE2IDhDMTguMjA5MSA4IDIwIDkuNzkwODYgMjAgMTJDMjAgMTQuMjA5MSAxOC4yMDkxIDE2IDE2IDE2QzEzLjc5MDkgMTYgMTIgMTQuMjA5MSAxMiAxMkMxMiA5Ljc5MDg2IDEzLjc5MDkgOCAxNiA4WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI0IDI0QzI0IDIwLjY4NjMgMjAuNDE0MiAxOCAxNiAxOEMxMS41ODU4IDE4IDggMjAuNjg2MyA4IDI0IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K')
+const username = ref('用户名')
+const userAvatar = ref('')
+const userRoleText = ref('')
 
 // 计算属性
 const filteredHistoryList = computed(() => {
@@ -325,7 +362,71 @@ const filteredHistoryList = computed(() => {
   return filtered
 })
 
+// 获取用户信息
+onMounted(() => {
+  try {
+    const userInfo = userStore.userInfo;
+    if (userInfo && userInfo.username) {
+      username.value = userInfo.username;
+      userAvatar.value = userInfo.avatar_url || '';
+      
+      // 根据用户角色显示文本
+      if (userInfo.role !== undefined) {
+        switch (userInfo.role) {
+          case userStore.USER_ROLES.TEACHER_ADMIN:
+            userRoleText.value = '教师/管理员';
+            break;
+          case userStore.USER_ROLES.NORMAL_USER:
+            userRoleText.value = '普通用户';
+            break;
+          default:
+            userRoleText.value = '未知角色';
+            break;
+        }
+      } else {
+        userRoleText.value = '未设置角色';
+      }
+    } else if (userInfo && userInfo.name) {
+      username.value = userInfo.name;
+      userAvatar.value = userInfo.avatar || '';
+      userRoleText.value = '用户';
+    } else {
+      // 如果没有用户信息，使用默认值
+      username.value = '测试用户';
+      userAvatar.value = '';
+      userRoleText.value = '测试用户';
+      console.log('使用默认用户信息进行测试');
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    // 使用默认值
+    username.value = '测试用户';
+    userAvatar.value = '';
+    userRoleText.value = '测试用户';
+  }
+
+  loadRecentData()
+
+  // 检查是否为移动设备
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  if (!isMobile) {
+    showMobilePermissionHint.value = false
+  }
+})
+
 // 方法
+const showLinkMethod = () => {
+  linkModalVisible.value = true
+}
+
+const showCodeMethod = () => {
+  codeModalVisible.value = true
+}
+
+const showQRMethod = () => {
+  qrModalVisible.value = true
+}
+
 const submitLink = async () => {
   if (!questionnaireLink.value) {
     message.warning('请输入问卷链接')
@@ -342,6 +443,7 @@ const submitLink = async () => {
     message.error('链接验证失败，请检查链接是否正确')
   } finally {
     linkLoading.value = false
+    linkModalVisible.value = false
   }
 }
 
@@ -366,6 +468,7 @@ const submitCode = async () => {
     message.error('代码验证失败，请检查代码是否正确')
   } finally {
     codeLoading.value = false
+    codeModalVisible.value = false
   }
 }
 
@@ -392,77 +495,6 @@ const stopScan = () => {
 
 const switchCamera = () => {
   message.info('正在切换摄像头...')
-}
-
-const checkPermissionStatus = () => {
-  if (navigator.permissions && navigator.permissions.query) {
-    navigator.permissions.query({ name: 'camera' }).then(result => {
-      let status = '未知'
-      switch (result.state) {
-        case 'granted':
-          status = '已授权'
-          break
-        case 'denied':
-          status = '已拒绝'
-          break
-        case 'prompt':
-          status = '需要授权'
-          break
-      }
-      message.info(`摄像头权限状态: ${status}`)
-    })
-  } else {
-    message.info('无法检测权限状态，请手动检查')
-  }
-}
-
-const showCompatibilityInfo = () => {
-  const info = {
-    userAgent: navigator.userAgent,
-    camera: 'camera' in navigator || 'getUserMedia' in navigator,
-    permissions: 'permissions' in navigator,
-    mediaDevices: 'mediaDevices' in navigator
-  }
-
-  Modal.info({
-    title: '浏览器兼容性信息',
-    content: `
-      <div>
-        <p><strong>用户代理:</strong> ${info.userAgent}</p>
-        <p><strong>摄像头支持:</strong> ${info.camera ? '是' : '否'}</p>
-        <p><strong>权限API:</strong> ${info.permissions ? '是' : '否'}</p>
-        <p><strong>媒体设备API:</strong> ${info.mediaDevices ? '是' : '否'}</p>
-      </div>
-    `,
-    dangerouslySetHTMLContent: true
-  })
-}
-
-const showCameraInfo = () => {
-  if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-    navigator.mediaDevices.enumerateDevices()
-      .then(devices => {
-        const cameras = devices.filter(device => device.kind === 'videoinput')
-        if (cameras.length > 0) {
-          const cameraList = cameras.map((camera, index) =>
-            `${index + 1}. ${camera.label || `摄像头 ${index + 1}`}`
-          ).join('\n')
-
-          Modal.info({
-            title: '摄像头信息',
-            content: `检测到 ${cameras.length} 个摄像头:\n${cameraList}`,
-            okText: '确定'
-          })
-        } else {
-          message.warning('未检测到摄像头设备')
-        }
-      })
-      .catch(() => {
-        message.error('无法获取摄像头信息')
-      })
-  } else {
-    message.warning('浏览器不支持摄像头检测')
-  }
 }
 
 const hideMobilePermissionHint = () => {
@@ -528,20 +560,22 @@ const goToUserCenter = () => {
   router.push('/user')
 }
 
-const logout = () => {
-  Modal.confirm({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    onOk: () => {
-      localStorage.clear()
-      router.push('/login')
-      message.success('已退出登录')
-    }
-  })
+const goToHome = () => {
+  router.push('/')
 }
 
-const toggleUserDropdown = () => {
-  userDropdownOpen.value = !userDropdownOpen.value
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await userStore.logout();
+    message.success('退出登录成功');
+    router.push('/login');
+  } catch (error) {
+    console.error('退出登录失败:', error);
+    message.error('退出登录失败');
+    // 即使退出失败，也跳转到登录页
+    router.push('/login');
+  }
 }
 
 const formatDate = (date) => {
@@ -566,17 +600,6 @@ const getStatusText = (status) => {
   return texts[status] || '未知'
 }
 
-// 生命周期
-onMounted(() => {
-  loadRecentData()
-
-  // 检查是否为移动设备
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  if (!isMobile) {
-    showMobilePermissionHint.value = false
-  }
-})
-
 onUnmounted(() => {
   // 清理二维码扫描器
   if (isScanning.value) {
@@ -586,122 +609,191 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.ask-user-container {
+.ask-user-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  height: 70px;
+  line-height: 70px;
 }
 
 .navbar {
-  background: #fff;
-  border-bottom: 1px solid #e8e8e8;
-  padding: 0 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  height: 64px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  align-items: center;
+  height: 100%;
 }
 
 .logo {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #1890ff;
+  color: #3b82f6;
 }
 
 .nav-links {
   display: flex;
-  align-items: center;
-  gap: 24px;
+  gap: 30px;
 }
 
 .nav-link {
-  color: #666;
   text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.3s;
+  color: #374151;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .nav-link:hover {
-  color: #1890ff;
-  background-color: #f0f8ff;
-}
-
-.nav-link.active {
-  color: #1890ff;
-  background-color: #e6f7ff;
+  color: #3b82f6;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.3s;
-}
-
-.user-info:hover {
-  background-color: #f5f5f5;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  background-color: #3b82f6;
 }
 
-.user-name {
-  color: #333;
+.username {
+  color: #374151;
   font-weight: 500;
+  margin: 0 8px;
+}
+
+.user-role {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: 8px;
 }
 
 .main-content {
-  padding: 24px;
+  flex: 1;
+  background-color: #f9fafb;
+  padding: 40px 20px;
+}
+
+.welcome-section {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+.welcome-section p {
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
+.role-info {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  margin-top: 10px;
+}
+
+.questionnaire-methods {
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-bottom: 60px;
+}
+
+.questionnaire-methods h2 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 40px;
+}
+
+.method-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.method-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.method-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  font-size: 3rem;
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.ant-card-meta-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.ant-card-meta-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.recent-section {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.ask-container {
-  background: #fff;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.ask-container h1 {
-  font-size: 28px;
+.recent-section h2 {
+  text-align: center;
+  font-size: 2rem;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-  text-align: center;
-}
-
-.page-description {
-  text-align: center;
-  color: #666;
-  margin-bottom: 32px;
-  font-size: 16px;
-}
-
-.input-methods {
+  color: #1f2937;
   margin-bottom: 40px;
 }
 
-.method-tabs {
+.recent-list {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.questionnaire-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.history-section {
+  text-align: center;
 }
 
 .method-content {
-  padding: 24px 0;
+  padding: 20px 0;
 }
 
 .input-section {
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .input-hint {
@@ -772,46 +864,6 @@ onUnmounted(() => {
   margin-top: 16px;
 }
 
-.recent-section {
-  margin-bottom: 32px;
-}
-
-.recent-section h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 16px;
-}
-
-.recent-list {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e8e8e8;
-}
-
-.questionnaire-meta {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.history-section {
-  text-align: center;
-}
-
-.footer {
-  background: #fff;
-  border-top: 1px solid #e8e8e8;
-  padding: 24px;
-  text-align: center;
-  margin-top: 40px;
-}
-
-.copyright {
-  color: #999;
-  font-size: 14px;
-}
-
 .history-filters {
   margin-bottom: 24px;
 }
@@ -824,21 +876,21 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .navbar {
-    padding: 0 16px;
+    padding: 0 15px;
   }
-
+  
   .nav-links {
-    gap: 16px;
+    gap: 20px;
   }
-
-  .main-content {
-    padding: 16px;
+  
+  .welcome-section h1 {
+    font-size: 2rem;
   }
-
-  .ask-container {
-    padding: 24px 16px;
+  
+  .method-cards {
+    grid-template-columns: 1fr;
   }
-
+  
   .qr-container {
     width: 250px;
     height: 250px;

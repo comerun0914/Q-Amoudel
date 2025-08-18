@@ -2,7 +2,18 @@
   <div class="user-center-page">
     <div class="page-header">
       <div class="header-left">
-        <h1>用户中心</h1>
+        <div class="title-with-back">
+          <a-button 
+            type="link" 
+            size="large" 
+            @click="goToHome"
+            class="back-home-btn"
+          >
+            <HomeOutlined />
+            主页
+          </a-button>
+          <h1>用户中心</h1>
+        </div>
         <p>管理您的个人信息和账户设置</p>
       </div>
       <div class="header-actions">
@@ -333,6 +344,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
+import { useRouter } from 'vue-router'
 import {
   SaveOutlined,
   UserOutlined,
@@ -345,14 +357,34 @@ import {
   EyeInvisibleOutlined,
   BellOutlined,
   LockOutlined,
-  SettingOutlined
+  SettingOutlined,
+  HomeOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { api } from '@/utils/request'
 import { CONFIG } from '@/api/config'
 
+// 使用路由
+const router = useRouter()
+
 // 使用用户状态管理
 const userStore = useUserStore()
+
+// 工具函数：从本地存储获取用户ID
+const getCurrentUserId = () => {
+  const userInfoStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO)
+  if (userInfoStr) {
+    try {
+      const userInfo = JSON.parse(userInfoStr)
+      if (userInfo && userInfo.id) {
+        return userInfo.id
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error)
+    }
+  }
+  return 1 // 默认值
+}
 
 // 响应式数据
 const saving = ref(false)
@@ -482,8 +514,13 @@ const loadUserInfo = async () => {
 // 获取用户统计数据
 const fetchUserStats = async () => {
   try {
+    // 获取当前用户ID
+    const userId = getCurrentUserId()
+    
     // 根据数据库表结构，从users表获取用户统计信息
-    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE)
+    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE, {
+      userId: userId
+    })
 
     if (response.code === 200) {
       userStats.value = response.data.stats || userStats.value
@@ -498,8 +535,13 @@ const fetchUserStats = async () => {
 // 获取用户设置
 const fetchUserSettings = async () => {
   try {
+    // 获取当前用户ID
+    const userId = getCurrentUserId()
+    
     // 根据数据库表结构，从users表获取用户设置
-    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE)
+    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE, {
+      userId: userId
+    })
 
     if (response.code === 200) {
       userSettings.value = response.data.settings || userSettings.value
@@ -514,8 +556,13 @@ const fetchUserSettings = async () => {
 // 获取用户活动
 const fetchUserActivities = async () => {
   try {
+    // 获取当前用户ID
+    const userId = getCurrentUserId()
+    
     // 根据数据库表结构，从login_history表获取用户活动记录
-    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE)
+    const response = await api.get(CONFIG.API_ENDPOINTS.USER_PROFILE, {
+      userId: userId
+    })
 
     if (response.code === 200) {
       userActivities.value = response.data.activities || userActivities.value
@@ -530,12 +577,18 @@ const fetchUserActivities = async () => {
 // 更新用户资料
 const updateUserProfile = async () => {
   try {
+    // 获取当前用户ID
+    const userId = getCurrentUserId()
+    
     // 根据数据库表结构，更新users表中的用户信息
-    const response = await api.put(CONFIG.API_ENDPOINTS.USER_PROFILE, userInfo.value)
+    const response = await api.put(CONFIG.API_ENDPOINTS.USER_PROFILE, {
+      userId: userId,
+      ...userInfo
+    })
 
     if (response.code === 200) {
       message.success('资料更新成功')
-      fetchUserProfile()
+      loadUserInfo()
     } else {
       message.error(response.message || '更新失败')
     }
@@ -548,24 +601,74 @@ const updateUserProfile = async () => {
 // 修改密码
 const changePassword = async () => {
   try {
+    // 获取当前用户ID
+    const userId = getCurrentUserId()
+    
     // 根据数据库表结构，更新users表中的密码
     const response = await api.put(CONFIG.API_ENDPOINTS.USER_PROFILE, {
-      oldPassword: passwordForm.oldPassword,
+      userId: userId,
+      oldPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword
     })
 
     if (response.code === 200) {
       message.success('密码修改成功')
-      passwordForm.oldPassword = ''
+      passwordForm.currentPassword = ''
       passwordForm.newPassword = ''
       passwordForm.confirmPassword = ''
-      showPasswordModal.value = false
+      showChangePasswordModal.value = false
     } else {
       message.error(response.message || '修改失败')
     }
   } catch (error) {
     console.error('修改密码失败:', error)
     message.error('修改失败')
+  }
+}
+
+// 保存用户信息
+const saveUserInfo = async () => {
+  try {
+    saving.value = true
+    
+    // 验证表单
+    await userInfoFormRef.value.validate()
+    
+    // 更新用户资料
+    await updateUserProfile()
+    
+  } catch (error) {
+    console.error('保存用户信息失败:', error)
+    if (error.errorFields) {
+      message.error('请检查表单填写是否正确')
+    } else {
+      message.error('保存失败')
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// 处理修改密码
+const handleChangePassword = async () => {
+  try {
+    changingPassword.value = true
+    
+    // 验证表单
+    await passwordFormRef.value.validate()
+    
+    // 修改密码
+    await changePassword()
+    
+  } catch (error) {
+    console.error('修改密码失败:', error)
+    if (error.errorFields) {
+      message.error('请检查密码填写是否正确')
+    } else {
+      message.error('修改失败')
+    }
+  } finally {
+    changingPassword.value = false
   }
 }
 
@@ -591,42 +694,6 @@ const beforeAvatarUpload = (file) => {
   reader.readAsDataURL(file)
 
   return false // 阻止自动上传
-}
-
-const handleChangePassword = async () => {
-  try {
-    await passwordFormRef.value?.validate()
-
-    changingPassword.value = true
-
-    const response = await api.put(CONFIG.API_ENDPOINTS.USER_PROFILE, {
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword
-    })
-
-    if (response.code === 200) {
-      message.success('密码修改成功')
-      showChangePasswordModal.value = false
-      // 清空表单
-      Object.assign(passwordForm, {
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      })
-    } else {
-      message.error(response.message || '密码修改失败')
-    }
-
-  } catch (error) {
-    console.error('修改密码失败:', error)
-    if (error.name === 'ValidationError') {
-      message.error('请检查表单信息')
-    } else {
-      message.error('修改失败，请稍后重试')
-    }
-  } finally {
-    changingPassword.value = false
-  }
 }
 
 // 设置变更处理
@@ -712,6 +779,11 @@ const formatTime = (time) => {
   if (diff < 2592000000) return `${Math.floor(diff / 86400000)}天前`
 
   return activityTime.toLocaleDateString('zh-CN')
+}
+
+// 返回主页
+const goToHome = () => {
+  router.push('/')
 }
 
 // 生命周期
