@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import com.shz.quick_qa_system.dto.QuestionDto;
 import com.shz.quick_qa_system.dto.QuestionOptionDto;
 import com.shz.quick_qa_system.dto.QuestionnairePreviewDto;
+import com.shz.quick_qa_system.entity.Users;
+import com.shz.quick_qa_system.service.UsersService;
 
 /**
  * <p>
@@ -75,6 +77,9 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
     
     @Resource
     private MatrixColumnMapper matrixColumnMapper;
+
+    @Resource
+    private UsersService usersService;
 
     public QuestionCreate CreateQuestion(QuestionCreate questionCreate) {
         // 设置表单ID
@@ -230,6 +235,11 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             } else if (questionType == 4) { // 评分题
                 saveRatingQuestionConfig(question.getId(), questionData);
             } else if (questionType == 5) { // 矩阵题
+                System.out.println("=== 检测到矩阵题 ===");
+                System.out.println("问题数据: " + questionData);
+                System.out.println("矩阵行数据: " + questionData.get("rows"));
+                System.out.println("矩阵列数据: " + questionData.get("columns"));
+                System.out.println("矩阵题类型: " + questionData.get("subQuestionType"));
                 saveMatrixQuestionConfig(question.getId(), questionData);
             }
         }
@@ -341,6 +351,10 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
      * 保存矩阵题配置
      */
     private void saveMatrixQuestionConfig(Integer questionId, Map<String, Object> questionData) {
+        System.out.println("=== 开始保存矩阵题配置 ===");
+        System.out.println("问题ID: " + questionId);
+        System.out.println("接收到的数据: " + questionData);
+        
         // 创建矩阵题主体
         MatrixQuestion matrixQuestion = new MatrixQuestion();
         matrixQuestion.setQuestionId(questionId);
@@ -349,6 +363,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             matrixQuestion.setSubQuestionType(1); // 默认单选矩阵
         }
         matrixQuestion.setDescription((String) questionData.get("description"));
+        
         // 生成唯一矩阵题ID
         Integer mid = CodeGenerator.generateFormId();
         while (matrixQuestionMapper.exists(new QueryWrapper<MatrixQuestion>().eq("id", mid))) {
@@ -361,6 +376,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         // 保存矩阵行
         @SuppressWarnings("unchecked")
         List<String> rows = (List<String>) questionData.get("rows");
+        System.out.println("矩阵行数据: " + rows);
         if (rows != null && !rows.isEmpty()) {
             for (int i = 0; i < rows.size(); i++) {
                 MatrixRow matrixRow = new MatrixRow();
@@ -374,13 +390,17 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 }
                 matrixRow.setId(rowId);
                 matrixRowMapper.insert(matrixRow);
+                System.out.println("保存矩阵行: " + rows.get(i) + ", ID: " + rowId);
             }
             System.out.println("矩阵行保存成功，共 " + rows.size() + " 行");
+        } else {
+            System.out.println("警告：矩阵行数据为空或null");
         }
         
         // 保存矩阵列
         @SuppressWarnings("unchecked")
         List<String> columns = (List<String>) questionData.get("columns");
+        System.out.println("矩阵列数据: " + columns);
         if (columns != null && !columns.isEmpty()) {
             for (int i = 0; i < columns.size(); i++) {
                 MatrixColumn matrixColumn = new MatrixColumn();
@@ -395,9 +415,14 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
                 }
                 matrixColumn.setId(colId);
                 matrixColumnMapper.insert(matrixColumn);
+                System.out.println("保存矩阵列: " + columns.get(i) + ", ID: " + colId);
             }
             System.out.println("矩阵列保存成功，共 " + columns.size() + " 列");
+        } else {
+            System.out.println("警告：矩阵列数据为空或null");
         }
+        
+        System.out.println("=== 矩阵题配置保存完成 ===");
     }
 
     @Override
@@ -452,13 +477,46 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         // 执行分页查询
         IPage<QuestionCreate> result = page(pageParam, queryWrapper);
 
-        // 构建返回结果
+        // 为每个问卷添加创建者信息
+        List<Map<String, Object>> enrichedList = new ArrayList<>();
+        for (QuestionCreate questionnaire : result.getRecords()) {
+            Map<String, Object> enrichedItem = new HashMap<>();
+            enrichedItem.put("id", questionnaire.getId());
+            enrichedItem.put("title", questionnaire.getTitle());
+            enrichedItem.put("description", questionnaire.getDescription());
+            enrichedItem.put("status", questionnaire.getStatus());
+            enrichedItem.put("start_date", questionnaire.getStartDate());
+            enrichedItem.put("end_date", questionnaire.getEndDate());
+            enrichedItem.put("creator_id", questionnaire.getCreatorId());
+            enrichedItem.put("created_time", questionnaire.getCreatedTime());
+            enrichedItem.put("updated_time", questionnaire.getUpdatedTime());
+            enrichedItem.put("submission_limit", questionnaire.getSubmissionLimit());
+            
+            // 获取创建者用户名
+            String creatorName = "匿名用户";
+            if (questionnaire.getCreatorId() != null) {
+                try {
+                    Users creator = usersService.getById(questionnaire.getCreatorId());
+                    if (creator != null) {
+                        creatorName = creator.getUsername();
+                    }
+                } catch (Exception e) {
+                    // 如果获取用户信息失败，使用默认值
+                    creatorName = "用户" + questionnaire.getCreatorId();
+                }
+            }
+            enrichedItem.put("creatorName", creatorName);
+            
+            enrichedList.add(enrichedItem);
+        }
+
+        // 构建返回结果 - 使用与前端一致的字段名
         Map<String, Object> response = new HashMap<>();
-        response.put("list", result.getRecords());
-        response.put("total", result.getTotal());
-        response.put("pages", result.getPages());
-        response.put("current", result.getCurrent());
-        response.put("size", result.getSize());
+        response.put("list", enrichedList);
+        response.put("current", (int) result.getCurrent());
+        response.put("pageSize", (int) result.getSize());
+        response.put("total", (int) result.getTotal());
+        response.put("pages", (int) result.getPages());
 
         return response;
     }
@@ -507,16 +565,16 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
         }
         queryWrapper.orderByDesc("created_time");
-        
-        System.out.println("执行分页查询...");
+//
+//        System.out.println("执行分页查询...");
         IPage<QuestionCreate> result = page(pageParam, queryWrapper);
-        
-        System.out.println("分页查询结果：");
-        System.out.println("  result.getRecords().size(): " + result.getRecords().size());
-        System.out.println("  result.getCurrent(): " + result.getCurrent());
-        System.out.println("  result.getSize(): " + result.getSize());
-        System.out.println("  result.getTotal(): " + result.getTotal());
-        System.out.println("  result.getPages(): " + result.getPages());
+//
+//        System.out.println("分页查询结果：");
+//        System.out.println("  result.getRecords().size(): " + result.getRecords().size());
+//        System.out.println("  result.getCurrent(): " + result.getCurrent());
+//        System.out.println("  result.getSize(): " + result.getSize());
+//        System.out.println("  result.getTotal(): " + result.getTotal());
+//        System.out.println("  result.getPages(): " + result.getPages());
         
         Map<String, Object> response = new HashMap<>();
         response.put("list", result.getRecords());
@@ -525,13 +583,13 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
         response.put("totalCount", (int) result.getTotal());
         response.put("totalPages", (int) result.getPages());
         
-        System.out.println("返回的响应：");
-        System.out.println("  list.size(): " + ((List<?>) response.get("list")).size());
-        System.out.println("  currentPage: " + response.get("currentPage"));
-        System.out.println("  pageSize: " + response.get("pageSize"));
-        System.out.println("  totalCount: " + response.get("totalCount"));
-        System.out.println("  totalPages: " + response.get("totalPages"));
-        System.out.println("=== 分页查询结束 ===");
+//        System.out.println("返回的响应：");
+//        System.out.println("  list.size(): " + ((List<?>) response.get("list")).size());
+//        System.out.println("  currentPage: " + response.get("currentPage"));
+//        System.out.println("  pageSize: " + response.get("pageSize"));
+//        System.out.println("  totalCount: " + response.get("totalCount"));
+//        System.out.println("  totalPages: " + response.get("totalPages"));
+//        System.out.println("=== 分页查询结束 ===");
         
         return response;
     }
@@ -550,7 +608,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
     }
 
     /**
-     * 获取问卷详情（包含创建者信息）
+     * 获取问卷详情（包含创建者信息和问题列表）
      */
     public Map<String, Object> getQuestionnaireDetailWithCreator(Integer id) {
         try {
@@ -558,6 +616,9 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             if (questionnaire == null) {
                 throw new RuntimeException("问卷不存在");
             }
+
+            // 获取问题列表
+            List<QuestionDto> questions = getQuestionnaireQuestions(id);
 
             // 获取创建者信息
             String creatorName = "未知用户";
@@ -568,8 +629,9 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
 
             Map<String, Object> result = new HashMap<>();
-            result.put("data", questionnaire);
-            result.put("userInfo", creatorName);
+            result.put("questionnaire", questionnaire);
+            result.put("questions", questions);
+            result.put("creatorName", creatorName);
 
             return result;
         } catch (Exception e) {

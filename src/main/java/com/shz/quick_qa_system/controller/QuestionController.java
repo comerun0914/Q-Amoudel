@@ -25,7 +25,7 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/question")
-//@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8080"}, allowCredentials = "false")
 public class QuestionController {
     
     private static final Logger logger = LoggerFactory.getLogger(QuestionController.class);
