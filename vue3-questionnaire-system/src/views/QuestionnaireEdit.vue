@@ -324,6 +324,7 @@ import {
   DragOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG } from '@/api/config'
+import { questionnaireAPI as questionnaireApi } from '@/api/questionnaire'
 import { api } from '@/utils/request'
 import QuestionModal from '@/components/Questionnaire/QuestionModal.vue'
 import dayjs from 'dayjs'
@@ -818,7 +819,7 @@ const updateQuestionnaire = async () => {
     console.log('发送到后端的更新数据:', updateData)
 
     // 根据数据库表结构，更新question_create表
-    const response = await api.put(`${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_UPDATE}/${questionnaireInfo.id}`, updateData)
+    const response = await questionnaireApi.updateQuestionnaire(questionnaireInfo.id, updateData)
 
     if (response.code === 200) {
       message.success('问卷更新成功')

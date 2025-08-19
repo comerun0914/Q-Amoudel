@@ -67,6 +67,19 @@
         <div v-if="!loading && !error" class="content-wrapper">
           <!-- 问题列表 -->
           <div v-if="currentQuestion" class="question-container">
+            <!-- 调试信息 -->
+            <div v-if="isDevelopment" class="debug-info" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-size: 12px;">
+              <strong>调试信息:</strong>
+              <div>问题ID: {{ currentQuestion.id }}</div>
+              <div>问题类型: {{ currentQuestion.questionType }} ({{ getQuestionTypeName(currentQuestion.questionType) }})</div>
+              <div>问题内容: {{ currentQuestion.content }}</div>
+              <div>是否必填: {{ currentQuestion.isRequired }}</div>
+              <div>选项数量: {{ currentQuestion.options?.length || 0 }}</div>
+              <div>文本题配置: {{ currentQuestion.textQuestionConfig ? '有' : '无' }}</div>
+              <div>评分题配置: {{ currentQuestion.ratingQuestionConfig ? '有' : '无' }}</div>
+              <div>矩阵题配置: {{ currentQuestion.matrixQuestionConfig ? '有' : '无' }}</div>
+            </div>
+            
             <div class="question-header">
               <h2 class="question-title">
                 第{{ currentQuestionIndex + 1 }}题
@@ -112,19 +125,22 @@
                 :maxlength="currentQuestion.textQuestionConfig?.maxLength || 500"
                 show-count
               />
+              <div v-if="currentQuestion.textQuestionConfig?.hintText" class="hint-text">
+                <small style="color: #666;">{{ currentQuestion.textQuestionConfig.hintText }}</small>
+              </div>
             </div>
 
             <!-- 评分题 -->
             <div v-else-if="currentQuestion.questionType === 4" class="question-content">
               <a-rate
                 v-model:value="currentQuestion.answer"
-                :count="currentQuestion.ratingQuestionConfig?.maxRating || 5"
+                :count="currentQuestion.ratingQuestionConfig?.maxScore || 5"
                 :tooltips="ratingTooltips"
                 show-tooltip
               />
               <div class="rating-labels">
-                <span>{{ ratingLabels[0] }}</span>
-                <span>{{ ratingLabels[ratingLabels.length - 1] }}</span>
+                <span>{{ currentQuestion.ratingQuestionConfig?.minLabel || '非常不满意' }}</span>
+                <span>{{ currentQuestion.ratingQuestionConfig?.maxLabel || '非常满意' }}</span>
               </div>
             </div>
 
@@ -262,7 +278,7 @@ import {
   CalendarOutlined,
   SendOutlined
 } from '@ant-design/icons-vue'
-import { questionnaireApi, questionnaireUtils } from '@/api/questionnaire'
+import { questionnaireAPI as questionnaireApi, questionnaireUtils } from '@/api/questionnaire'
 import { CONFIG } from '@/api/config'
 
 const router = useRouter()
@@ -275,7 +291,7 @@ const getCurrentUserId = () => {
     try {
       const userInfo = JSON.parse(userInfoStr);
       if (userInfo && userInfo.id) {
-        return userInfo.id;
+        return parseInt(userInfo.id); // 确保返回整数类型
       }
     } catch (error) {
       console.error('解析用户信息失败:', error);
@@ -313,6 +329,41 @@ const getClientIP = async () => {
   }
 };
 
+// 格式化日期时间为后端期望的格式
+// 尝试多种格式，找到后端能够解析的格式
+const formatDateTime = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  // 当前使用的格式: yyyy-MM-dd'T'HH:mm:ss (ISO 8601本地时间格式)
+  // 如果这个格式仍然不行，可以尝试其他格式
+  
+  // 格式1: yyyy/MM/dd HH:mm:ss (Java SimpleDateFormat常用格式)
+  // return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+  
+  // 格式2: dd-MM-yyyy HH:mm:ss (欧洲常用格式)
+  // return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  
+  // 格式3: MM/dd/yyyy HH:mm:ss (美国常用格式)
+  // return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
+  
+  // 格式4: yyyy-MM-dd'T'HH:mm:ss (ISO 8601本地时间格式) - 当前使用
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  
+  // 格式5: yyyy-MM-dd HH:mm:ss (MySQL datetime格式)
+  // return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  
+  // 格式6: 时间戳 (毫秒)
+  // return date.getTime();
+  
+  // 格式7: 只发送日期部分，让后端处理时间
+  // return `${year}-${month}-${day}`;
+};
+
 // 响应式数据
 const loading = ref(true)
 const error = ref(false)
@@ -320,6 +371,9 @@ const errorMessage = ref('无法加载问卷数据')
 const backLoading = ref(false)
 const saveLoading = ref(false)
 const submitLoading = ref(false)
+
+// 开发环境标识
+const isDevelopment = ref(import.meta.env.DEV || import.meta.env.MODE === 'development')
 
 // 问卷数据
 const questionnaireTitle = ref('问卷标题')
@@ -361,7 +415,7 @@ const answerSummary = computed(() => {
 
     return {
       index,
-      question: question.content,
+      question: question.content || '问题标题',
       answer: answerText
     }
   })
@@ -409,15 +463,15 @@ const matrixData = computed(() => {
 const ratingTooltips = computed(() => {
   if (!currentQuestion.value || currentQuestion.value.questionType !== 4) return []
 
-  const maxRating = currentQuestion.value.ratingQuestionConfig?.maxRating || 5
-  return Array.from({ length: maxRating }, (_, i) => `${i + 1}分`)
+  const maxScore = currentQuestion.value.ratingQuestionConfig?.maxScore || 5
+  return Array.from({ length: maxScore }, (_, i) => `${i + 1}分`)
 })
 
 const ratingLabels = computed(() => {
   if (!currentQuestion.value || currentQuestion.value.questionType !== 4) return []
 
-  const maxRating = currentQuestion.value.ratingQuestionConfig?.maxRating || 5
-  return Array.from({ length: maxRating }, (_, i) => `${i + 1}分`)
+  const maxScore = currentQuestion.value.ratingQuestionConfig?.maxScore || 5
+  return Array.from({ length: maxScore }, (_, i) => `${i + 1}分`)
 })
 
 // 方法
@@ -449,6 +503,7 @@ const goToHome = () => {
 
 // 加载问卷
 const loadQuestionnaire = async () => {
+  console.log('开始加载问卷数据...')
   loading.value = true
   error.value = false
 
@@ -456,18 +511,30 @@ const loadQuestionnaire = async () => {
     const questionnaireId = route.params.id
     const url = route.query.url
     const code = route.query.code
+    
+    console.log('问卷ID:', questionnaireId)
+    console.log('URL参数:', url)
+    console.log('代码参数:', code)
 
     let response
 
     if (questionnaireId) {
+      console.log('使用问卷ID加载数据:', questionnaireId)
+      
       // 根据数据库表结构，从question_create表获取问卷数据
+      console.log('调用 getQuestionnaireDetail API...')
       const questionnaireResponse = await questionnaireApi.getQuestionnaireDetail(questionnaireId)
+      console.log('问卷详情响应:', questionnaireResponse)
+      
       if (questionnaireResponse.code !== 200) {
         throw new Error(questionnaireResponse.message || '获取问卷信息失败')
       }
       
       // 获取问卷问题列表
+      console.log('调用 getQuestionnaireQuestions API...')
       const questionsResponse = await questionnaireApi.getQuestionnaireQuestions(questionnaireId)
+      console.log('问题列表响应:', questionsResponse)
+      
       if (questionsResponse.code !== 200) {
         throw new Error(questionsResponse.message || '获取问题列表失败')
       }
@@ -509,8 +576,13 @@ const loadQuestionnaire = async () => {
     if (response.code === 200) {
       const data = response.data
 
-      // 根据后端数据结构映射
-      const questionnaire = data.questionnaire || data
+      // 根据后端数据结构映射 - 修复嵌套问题
+      let questionnaire = data.questionnaire || data
+      
+      // 处理嵌套的questionnaire结构
+      if (questionnaire && questionnaire.questionnaire) {
+        questionnaire = questionnaire.questionnaire
+      }
       
       // 检查问卷状态，只有已发布的问卷才能填写
       if (questionnaire.status !== 1) {
@@ -523,22 +595,49 @@ const loadQuestionnaire = async () => {
       estimatedTime.value = `${questionnaire.estimatedTime || 10} 分钟`
 
       // 初始化问题数据，根据数据库表结构
-      const questionList = data.questions || []
+      let questionList = data.questions || []
+      
+      // 处理嵌套的questions结构
+      if (data.questionnaire && data.questionnaire.questions) {
+        questionList = data.questionnaire.questions
+      }
+      
+      console.log('原始问题数据:', questionList)
+      
       questions.value = questionList.map(q => {
         // 使用工具函数初始化答案
         const answer = questionnaireUtils.initializeAnswer(q.questionType)
 
-        return {
-          ...q,
-          answer,
-          // 确保必填字段存在，后端返回的是Integer类型（1=是，0=否）
-          isRequired: q.isRequired === 1,
-          // 确保问题内容字段正确映射
-          title: q.content || q.title || '问题标题',
-          // 确保问题类型字段正确映射
-          type: q.questionType || q.type
+        // 根据数据库表结构映射字段
+        const mappedQuestion = {
+          id: q.id,
+          questionnaireId: q.questionnaireId,
+          content: q.content, // 问题内容
+          questionType: q.questionType, // 问题类型
+          sortNum: q.sortNum, // 排序号
+          isRequired: q.isRequired === 1, // 是否必填（后端返回1=是，0=否）
+          createdTime: q.createdTime,
+          updatedTime: q.updatedTime,
+          answer: answer, // 初始化的答案
+          
+          // 选项信息（单选题和多选题）
+          options: q.options || [],
+          
+          // 文本题配置
+          textQuestionConfig: q.textQuestionConfig || null,
+          
+          // 评分题配置
+          ratingQuestionConfig: q.ratingQuestionConfig || null,
+          
+          // 矩阵题配置
+          matrixQuestionConfig: q.matrixQuestionConfig || null
         }
+        
+        console.log('映射后的问题数据:', mappedQuestion)
+        return mappedQuestion
       })
+
+      console.log('处理后的问题列表:', questions.value)
 
       // 加载草稿数据
       await loadDraft()
@@ -550,10 +649,16 @@ const loadQuestionnaire = async () => {
     }
   } catch (error) {
     console.error('加载问卷失败:', error)
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     error.value = true
     errorMessage.value = error.message || '无法加载问卷数据'
   } finally {
     loading.value = false
+    console.log('加载完成，loading状态:', loading.value, 'error状态:', error.value)
   }
 }
 
@@ -564,14 +669,14 @@ const saveDraft = async () => {
   try {
     // 收集所有答案，根据数据库表结构
     const answers = questions.value.map(question => ({
-      questionId: question.id,
+      questionId: parseInt(question.id), // 确保转换为整数
       answer: question.answer,
-      questionType: question.questionType
+      questionType: parseInt(question.questionType) // 确保转换为整数
     }))
 
     // 根据数据库表结构，保存到questionnaire_draft表
     await questionnaireApi.saveDraft({
-      questionnaireId: route.params.id,
+      questionnaireId: parseInt(route.params.id), // 确保转换为整数
       answers,
       timestamp: Date.now()
     })
@@ -624,86 +729,54 @@ const submitQuestionnaire = async () => {
 
     // 收集所有答案，根据数据库表结构
     const answers = questions.value.map(question => ({
-      questionId: question.id,
+      questionId: parseInt(question.id), // 确保转换为整数
       answer: question.answer,
-      questionType: question.questionType
+      questionType: parseInt(question.questionType) // 确保转换为整数
     }))
 
-    // 构建提交数据，根据数据库表结构
-    const submissionData = {
-      questionnaireId: questionnaireId,
-      answers: answers,
-      submitTime: new Date().toISOString(),
-      duration: Math.floor((Date.now() - startTimeStamp.value) / 1000), // 转换为秒
-      // 添加用户信息（如果有的话）
-      userId: getCurrentUserId(),
-      submitterName: getCurrentUserInfo()?.username || null,
-      submitterEmail: getCurrentUserInfo()?.email || null,
-      submitterPhone: getCurrentUserInfo()?.phone || null,
-      ipAddress: await getClientIP(),
-      userAgent: navigator.userAgent,
-      startTime: new Date(startTimeStamp.value).toISOString(),
-      isComplete: true,
-      status: 1
-    }
+         // 构建提交数据，根据数据库表结构
+     const submissionData = {
+       questionnaireId: questionnaireId,
+       answers: answers,
+       submitTime: formatDateTime(new Date()), // 转换为后端期望的日期格式
+       duration: Math.floor((Date.now() - startTimeStamp.value) / 1000), // 转换为秒
+       // 添加用户信息（如果有的话）
+       userId: getCurrentUserId(),
+       submitterName: getCurrentUserInfo()?.username || null,
+       submitterEmail: getCurrentUserInfo()?.email || null,
+       submitterPhone: getCurrentUserInfo()?.phone || null,
+       ipAddress: await getClientIP(),
+       userAgent: navigator.userAgent,
+       startTime: formatDateTime(new Date(startTimeStamp.value)), // 转换为后端期望的日期格式
+       isComplete: true,
+       status: 1
+     }
 
-    // 根据数据库表结构，保存到questionnaire_submission和question_answer表
-    // 首先创建提交记录
-    const submissionResponse = await questionnaireApi.createSubmission({
-      questionnaireId: questionnaireId,
-      userId: getCurrentUserId(),
-      submitterName: getCurrentUserInfo()?.username || null,
-      submitterEmail: getCurrentUserInfo()?.email || null,
-      submitterPhone: getCurrentUserInfo()?.phone || null,
-      ipAddress: await getClientIP(),
-      userAgent: navigator.userAgent,
-      startTime: new Date(startTimeStamp.value).toISOString(),
-      submitTime: submissionData.submitTime,
-      durationSeconds: submissionData.duration,
-      status: 1,
-      isComplete: true
-    })
+         // 使用后端的/submission/submit接口一次性提交所有数据
+     const submissionResponse = await questionnaireUtils.createSubmission({
+       questionnaireId: parseInt(questionnaireId), // 确保转换为整数
+       userId: getCurrentUserId() ? parseInt(getCurrentUserId()) : null, // 确保转换为整数
+       submitterName: getCurrentUserInfo()?.username || null,
+       submitterEmail: getCurrentUserInfo()?.email || null,
+       submitterPhone: getCurrentUserInfo()?.phone || null,
+       ipAddress: await getClientIP(),
+       userAgent: navigator.userAgent,
+       startTime: formatDateTime(new Date(startTimeStamp.value)), // 转换为后端期望的日期格式
+       durationSeconds: parseInt(submissionData.duration), // 确保转换为整数
+       answers: answers // 直接传递答案数组，后端会处理
+     })
 
-    if (submissionResponse.code !== 200) {
-      throw new Error('创建提交记录失败: ' + submissionResponse.message)
-    }
-
-    const submissionId = submissionResponse.data.id
-
-    // 然后保存所有答案
-    const answerPromises = answers.map(async (answer) => {
-      const answerData = {
-        submissionId: submissionId,
-        questionId: answer.questionId,
-        questionType: answer.questionType,
-        answerJson: JSON.stringify(answer.answer)
+           if (submissionResponse.code !== 200) {
+        throw new Error('问卷提交失败: ' + submissionResponse.message)
       }
 
-      return await questionnaireApi.createQuestionAnswer(answerData)
-    })
-
-    await Promise.all(answerPromises)
-
-    const response = { code: 200, message: '提交成功' }
-
-    if (response.code === 200) {
+      // 提交成功，显示成功提示
       message.success('问卷提交成功！')
       
-      // 跳转到成功页面，传递问卷信息
-      router.push({
-        path: '/questionnaire/success',
-        query: {
-          id: questionnaireId,
-          title: questionnaireTitle.value,
-          description: questionnaireDescription.value,
-          action: 'submit',
-          submitTime: submissionData.submitTime,
-          duration: submissionData.duration
-        }
-      })
-    } else {
-      throw new Error(response.message || '提交失败')
-    }
+      // 延迟1秒后返回首页，让用户看到成功提示
+      setTimeout(() => {
+        router.push('/')
+      }, 1000)
   } catch (error) {
     console.error('问卷提交失败:', error)
     message.error('问卷提交失败: ' + (error.message || '未知错误'))
@@ -720,7 +793,7 @@ const retryLoad = () => {
 // 加载草稿
 const loadDraft = async () => {
   try {
-    const questionnaireId = route.params.id
+    const questionnaireId = parseInt(route.params.id) // 确保转换为整数
     if (!questionnaireId) return
 
     // 根据数据库表结构，从questionnaire_draft表获取草稿数据
@@ -782,40 +855,68 @@ const handleCancel = () => {
   confirmModalVisible.value = false
 }
 
-// 矩阵题相关方法
+// 矩阵题选择逻辑
 const isMatrixOptionSelected = (rowId, colId) => {
   if (!currentQuestion.value || currentQuestion.value.questionType !== 5) return false
-
+  
   const answerKey = `${currentQuestion.value.id}_${rowId}_${colId}`
-  return currentQuestion.value.answer?.[answerKey] === true
+  return currentQuestion.value.answer && currentQuestion.value.answer[answerKey] === true
 }
 
 const selectMatrixOption = (rowId, colId) => {
   if (!currentQuestion.value || currentQuestion.value.questionType !== 5) return
-
-  // 初始化答案对象（如果不存在）
-  if (!currentQuestion.value.answer) {
+  
+  // 初始化答案对象
+  if (!currentQuestion.value.answer || typeof currentQuestion.value.answer !== 'object') {
     currentQuestion.value.answer = {}
   }
-
+  
   const answerKey = `${currentQuestion.value.id}_${rowId}_${colId}`
-
-  // 处理单选逻辑 - 每行只能选择一个选项
-  // 先清除当前行的所有选中状态
-  Object.keys(currentQuestion.value.answer).forEach(key => {
-    if (key.startsWith(`${currentQuestion.value.id}_${rowId}_`)) {
+  
+  // 如果是单选矩阵，先清除同一行的其他选择
+  if (currentQuestion.value.matrixQuestionConfig?.subQuestionType === 1) {
+    currentQuestion.value.matrixQuestionConfig.columns.forEach(col => {
+      const key = `${currentQuestion.value.id}_${rowId}_${col.id}`
       currentQuestion.value.answer[key] = false
-    }
-  })
+    })
+  }
+  
+  // 切换当前选择状态
+  currentQuestion.value.answer[answerKey] = !currentQuestion.value.answer[answerKey]
+}
 
-  // 然后选中当前选项
-  currentQuestion.value.answer[answerKey] = true
-
-  console.log('矩阵题答案已更新:', currentQuestion.value.answer)
+// 获取问题类型名称
+const getQuestionTypeName = (type) => {
+  switch (type) {
+    case 1:
+      return '单选题'
+    case 2:
+      return '多选题'
+    case 3:
+      return '文本题'
+    case 4:
+      return '评分题'
+    case 5:
+      return '矩阵题'
+    default:
+      return '未知类型'
+  }
 }
 
 // 生命周期
 onMounted(() => {
+  console.log('QuestionnaireFill 组件已挂载')
+  console.log('当前路由参数:', route.params)
+  console.log('当前路由查询:', route.query)
+  
+  // 检查用户信息
+  const userInfo = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO)
+  console.log('用户信息:', userInfo)
+  
+  // 检查token
+  const token = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_TOKEN)
+  console.log('用户token:', token)
+  
   loadQuestionnaire()
 })
 

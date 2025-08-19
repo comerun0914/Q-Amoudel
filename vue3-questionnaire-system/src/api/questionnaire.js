@@ -19,11 +19,12 @@ export const questionnaireAPI = {
 
   /**
    * 更新问卷
+   * @param {number} id 问卷ID
    * @param {Object} data 问卷数据
    * @returns {Promise} 返回更新结果
    */
-  updateQuestionnaire(data) {
-    const endpoint = CONFIG.API_ENDPOINTS.QUESTIONNAIRE_UPDATE;
+  updateQuestionnaire(id, data) {
+    const endpoint = CONFIG.API_ENDPOINTS.QUESTIONNAIRE_UPDATE.replace('{id}', id);
     return request.put(endpoint, data);
   },
 
@@ -95,8 +96,8 @@ export const questionnaireAPI = {
    * @returns {Promise} 返回问卷详情
    */
   getQuestionnaireDetail(id) {
-    const endpoint = CONFIG.API_ENDPOINTS.QUESTIONNAIRE_DETAIL;
-    return request.get(endpoint, { params: { id } });
+    const endpoint = CONFIG.API_ENDPOINTS.QUESTIONNAIRE_DETAIL.replace('{id}', id);
+    return request.get(endpoint);
   },
 
   /**

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷问题数据结构测试</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #1890ff;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 4px;
+        }
+        .error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        .loading {
+            color: #1890ff;
+            font-style: italic;
+        }
+        .data-display {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .question-item {
+            border: 1px solid #e8e8e8;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+            background: white;
+        }
+        .question-header {
+            font-weight: bold;
+            color: #1890ff;
+            margin-bottom: 10px;
+        }
+        .question-content {
+            margin: 5px 0;
+        }
+        .options-list {
+            margin-left: 20px;
+            color: #666;
+        }
+        .config-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <h1>问卷问题数据结构测试</h1>
+            <p>此页面用于测试问卷问题API返回的数据结构，帮助诊断前端显示问题</p>
+            
+            <div class="test-section">
+                <h3>1. 获取问卷详情</h3>
+                <div class="form-group">
+                    <label>问卷ID:</label>
+                    <input type="text" v-model="questionnaireId" placeholder="输入问卷ID">
+                    <button @click="getQuestionnaireDetail">获取问卷详情</button>
+                </div>
+                <div v-if="questionnaireDetailLoading" class="loading">正在获取问卷详情...</div>
+                <div v-if="questionnaireDetailResult" class="result">
+                    <h4>问卷详情:</h4>
+                    <div class="data-display">{{ JSON.stringify(questionnaireDetailResult, null, 2) }}</div>
+                </div>
+                <div v-if="questionnaireDetailError" class="result error">
+                    <h4>错误信息:</h4>
+                    <div>{{ questionnaireDetailError }}</div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>2. 获取问卷问题列表</h3>
+                <div class="form-group">
+                    <label>问卷ID:</label>
+                    <input type="text" v-model="questionnaireId" placeholder="输入问卷ID">
+                    <button @click="getQuestionnaireQuestions">获取问题列表</button>
+                </div>
+                <div v-if="questionsLoading" class="loading">正在获取问题列表...</div>
+                <div v-if="questionsResult" class="result">
+                    <h4>问题列表 (共{{ questionsResult.length }}题):</h4>
+                    <div v-for="(question, index) in questionsResult" :key="question.id" class="question-item">
+                        <div class="question-header">
+                            第{{ index + 1 }}题 (ID: {{ question.id }}, 类型: {{ getQuestionTypeName(question.questionType) }})
+                        </div>
+                        <div class="question-content">
+                            <strong>问题内容:</strong> {{ question.content }}
+                        </div>
+                        <div class="question-content">
+                            <strong>是否必填:</strong> {{ question.isRequired === 1 ? '是' : '否' }}
+                        </div>
+                        <div class="question-content">
+                            <strong>排序号:</strong> {{ question.sortNum }}
+                        </div>
+                        
+                        <!-- 选项信息 -->
+                        <div v-if="question.options && question.options.length > 0" class="options-list">
+                            <strong>选项列表:</strong>
+                            <div v-for="option in question.options" :key="option.id">
+                                {{ option.sortNum }}. {{ option.optionContent }} (ID: {{ option.id }})
+                            </div>
+                        </div>
+                        
+                        <!-- 文本题配置 -->
+                        <div v-if="question.textQuestionConfig" class="config-info">
+                            <strong>文本题配置:</strong>
+                            <div>提示文本: {{ question.textQuestionConfig.hintText || '无' }}</div>
+                            <div>最大长度: {{ question.textQuestionConfig.maxLength || '无限制' }}</div>
+                            <div>输入类型: {{ question.textQuestionConfig.inputType === 1 ? '单行' : '多行' }}</div>
+                        </div>
+                        
+                        <!-- 评分题配置 -->
+                        <div v-if="question.ratingQuestionConfig" class="config-info">
+                            <strong>评分题配置:</strong>
+                            <div>评分范围: {{ question.ratingQuestionConfig.minScore }}-{{ question.ratingQuestionConfig.maxScore }}分</div>
+                            <div>最低分标签: {{ question.ratingQuestionConfig.minLabel }}</div>
+                            <div>最高分标签: {{ question.ratingQuestionConfig.maxLabel }}</div>
+                            <div>评分步长: {{ question.ratingQuestionConfig.step }}</div>
+                        </div>
+                        
+                        <!-- 矩阵题配置 -->
+                        <div v-if="question.matrixQuestionConfig" class="config-info">
+                            <strong>矩阵题配置:</strong>
+                            <div v-if="question.matrixQuestionConfig.rows && question.matrixQuestionConfig.rows.length > 0">
+                                <strong>矩阵行:</strong>
+                                <div v-for="row in question.matrixQuestionConfig.rows" :key="row.id">
+                                    {{ row.sortNum }}. {{ row.rowContent }} (ID: {{ row.id }})
+                                </div>
+                            </div>
+                            <div v-if="question.matrixQuestionConfig.columns && question.matrixQuestionConfig.columns.length > 0">
+                                <strong>矩阵列:</strong>
+                                <div v-for="col in question.matrixQuestionConfig.columns" :key="col.id">
+                                    {{ col.sortNum }}. {{ col.columnContent }} (ID: {{ col.id }})
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="questionsError" class="result error">
+                    <h4>错误信息:</h4>
+                    <div>{{ questionsError }}</div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>3. 数据结构分析</h3>
+                <div v-if="questionsResult && questionsResult.length > 0">
+                    <h4>数据结构总结:</h4>
+                    <div class="data-display">
+问卷数据结构分析:
+================
+
+总问题数: {{ questionsResult.length }}
+
+问题类型分布:
+{{ getQuestionTypeDistribution() }}
+
+字段映射检查:
+{{ getFieldMappingAnalysis() }}
+
+前端显示建议:
+{{ getDisplaySuggestions() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const questionnaireId = ref('77106636');
+                const questionnaireDetailResult = ref(null);
+                const questionnaireDetailError = ref(null);
+                const questionnaireDetailLoading = ref(false);
+                const questionsResult = ref(null);
+                const questionsError = ref(null);
+                const questionsLoading = ref(false);
+
+                // 获取问卷详情
+                const getQuestionnaireDetail = async () => {
+                    if (!questionnaireId.value) {
+                        alert('请输入问卷ID');
+                        return;
+                    }
+
+                    questionnaireDetailLoading.value = true;
+                    questionnaireDetailError.value = null;
+                    questionnaireDetailResult.value = null;
+
+                    try {
+                        const response = await axios.get(`/api/questionCreate/detail/${questionnaireId.value}`);
+                        console.log('问卷详情响应:', response);
+                        questionnaireDetailResult.value = response.data;
+                    } catch (error) {
+                        console.error('获取问卷详情失败:', error);
+                        questionnaireDetailError.value = error.response?.data?.message || error.message || '未知错误';
+                    } finally {
+                        questionnaireDetailLoading.value = false;
+                    }
+                };
+
+                // 获取问卷问题列表
+                const getQuestionnaireQuestions = async () => {
+                    if (!questionnaireId.value) {
+                        alert('请输入问卷ID');
+                        return;
+                    }
+
+                    questionsLoading.value = true;
+                    questionsError.value = null;
+                    questionsResult.value = null;
+
+                    try {
+                        const response = await axios.get('/api/questionCreate/questions', {
+                            params: { questionnaireId: questionnaireId.value }
+                        });
+                        console.log('问题列表响应:', response);
+                        questionsResult.value = response.data.data || response.data;
+                    } catch (error) {
+                        console.error('获取问题列表失败:', error);
+                        questionsError.value = error.response?.data?.message || error.message || '未知错误';
+                    } finally {
+                        questionsLoading.value = false;
+                    }
+                };
+
+                // 获取问题类型名称
+                const getQuestionTypeName = (type) => {
+                    const typeMap = {
+                        1: '单选题',
+                        2: '多选题', 
+                        3: '问答题',
+                        4: '评分题',
+                        5: '矩阵题'
+                    };
+                    return typeMap[type] || `未知类型(${type})`;
+                };
+
+                // 获取问题类型分布
+                const getQuestionTypeDistribution = () => {
+                    if (!questionsResult.value) return '';
+                    
+                    const distribution = {};
+                    questionsResult.value.forEach(q => {
+                        const typeName = getQuestionTypeName(q.questionType);
+                        distribution[typeName] = (distribution[typeName] || 0) + 1;
+                    });
+                    
+                    return Object.entries(distribution)
+                        .map(([type, count]) => `${type}: ${count}题`)
+                        .join('\n');
+                };
+
+                // 字段映射分析
+                const getFieldMappingAnalysis = () => {
+                    if (!questionsResult.value || questionsResult.value.length === 0) return '';
+                    
+                    const firstQuestion = questionsResult.value[0];
+                    const analysis = [];
+                    
+                    // 检查关键字段
+                    analysis.push('关键字段检查:');
+                    analysis.push(`- id: ${firstQuestion.id ? '✓' : '✗'} (${firstQuestion.id})`);
+                    analysis.push(`- content: ${firstQuestion.content ? '✓' : '✗'} (${firstQuestion.content})`);
+                    analysis.push(`- questionType: ${firstQuestion.questionType ? '✓' : '✗'} (${firstQuestion.questionType})`);
+                    analysis.push(`- isRequired: ${firstQuestion.isRequired !== undefined ? '✓' : '✗'} (${firstQuestion.isRequired})`);
+                    analysis.push(`- sortNum: ${firstQuestion.sortNum !== undefined ? '✓' : '✗'} (${firstQuestion.sortNum})`);
+                    
+                    // 检查选项字段
+                    if (firstQuestion.options) {
+                        analysis.push(`- options: ✓ (${firstQuestion.options.length}个选项)`);
+                        if (firstQuestion.options.length > 0) {
+                            const firstOption = firstQuestion.options[0];
+                            analysis.push(`  - optionContent: ${firstOption.optionContent ? '✓' : '✗'}`);
+                            analysis.push(`  - sortNum: ${firstOption.sortNum !== undefined ? '✓' : '✗'}`);
+                        }
+                    } else {
+                        analysis.push('- options: ✗ (无选项数据)');
+                    }
+                    
+                    return analysis.join('\n');
+                };
+
+                // 显示建议
+                const getDisplaySuggestions = () => {
+                    if (!questionsResult.value || questionsResult.value.length === 0) return '';
+                    
+                    const suggestions = [];
+                    suggestions.push('前端显示建议:');
+                    
+                    // 检查问题内容显示
+                    const hasContent = questionsResult.value.every(q => q.content);
+                    suggestions.push(`- 问题内容显示: ${hasContent ? '✓ 正常' : '✗ 需要检查content字段'}`);
+                    
+                    // 检查选项显示
+                    const choiceQuestions = questionsResult.value.filter(q => q.questionType === 1 || q.questionType === 2);
+                    const hasOptions = choiceQuestions.every(q => q.options && q.options.length > 0);
+                    suggestions.push(`- 选项显示: ${hasOptions ? '✓ 正常' : '✗ 需要检查options字段'}`);
+                    
+                    // 检查配置信息
+                    const hasConfigs = questionsResult.value.every(q => {
+                        if (q.questionType === 3) return q.textQuestionConfig;
+                        if (q.questionType === 4) return q.ratingQuestionConfig;
+                        if (q.questionType === 5) return q.matrixQuestionConfig;
+                        return true;
+                    });
+                    suggestions.push(`- 配置信息: ${hasConfigs ? '✓ 正常' : '✗ 需要检查配置字段'}`);
+                    
+                    return suggestions.join('\n');
+                };
+
+                return {
+                    questionnaireId,
+                    questionnaireDetailResult,
+                    questionnaireDetailError,
+                    questionnaireDetailLoading,
+                    questionsResult,
+                    questionsError,
+                    questionsLoading,
+                    getQuestionnaireDetail,
+                    getQuestionnaireQuestions,
+                    getQuestionTypeName,
+                    getQuestionTypeDistribution,
+                    getFieldMappingAnalysis,
+                    getDisplaySuggestions
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

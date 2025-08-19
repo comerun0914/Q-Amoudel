@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷填写调试页面 - 增强版</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .debug-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .debug-content {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: red;
+            background: #ffe6e6;
+            border: 1px solid #ff9999;
+        }
+        .success {
+            color: green;
+            background: #e6ffe6;
+            border: 1px solid #99ff99;
+        }
+        .warning {
+            color: orange;
+            background: #fff3e6;
+            border: 1px solid #ffcc80;
+        }
+        .button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #40a9ff;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .data-analysis {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .data-item {
+            margin: 5px 0;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷填写调试页面 - 增强版</h1>
+        <p>用于调试问卷填写页面的问题，特别是题目信息显示问题</p>
+        
+        <div class="debug-section">
+            <div class="debug-title">测试问卷ID: 77106636</div>
+            <button class="button" onclick="testQuestionnaireDetail()">测试获取问卷详情</button>
+            <button class="button" onclick="testQuestionnaireQuestions()">测试获取问题列表</button>
+            <button class="button" onclick="testFullFlow()">测试完整流程</button>
+            <button class="button" onclick="analyzeDataStructure()">分析数据结构</button>
+            <button class="button" onclick="clearLogs()">清空日志</button>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">调试日志</div>
+            <div id="debugLogs" class="debug-content"></div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">API响应数据</div>
+            <div id="apiResponse" class="debug-content"></div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">数据结构分析</div>
+            <div id="dataAnalysis" class="debug-content"></div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">错误信息</div>
+            <div id="errorInfo" class="debug-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const DEBUG_LOGS = [];
+        const API_BASE = 'http://localhost:7070/api';
+        let lastDetailData = null;
+        let lastQuestionsData = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            DEBUG_LOGS.push(logEntry);
+            
+            const logsDiv = document.getElementById('debugLogs');
+            logsDiv.textContent = DEBUG_LOGS.join('\n');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        function showResponse(title, data) {
+            const responseDiv = document.getElementById('apiResponse');
+            responseDiv.innerHTML = `<strong>${title}:</strong>\n${JSON.stringify(data, null, 2)}`;
+        }
+        
+        function showError(error) {
+            const errorDiv = document.getElementById('errorInfo');
+            errorDiv.innerHTML = `<strong>错误:</strong>\n${error.message || error}\n\n<strong>堆栈:</strong>\n${error.stack || '无堆栈信息'}`;
+            errorDiv.className = 'debug-content error';
+        }
+        
+        function clearLogs() {
+            DEBUG_LOGS.length = 0;
+            document.getElementById('debugLogs').textContent = '';
+            document.getElementById('apiResponse').textContent = '';
+            document.getElementById('errorInfo').textContent = '';
+            document.getElementById('errorInfo').className = 'debug-content';
+            document.getElementById('dataAnalysis').textContent = '';
+        }
+        
+        async function testQuestionnaireDetail() {
+            try {
+                log('开始测试获取问卷详情...');
+                const response = await fetch(`${API_BASE}/questionCreate/detail/77106636`);
+                log(`API响应状态: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                lastDetailData = data;
+                log('问卷详情获取成功');
+                showResponse('问卷详情', data);
+                
+                // 分析问卷数据结构
+                analyzeQuestionnaireStructure(data);
+                
+            } catch (error) {
+                log(`获取问卷详情失败: ${error.message}`, 'error');
+                showError(error);
+            }
+        }
+        
+        async function testQuestionnaireQuestions() {
+            try {
+                log('开始测试获取问题列表...');
+                const response = await fetch(`${API_BASE}/questionCreate/questions?questionnaireId=77106636`);
+                log(`API响应状态: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                lastQuestionsData = data;
+                log('问题列表获取成功');
+                showResponse('问题列表', data);
+                
+                // 分析问题数据结构
+                analyzeQuestionsStructure(data);
+                
+            } catch (error) {
+                log(`获取问题列表失败: ${error.message}`, 'error');
+                showError(error);
+            }
+        }
+        
+        async function testFullFlow() {
+            try {
+                log('开始测试完整流程...');
+                
+                // 1. 获取问卷详情
+                log('步骤1: 获取问卷详情');
+                const detailResponse = await fetch(`${API_BASE}/questionCreate/detail/77106636`);
+                if (!detailResponse.ok) {
+                    throw new Error(`获取问卷详情失败: HTTP ${detailResponse.status}`);
+                }
+                const detailData = await detailResponse.json();
+                lastDetailData = detailData;
+                log('问卷详情获取成功');
+                
+                // 2. 获取问题列表
+                log('步骤2: 获取问题列表');
+                const questionsResponse = await fetch(`${API_BASE}/questionCreate/questions?questionnaireId=77106636`);
+                if (!questionsResponse.ok) {
+                    throw new Error(`获取问题列表失败: HTTP ${questionsResponse.status}`);
+                }
+                const questionsData = await questionsResponse.json();
+                lastQuestionsData = questionsData;
+                log('问题列表获取成功');
+                
+                // 3. 模拟前端数据处理
+                log('步骤3: 模拟前端数据处理');
+                const processedData = {
+                    questionnaire: detailData.data,
+                    questions: questionsData.data
+                };
+                
+                log('数据处理完成');
+                showResponse('完整流程数据', processedData);
+                
+                // 4. 分析数据结构
+                log('步骤4: 分析数据结构');
+                analyzeDataStructure();
+                
+            } catch (error) {
+                log(`完整流程测试失败: ${error.message}`, 'error');
+                showError(error);
+            }
+        }
+        
+        function analyzeQuestionnaireStructure(data) {
+            const analysisDiv = document.getElementById('dataAnalysis');
+            let analysis = '=== 问卷详情数据结构分析 ===\n\n';
+            
+            if (data.code === 200 && data.data) {
+                const questionnaire = data.data;
+                analysis += `✅ 问卷基本信息:\n`;
+                analysis += `  - ID: ${questionnaire.id || '未找到'}\n`;
+                analysis += `  - 标题: ${questionnaire.title || '未找到'}\n`;
+                analysis += `  - 描述: ${questionnaire.description || '未找到'}\n`;
+                analysis += `  - 状态: ${questionnaire.status || '未找到'}\n`;
+                analysis += `  - 开始时间: ${questionnaire.startDate || '未找到'}\n`;
+                analysis += `  - 预计用时: ${questionnaire.estimatedTime || '未找到'}\n\n`;
+                
+                analysis += `📊 数据结构检查:\n`;
+                analysis += `  - 是否有title字段: ${questionnaire.hasOwnProperty('title')}\n`;
+                analysis += `  - 是否有content字段: ${questionnaire.hasOwnProperty('content')}\n`;
+                analysis += `  - 是否有description字段: ${questionnaire.hasOwnProperty('description')}\n`;
+                analysis += `  - 是否有status字段: ${questionnaire.hasOwnProperty('status')}\n`;
+                
+                if (questionnaire.status !== 1) {
+                    analysis += `\n⚠️  警告: 问卷状态不是1(已发布)，当前状态: ${questionnaire.status}\n`;
+                }
+            } else {
+                analysis += `❌ 问卷数据格式异常:\n`;
+                analysis += `  - 响应码: ${data.code}\n`;
+                analysis += `  - 响应消息: ${data.message}\n`;
+                analysis += `  - 是否有data字段: ${data.hasOwnProperty('data')}\n`;
+            }
+            
+            analysisDiv.textContent = analysis;
+        }
+        
+        function analyzeQuestionsStructure(data) {
+            const analysisDiv = document.getElementById('dataAnalysis');
+            let analysis = analysisDiv.textContent + '\n\n=== 问题列表数据结构分析 ===\n\n';
+            
+            if (data.code === 200 && data.data) {
+                const questions = data.data;
+                analysis += `✅ 问题列表基本信息:\n`;
+                analysis += `  - 问题总数: ${questions.length}\n`;
+                analysis += `  - 数据类型: ${Array.isArray(questions) ? '数组' : typeof questions}\n\n`;
+                
+                if (questions.length > 0) {
+                    const firstQuestion = questions[0];
+                    analysis += `📋 第一个问题的结构:\n`;
+                    analysis += `  - 问题ID: ${firstQuestion.id || '未找到'}\n`;
+                    analysis += `  - 问题内容: ${firstQuestion.content || '未找到'}\n`;
+                    analysis += `  - 问题类型: ${firstQuestion.questionType || '未找到'}\n`;
+                    analysis += `  - 是否必填: ${firstQuestion.isRequired || '未找到'}\n`;
+                    analysis += `  - 排序号: ${firstQuestion.sortNum || '未找到'}\n`;
+                    analysis += `  - 问卷ID: ${firstQuestion.questionnaireId || '未找到'}\n\n`;
+                    
+                    analysis += `🔍 字段存在性检查:\n`;
+                    analysis += `  - 是否有content字段: ${firstQuestion.hasOwnProperty('content')}\n`;
+                    analysis += `  - 是否有title字段: ${firstQuestion.hasOwnProperty('title')}\n`;
+                    analysis += `  - 是否有questionType字段: ${firstQuestion.hasOwnProperty('questionType')}\n`;
+                    analysis += `  - 是否有isRequired字段: ${firstQuestion.hasOwnProperty('isRequired')}\n`;
+                    analysis += `  - 是否有options字段: ${firstQuestion.hasOwnProperty('options')}\n`;
+                    
+                    if (firstQuestion.options && firstQuestion.options.length > 0) {
+                        analysis += `\n📝 选项信息:\n`;
+                        analysis += `  - 选项数量: ${firstQuestion.options.length}\n`;
+                        const firstOption = firstQuestion.options[0];
+                        analysis += `  - 第一个选项ID: ${firstOption.id || '未找到'}\n`;
+                        analysis += `  - 第一个选项内容: ${firstOption.optionContent || firstOption.content || '未找到'}\n`;
+                    } else {
+                        analysis += `\n⚠️  警告: 第一个问题没有选项数据\n`;
+                    }
+                } else {
+                    analysis += `⚠️  警告: 问题列表为空\n`;
+                }
+            } else {
+                analysis += `❌ 问题数据格式异常:\n`;
+                analysis += `  - 响应码: ${data.code}\n`;
+                analysis += `  - 响应消息: ${data.message}\n`;
+                analysis += `  - 是否有data字段: ${data.hasOwnProperty('data')}\n`;
+            }
+            
+            analysisDiv.textContent = analysis;
+        }
+        
+        function analyzeDataStructure() {
+            if (!lastDetailData || !lastQuestionsData) {
+                log('请先获取问卷详情和问题列表数据', 'warning');
+                return;
+            }
+            
+            const analysisDiv = document.getElementById('dataAnalysis');
+            let analysis = analysisDiv.textContent + '\n\n=== 综合数据分析 ===\n\n';
+            
+            // 检查数据完整性
+            const questionnaire = lastDetailData.data;
+            const questions = lastQuestionsData.data;
+            
+            analysis += `🔍 数据完整性检查:\n`;
+            analysis += `  - 问卷数据: ${questionnaire ? '✅ 存在' : '❌ 缺失'}\n`;
+            analysis += `  - 问题数据: ${questions ? '✅ 存在' : '❌ 缺失'}\n`;
+            analysis += `  - 问题数量: ${questions ? questions.length : 0}\n\n`;
+            
+            // 检查前端期望的字段
+            if (questionnaire) {
+                analysis += `📋 前端期望的问卷字段:\n`;
+                analysis += `  - title: ${questionnaire.title ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - description: ${questionnaire.description ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - status: ${questionnaire.status ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - startDate: ${questionnaire.startDate ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - estimatedTime: ${questionnaire.estimatedTime ? '✅ 存在' : '❌ 缺失'}\n\n`;
+            }
+            
+            if (questions && questions.length > 0) {
+                analysis += `📋 前端期望的问题字段:\n`;
+                const firstQuestion = questions[0];
+                analysis += `  - content: ${firstQuestion.content ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - questionType: ${firstQuestion.questionType ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - isRequired: ${firstQuestion.hasOwnProperty('isRequired') ? '✅ 存在' : '❌ 缺失'}\n`;
+                analysis += `  - options: ${firstQuestion.options ? '✅ 存在' : '❌ 缺失'}\n`;
+                
+                if (firstQuestion.options && firstQuestion.options.length > 0) {
+                    const firstOption = firstQuestion.options[0];
+                    analysis += `  - optionContent: ${firstOption.optionContent ? '✅ 存在' : '❌ 缺失'}\n`;
+                    analysis += `  - content: ${firstOption.content ? '✅ 存在' : '❌ 缺失'}\n`;
+                }
+            }
+            
+            // 提供修复建议
+            analysis += `\n💡 修复建议:\n`;
+            if (questionnaire && !questionnaire.title) {
+                analysis += `  - 问卷缺少title字段，前端无法显示标题\n`;
+            }
+            if (questions && questions.length > 0 && !questions[0].content) {
+                analysis += `  - 问题缺少content字段，前端无法显示问题内容\n`;
+            }
+            if (questions && questions.length > 0 && questions[0].options && questions[0].options.length > 0) {
+                const firstOption = questions[0].options[0];
+                if (!firstOption.optionContent && !firstOption.content) {
+                    analysis += `  - 选项缺少内容字段，前端无法显示选项\n`;
+                }
+            }
+            
+            analysisDiv.textContent = analysis;
+        }
+        
+        // 页面加载完成后的初始化
+        window.onload = function() {
+            log('调试页面加载完成');
+            log('请点击上方按钮开始测试');
+            log('建议按顺序执行：1.获取问卷详情 2.获取问题列表 3.分析数据结构');
+        };
+    </script>
+</body>
+</html>

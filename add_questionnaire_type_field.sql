@@ -16,3 +16,4 @@ DESCRIBE `question_create`;
 
 -- 查看现有数据
 SELECT id, title, questionnaire_type FROM `question_create` LIMIT 10;
+

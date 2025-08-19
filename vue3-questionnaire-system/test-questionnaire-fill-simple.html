@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷填写简单测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #40a9ff;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷填写简单测试</h1>
+        
+        <div class="test-section">
+            <h3>测试1: 直接访问问卷填写页面</h3>
+            <p>点击下面的按钮直接跳转到问卷填写页面</p>
+            <button class="button" onclick="goToQuestionnaireFill()">跳转到问卷填写页面</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试2: 检查路由参数</h3>
+            <p>当前URL: <span id="currentUrl"></span></p>
+            <p>问卷ID: <span id="questionnaireId"></span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试3: 模拟API调用</h3>
+            <button class="button" onclick="simulateApiCall()">模拟API调用</button>
+            <div id="apiResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>测试4: 检查本地存储</h3>
+            <button class="button" onclick="checkLocalStorage()">检查本地存储</button>
+            <div id="storageResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前URL信息
+        function updateUrlInfo() {
+            document.getElementById('currentUrl').textContent = window.location.href;
+            const urlParams = new URLSearchParams(window.location.search);
+            const questionnaireId = urlParams.get('id') || '未找到';
+            document.getElementById('questionnaireId').textContent = questionnaireId;
+        }
+        
+        // 跳转到问卷填写页面
+        function goToQuestionnaireFill() {
+            const url = 'http://localhost:3000/questionnaire/fill/77106636';
+            window.open(url, '_blank');
+        }
+        
+        // 模拟API调用
+        async function simulateApiCall() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.textContent = '正在测试API调用...';
+            
+            try {
+                // 测试问卷详情API
+                const detailResponse = await fetch('http://localhost:7070/api/questionCreate/detail/77106636');
+                const detailData = await detailResponse.json();
+                
+                // 测试问题列表API
+                const questionsResponse = await fetch('http://localhost:7070/api/questionCreate/questions?questionnaireId=77106636');
+                const questionsData = await questionsResponse.json();
+                
+                const result = {
+                    detail: {
+                        status: detailResponse.status,
+                        data: detailData
+                    },
+                    questions: {
+                        status: questionsResponse.status,
+                        data: questionsData
+                    }
+                };
+                
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+                
+            } catch (error) {
+                resultDiv.textContent = `API调用失败: ${error.message}`;
+            }
+        }
+        
+        // 检查本地存储
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('storageResult');
+            const storage = {
+                userToken: localStorage.getItem('user_token'),
+                userInfo: localStorage.getItem('user_info'),
+                permissions: localStorage.getItem('permissions')
+            };
+            
+            resultDiv.textContent = JSON.stringify(storage, null, 2);
+        }
+        
+        // 页面加载完成后初始化
+        window.onload = function() {
+            updateUrlInfo();
+        };
+    </script>
+</body>
+</html>

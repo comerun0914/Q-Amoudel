@@ -110,14 +110,7 @@
                   >
                     {{ item.status === 1 ? '填写问卷' : '未发布' }}
                   </a-button>
-                  <!-- 测试按钮 -->
-                  <a-button 
-                    type="dashed" 
-                    @click="testClick(item.id)"
-                    style="margin-left: 8px;"
-                  >
-                    测试点击
-                  </a-button>
+
                 </template>
               </a-list-item>
             </template>
@@ -339,6 +332,7 @@ const linkLoading = ref(false)
 const codeLoading = ref(false)
 const scanLoading = ref(false)
 const isScanning = ref(false)
+const qrScanner = ref(null)
 const historyModalVisible = ref(false)
 const historySearch = ref('')
 const historyStatusFilter = ref('')
@@ -535,20 +529,132 @@ const startScan = () => {
   scanLoading.value = true
   isScanning.value = true
 
-  // 这里应该实现二维码扫描逻辑
-  setTimeout(() => {
+  try {
+    // 创建二维码扫描器
+    const html5QrCode = new Html5Qrcode("qr-reader")
+    
+    // 配置扫描选项
+    const config = {
+      fps: 10,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0
+    }
+
+    // 开始扫描
+    html5QrCode.start(
+      { facingMode: "environment" }, // 使用后置摄像头
+      config,
+      (decodedText, decodedResult) => {
+        // 扫描成功回调
+        console.log('扫描结果:', decodedText)
+        message.success('扫描成功！')
+        
+        // 停止扫描
+        stopScan()
+        
+        // 处理扫描结果 - 假设二维码内容是问卷ID或链接
+        handleQRCodeResult(decodedText)
+      },
+      (errorMessage) => {
+        // 扫描错误回调（忽略）
+        console.log('扫描中...', errorMessage)
+      }
+    ).then(() => {
+      scanLoading.value = false
+      message.success('扫描功能已启动')
+    }).catch((err) => {
+      console.error('启动扫描失败:', err)
+      message.error('启动扫描失败: ' + err.message)
+      scanLoading.value = false
+      isScanning.value = false
+    })
+
+    // 保存扫描器实例
+    qrScanner.value = html5QrCode
+
+  } catch (error) {
+    console.error('启动扫描失败:', error)
+    message.error('启动扫描失败: ' + error.message)
     scanLoading.value = false
-    message.success('扫描功能已启动')
-  }, 1000)
+    isScanning.value = false
+  }
 }
 
 const stopScan = () => {
-  isScanning.value = false
-  message.info('扫描已停止')
+  if (qrScanner.value) {
+    try {
+      qrScanner.value.stop().then(() => {
+        console.log('扫描器已停止')
+        qrScanner.value = null
+        isScanning.value = false
+        message.info('扫描已停止')
+      }).catch((err) => {
+        console.error('停止扫描器失败:', err)
+        message.error('停止扫描失败')
+      })
+    } catch (error) {
+      console.error('停止扫描失败:', error)
+      message.error('停止扫描失败')
+    }
+  } else {
+    isScanning.value = false
+    message.info('扫描已停止')
+  }
 }
 
 const switchCamera = () => {
   message.info('正在切换摄像头...')
+  
+  if (qrScanner.value) {
+    // 停止当前扫描器
+    stopScan()
+    
+    // 延迟后重新启动，使用前置摄像头
+    setTimeout(() => {
+      startScan()
+    }, 500)
+  }
+}
+
+// 处理二维码扫描结果
+const handleQRCodeResult = (result) => {
+  console.log('处理扫描结果:', result)
+  
+  try {
+    // 尝试解析结果
+    let questionnaireId = null
+    let questionnaireUrl = null
+    
+    // 检查是否是URL
+    if (result.startsWith('http://') || result.startsWith('https://')) {
+      questionnaireUrl = result
+      // 从URL中提取问卷ID
+      const urlMatch = result.match(/\/questionnaire\/(\d+)/)
+      if (urlMatch) {
+        questionnaireId = urlMatch[1]
+      }
+    } else {
+      // 假设是问卷ID
+      questionnaireId = result
+    }
+    
+    if (questionnaireId) {
+      // 跳转到问卷填写页面
+      router.push(`/questionnaire/fill/${questionnaireId}`)
+      qrModalVisible.value = false
+      message.success('正在跳转到问卷填写页面...')
+    } else if (questionnaireUrl) {
+      // 如果是完整URL，可以尝试直接访问
+      message.info('检测到问卷链接，请手动访问')
+      console.log('问卷链接:', questionnaireUrl)
+    } else {
+      message.warning('无法识别的二维码内容')
+    }
+    
+  } catch (error) {
+    console.error('处理扫描结果失败:', error)
+    message.error('处理扫描结果失败')
+  }
 }
 
 const hideMobilePermissionHint = () => {
@@ -641,60 +747,47 @@ const loadAvailableQuestionnaires = async () => {
     }
 }
 
-const testClick = (id) => {
-  console.log('测试点击按钮被点击，ID:', id)
-  message.info(`测试点击成功！问卷ID: ${id}`)
-}
 
-const goToQuestionnaire = (id) => {
-  // 最基础的调试信息
-  alert(`函数被调用了！ID: ${id}`)
-  
-  // 检查路由对象是否有效
-  if (!router) {
-    alert('❌ 路由对象无效')
-    message.error('路由系统未初始化')
-    return
-  }
-  
-  alert('✅ 路由对象有效，继续执行...')
-  
-  // 检查当前路由状态
+
+const goToQuestionnaire = async (id) => {
   try {
-    const currentRoute = router.currentRoute.value
-    alert(`当前路由路径: ${currentRoute.path}`)
-  } catch (error) {
-    alert(`获取当前路由失败: ${error.message}`)
-    return
-  }
-  
-  alert(`准备跳转到: /questionnaire/fill/${id}`)
-  
-  try {
-    alert('尝试执行 router.push...')
-    const result = router.push(`/questionnaire/fill/${id}`)
-    alert(`router.push 返回结果类型: ${typeof result}`)
+    console.log('准备跳转到问卷填写页面，ID:', id)
     
-    // 检查是否返回了 Promise
-    if (result && typeof result.then === 'function') {
-      alert('返回的是 Promise，等待结果...')
-      result.then(() => {
-        alert('✅ 路由跳转成功 (Promise resolved)')
-      }).catch((error) => {
-        alert(`❌ 路由跳转失败 (Promise rejected): ${error.message}`)
-        message.error('跳转失败，请重试')
-      })
-    } else if (result === undefined) {
-      alert('✅ 路由跳转成功 (同步，返回 undefined)')
-    } else {
-      alert(`⚠️ 路由跳转返回了意外的结果: ${result}`)
+    // 显示加载提示
+    const hideLoading = message.loading('正在跳转...', 0)
+    
+    // 检查路由对象
+    console.log('当前路由:', router.currentRoute.value.path)
+    console.log('目标路由:', `/questionnaire/fill/${id}`)
+    
+    // 先尝试使用 Vue Router 跳转
+    try {
+      await router.push(`/questionnaire/fill/${id}`)
+      console.log('Vue Router 跳转成功')
+      hideLoading()
+      message.success('跳转成功')
+      return
+    } catch (routerError) {
+      console.error('Vue Router 跳转失败:', routerError)
+      hideLoading()
     }
+    
+    // 如果 Vue Router 失败，立即使用 window.location
+    const targetUrl = `${window.location.origin}/questionnaire/fill/${id}`
+    console.log('Vue Router 失败，使用原生跳转到:', targetUrl)
+    message.info('正在使用原生方式跳转...')
+    
+    // 立即跳转，不等待
+    window.location.href = targetUrl
+    
   } catch (error) {
-    alert(`❌ 路由跳转失败 (同步错误): ${error.message}`)
+    console.error('跳转失败:', error)
     message.error('跳转失败，请重试')
+    
+    // 最后的备用方案
+    const targetUrl = `${window.location.origin}/questionnaire/fill/${id}`
+    window.location.href = targetUrl
   }
-  
-  alert('=== 路由跳转诊断完成 ===')
 }
 
 const goToUserCenter = () => {
@@ -713,8 +806,8 @@ const handleLogout = async () => {
     router.push('/login');
   } catch (error) {
     console.error('退出登录失败:', error);
-    message.error('退出登录失败');
-    // 即使退出失败，也跳转到登录页
+    // 即使退出失败，也跳转到登录页，不显示错误信息
+    message.info('正在退出登录...');
     router.push('/login');
   }
 }
@@ -761,9 +854,9 @@ const getQuestionnaireStatusText = (status) => {
 
 onUnmounted(() => {
   // 清理二维码扫描器
-  if (isScanning.value) {
-    stopScan()
-  }
+if (isScanning.value || qrScanner.value) {
+  stopScan()
+}
 })
 </script>
 

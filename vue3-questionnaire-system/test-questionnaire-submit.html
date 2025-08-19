@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷提交功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+        }
+        .log {
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷提交功能测试</h1>
+        <p>用于测试问卷提交相关的API功能</p>
+
+        <div class="test-section">
+            <h3>测试配置</h3>
+            <div class="form-group">
+                <label>问卷ID:</label>
+                <input type="text" id="questionnaireId" value="77106636" placeholder="输入问卷ID">
+            </div>
+            <div class="form-group">
+                <label>用户ID:</label>
+                <input type="text" id="userId" value="1" placeholder="输入用户ID（可选）">
+            </div>
+            <div class="form-group">
+                <label>提交者姓名:</label>
+                <input type="text" id="submitterName" value="测试用户" placeholder="输入提交者姓名">
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>API测试</h3>
+            <button onclick="testCreateSubmission()">测试创建提交记录</button>
+            <button onclick="testCreateQuestionAnswer()">测试创建问题答案</button>
+            <button onclick="testFullSubmission()">测试完整提交流程</button>
+            <button onclick="clearResults()">清空结果</button>
+        </div>
+
+        <div class="test-section">
+            <h3>测试结果</h3>
+            <div id="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>调试日志</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+                 // 配置
+         const CONFIG = {
+             BACKEND_BASE_URL: 'http://localhost:7070/api',
+             API_ENDPOINTS: {
+                 QUESTIONNAIRE_SUBMISSION_CREATE: '/submission/submit',
+                 QUESTIONNAIRE_ANSWER_CREATE: '/submission/submit' // 答案通过submit接口一起提交
+             }
+         };
+
+         // 格式化日期时间为后端期望的格式
+         // 尝试多种格式，找到后端能够解析的格式
+         function formatDateTime(date) {
+             const year = date.getFullYear();
+             const month = String(date.getMonth() + 1).padStart(2, '0');
+             const day = String(date.getDate()).padStart(2, '0');
+             const hours = String(date.getHours()).padStart(2, '0');
+             const minutes = String(date.getMinutes()).padStart(2, '0');
+             const seconds = String(date.getSeconds()).padStart(2, '0');
+             
+             // 尝试格式1: yyyy/MM/dd HH:mm:ss (Java SimpleDateFormat常用格式)
+             // return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+             
+             // 尝试格式2: dd-MM-yyyy HH:mm:ss (欧洲常用格式)
+             // return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+             
+             // 尝试格式3: MM/dd/yyyy HH:mm:ss (美国常用格式)
+             // return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
+             
+             // 尝试格式4: yyyy-MM-dd'T'HH:mm:ss (ISO 8601本地时间格式)
+             return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+             
+             // 尝试格式5: yyyy-MM-dd HH:mm:ss (MySQL datetime格式)
+             // return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+         }
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        }
+
+        // 显示结果
+        function showResult(title, content, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultElement = document.createElement('div');
+            resultElement.className = `result ${type}`;
+            resultElement.innerHTML = `<strong>${title}:</strong>\n${content}`;
+            resultsDiv.appendChild(resultElement);
+        }
+
+        // 清空结果
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // 获取表单数据
+        function getFormData() {
+            return {
+                questionnaireId: document.getElementById('questionnaireId').value,
+                userId: document.getElementById('userId').value || null,
+                submitterName: document.getElementById('submitterName').value || null
+            };
+        }
+
+        // 测试创建提交记录
+        async function testCreateSubmission() {
+            const formData = getFormData();
+            log('开始测试创建提交记录...');
+            
+            try {
+                                 const submissionData = {
+                     questionnaireId: parseInt(formData.questionnaireId),
+                     userId: formData.userId ? parseInt(formData.userId) : null,
+                     submitterName: formData.submitterName,
+                     submitterEmail: null,
+                     submitterPhone: null,
+                     ipAddress: '127.0.0.1',
+                     userAgent: navigator.userAgent,
+                     startTime: formatDateTime(new Date(Date.now() - 60000)), // 1分钟前，使用后端期望的格式
+                     submitTime: formatDateTime(new Date()), // 使用后端期望的格式
+                     durationSeconds: 60,
+                     status: 1,
+                     isComplete: true
+                 };
+
+                log('提交数据:', 'info');
+                log(JSON.stringify(submissionData, null, 2), 'info');
+
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_SUBMISSION_CREATE}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(submissionData)
+                });
+
+                const result = await response.json();
+                log(`API响应状态: ${response.status}`, 'info');
+                log(`API响应数据: ${JSON.stringify(result, null, 2)}`, 'info');
+
+                                 if (response.ok && result.code === 200) {
+                     showResult('创建提交记录成功', JSON.stringify(result, null, 2), 'success');
+                     log('创建提交记录成功', 'success');
+                     
+                     // 显示成功提示后，可以添加返回逻辑
+                     log('提示：在实际应用中，这里会显示"提交成功"并返回首页', 'info');
+                 } else {
+                     showResult('创建提交记录失败', JSON.stringify(result, null, 2), 'error');
+                     log(`创建提交记录失败: ${result.message || '未知错误'}`, 'error');
+                 }
+            } catch (error) {
+                const errorMessage = `创建提交记录异常: ${error.message}`;
+                showResult('创建提交记录异常', errorMessage, 'error');
+                log(errorMessage, 'error');
+            }
+        }
+
+                 // 测试创建问题答案（通过submit接口）
+         async function testCreateQuestionAnswer() {
+             const formData = getFormData();
+             log('开始测试创建问题答案...');
+             
+             try {
+                 const answerData = {
+                     questionnaireId: parseInt(formData.questionnaireId),
+                     userId: formData.userId ? parseInt(formData.userId) : null,
+                     submitterName: formData.submitterName,
+                     answers: [
+                         {
+                             questionId: 63033512, // 使用已知的问题ID
+                             questionType: 3, // 文本题
+                             answer: "这是一个测试答案"
+                         }
+                     ]
+                 };
+
+                 log('答案数据:', 'info');
+                 log(JSON.stringify(answerData, null, 2), 'info');
+
+                 const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_ANSWER_CREATE}`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify(answerData)
+                 });
+
+                 const result = await response.json();
+                 log(`API响应状态: ${response.status}`, 'info');
+                 log(`API响应数据: ${JSON.stringify(result, null, 2)}`, 'info');
+
+                 if (response.ok && result.code === 200) {
+                     showResult('创建问题答案成功', JSON.stringify(result, null, 2), 'success');
+                     log('创建问题答案成功', 'success');
+                 } else {
+                     showResult('创建问题答案失败', JSON.stringify(result, null, 2), 'error');
+                     log(`创建问题答案失败: ${result.message || '未知错误'}`, 'error`);
+                 }
+             } catch (error) {
+                 const errorMessage = `创建问题答案异常: ${error.message}`;
+                 showResult('创建问题答案异常', errorMessage, 'error');
+                 log(errorMessage, 'error');
+             }
+         }
+
+        // 测试完整提交流程
+        async function testFullSubmission() {
+            const formData = getFormData();
+            log('开始测试完整提交流程...');
+            
+            try {
+                // 步骤1: 创建提交记录
+                log('步骤1: 创建提交记录', 'info');
+                                 const submissionData = {
+                     questionnaireId: parseInt(formData.questionnaireId),
+                     userId: formData.userId ? parseInt(formData.userId) : null,
+                     submitterName: formData.submitterName,
+                     submitterEmail: null,
+                     submitterPhone: null,
+                     ipAddress: '127.0.0.1',
+                     userAgent: navigator.userAgent,
+                     startTime: formatDateTime(new Date(Date.now() - 60000)), // 使用后端期望的格式
+                     durationSeconds: 60
+                 };
+
+                const submissionResponse = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_SUBMISSION_CREATE}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(submissionData)
+                });
+
+                const submissionResult = await submissionResponse.json();
+                log(`提交记录响应: ${JSON.stringify(submissionResult, null, 2)}`, 'info');
+
+                if (!submissionResponse.ok || submissionResult.code !== 200) {
+                    throw new Error(`创建提交记录失败: ${submissionResult.message || '未知错误'}`);
+                }
+
+                const submissionId = submissionResult.data.id;
+                log(`提交记录ID: ${submissionId}`, 'success');
+
+                                 // 步骤2: 创建问题答案（通过submit接口）
+                 log('步骤2: 创建问题答案', 'info');
+                 const answerData = {
+                     questionnaireId: parseInt(formData.questionnaireId),
+                     userId: formData.userId ? parseInt(formData.userId) : null,
+                     submitterName: formData.submitterName,
+                     answers: [
+                         {
+                             questionId: 63033512, // 使用已知的问题ID
+                             questionType: 3, // 文本题
+                             answer: "完整流程测试答案"
+                         }
+                     ]
+                 };
+
+                 const answerResponse = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.QUESTIONNAIRE_ANSWER_CREATE}`, {
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json'
+                     },
+                     body: JSON.stringify(answerData)
+                 });
+
+                 const answerResult = await answerResponse.json();
+                 log(`问题答案响应: ${JSON.stringify(answerResult, null, 2)}`, 'info');
+
+                 if (!answerResponse.ok || answerResult.code !== 200) {
+                     throw new Error(`创建问题答案失败: ${answerResult.message || '未知错误'}`);
+                 }
+
+                 showResult('完整提交流程测试成功', 
+                     `提交记录ID: ${submissionId}\n问题答案创建成功`, 'success');
+                 log('完整提交流程测试成功', 'success');
+
+            } catch (error) {
+                const errorMessage = `完整提交流程测试失败: ${error.message}`;
+                showResult('完整提交流程测试失败', errorMessage, 'error');
+                log(errorMessage, 'error');
+            }
+        }
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            log('问卷提交功能测试页面加载完成', 'info');
+            log('请确保后端服务正在运行 (http://localhost:7070)', 'info');
+            log('建议按顺序执行：1.测试创建提交记录 2.测试创建问题答案 3.测试完整提交流程', 'info');
+        });
+    </script>
+</body>
+</html>

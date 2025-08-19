@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷API修复测试</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: #1890ff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #40a9ff;
+        }
+        button:disabled {
+            background-color: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>问卷API修复测试</h1>
+        
+        <div class="test-section">
+            <h3>测试问卷详情API</h3>
+            <p class="info">测试路径参数格式: /api/questionCreate/detail/{id}</p>
+            <input v-model="questionnaireId" placeholder="输入问卷ID" style="padding: 8px; margin-right: 10px;">
+            <button @click="testDetailAPI" :disabled="testing">测试详情API</button>
+            <div v-if="detailResult" class="result">
+                <strong>结果:</strong>
+                <pre>{{ detailResult }}</pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试问卷问题列表API</h3>
+            <p class="info">测试查询参数格式: /api/questionCreate/questions?questionnaireId={id}</p>
+            <button @click="testQuestionsAPI" :disabled="testing">测试问题列表API</button>
+            <div v-if="questionsResult" class="result">
+                <strong>结果:</strong>
+                <pre>{{ questionsResult }}</pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试问卷信息API</h3>
+            <p class="info">测试查询参数格式: /api/questionCreate/getInfoById?id={id}</p>
+            <button @click="testInfoAPI" :disabled="testing">测试信息API</button>
+            <div v-if="infoResult" class="result">
+                <strong>结果:</strong>
+                <pre>{{ infoResult }}</pre>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>API状态检查</h3>
+            <button @click="checkAPIStatus" :disabled="checking">检查API状态</button>
+            <div v-if="statusResult" class="result">
+                <strong>状态:</strong>
+                <pre>{{ statusResult }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        createApp({
+            setup() {
+                const questionnaireId = ref('77106636'); // 使用日志中的ID
+                const testing = ref(false);
+                const checking = ref(false);
+                const detailResult = ref('');
+                const questionsResult = ref('');
+                const infoResult = ref('');
+                const statusResult = ref('');
+
+                const baseURL = 'http://localhost:7070/api';
+
+                const testDetailAPI = async () => {
+                    if (!questionnaireId.value) {
+                        alert('请输入问卷ID');
+                        return;
+                    }
+
+                    testing.value = true;
+                    detailResult.value = '测试中...';
+
+                    try {
+                        const response = await axios.get(`${baseURL}/questionCreate/detail/${questionnaireId.value}`);
+                        detailResult.value = `✅ 成功!\n状态码: ${response.status}\n数据: ${JSON.stringify(response.data, null, 2)}`;
+                    } catch (error) {
+                        detailResult.value = `❌ 失败!\n错误: ${error.message}\n状态码: ${error.response?.status}\n响应: ${JSON.stringify(error.response?.data, null, 2)}`;
+                    } finally {
+                        testing.value = false;
+                    }
+                };
+
+                const testQuestionsAPI = async () => {
+                    if (!questionnaireId.value) {
+                        alert('请输入问卷ID');
+                        return;
+                    }
+
+                    testing.value = true;
+                    questionsResult.value = '测试中...';
+
+                    try {
+                        const response = await axios.get(`${baseURL}/questionCreate/questions`, {
+                            params: { questionnaireId: questionnaireId.value }
+                        });
+                        questionsResult.value = `✅ 成功!\n状态码: ${response.status}\n数据: ${JSON.stringify(response.data, null, 2)}`;
+                    } catch (error) {
+                        questionsResult.value = `❌ 失败!\n错误: ${error.message}\n状态码: ${error.response?.status}\n响应: ${JSON.stringify(error.response?.data, null, 2)}`;
+                    } finally {
+                        testing.value = false;
+                    }
+                };
+
+                const testInfoAPI = async () => {
+                    if (!questionnaireId.value) {
+                        alert('请输入问卷ID');
+                        return;
+                    }
+
+                    testing.value = true;
+                    infoResult.value = '测试中...';
+
+                    try {
+                        const response = await axios.get(`${baseURL}/questionCreate/getInfoById`, {
+                            params: { id: questionnaireId.value }
+                        });
+                        infoResult.value = `✅ 成功!\n状态码: ${response.status}\n数据: ${JSON.stringify(response.data, null, 2)}`;
+                    } catch (error) {
+                        infoResult.value = `❌ 失败!\n错误: ${error.message}\n状态码: ${error.response?.status}\n响应: ${JSON.stringify(error.response?.data, null, 2)}`;
+                    } finally {
+                        testing.value = false;
+                    }
+                };
+
+                const checkAPIStatus = async () => {
+                    checking.value = true;
+                    statusResult.value = '检查中...';
+
+                    try {
+                        // 测试后端连接
+                        const response = await axios.get(`${baseURL}/questionCreate/testDbConnection`);
+                        statusResult.value = `✅ 后端连接正常!\n状态码: ${response.status}\n响应: ${JSON.stringify(response.data, null, 2)}`;
+                    } catch (error) {
+                        statusResult.value = `❌ 后端连接失败!\n错误: ${error.message}\n状态码: ${error.response?.status}\n响应: ${JSON.stringify(error.response?.data, null, 2)}`;
+                    } finally {
+                        checking.value = false;
+                    }
+                };
+
+                return {
+                    questionnaireId,
+                    testing,
+                    checking,
+                    detailResult,
+                    questionsResult,
+                    infoResult,
+                    statusResult,
+                    testDetailAPI,
+                    testQuestionsAPI,
+                    testInfoAPI,
+                    checkAPIStatus
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
