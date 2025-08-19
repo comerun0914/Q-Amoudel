@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue Router 调试测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #1890ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            width: 100%;
+        }
+        .test-button:hover {
+            background-color: #40a9ff;
+        }
+        .result-box {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .info-box {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #1890ff;
+        }
+        .debug-section {
+            background-color: #fff7e6;
+            border: 1px solid #ffd591;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .debug-section h4 {
+            margin: 0 0 10px 0;
+            color: #fa8c16;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">Vue Router 调试测试</h1>
+        
+        <div class="info-box">
+            <h4>📋 测试说明</h4>
+            <p>这个页面用于诊断Vue Router是否正常工作。</p>
+            <p><strong>测试目标：</strong>验证路由跳转功能、路由守卫、权限控制等</p>
+        </div>
+        
+        <button class="test-button" onclick="testRouterBasics()">
+            🔍 基础路由功能测试
+        </button>
+        
+        <button class="test-button" onclick="testRouteGuards()">
+            🛡️ 路由守卫测试
+        </button>
+        
+        <button class="test-button" onclick="testNavigation()">
+            🚀 路由跳转测试
+        </button>
+        
+        <button class="test-button" onclick="testUserInfo()">
+            👤 用户信息测试
+        </button>
+        
+        <div id="result" class="result-box">
+            点击按钮开始测试Vue Router功能...
+        </div>
+    </div>
+
+    <script>
+        function testRouterBasics() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试基础路由功能...</span>';
+            
+            try {
+                // 检查当前页面状态
+                const currentPath = window.location.pathname;
+                const currentUrl = window.location.href;
+                const currentHash = window.location.hash;
+                
+                // 检查是否有Vue Router的痕迹
+                const hasVueRouter = window.__VUE_ROUTER__ || 
+                                   window.location.pathname.includes('/#/') ||
+                                   document.querySelector('[data-v-router]');
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 基础路由功能测试完成</span>
+                    
+                    <div class="debug-section">
+                        <h4>🌐 当前页面状态</h4>
+                        - 路径: ${currentPath}
+                        - 完整URL: ${currentUrl}
+                        - Hash: ${currentHash}
+                        - 检测到Vue Router: ${hasVueRouter ? '是' : '否'}
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>🔍 Vue Router 检测</h4>
+                        - 全局Vue Router对象: ${window.__VUE_ROUTER__ ? '存在' : '不存在'}
+                        - Hash路由模式: ${currentHash ? '是' : '否'}
+                        - History路由模式: ${currentPath !== '/' ? '是' : '否'}
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>📋 测试结果分析</h4>
+                        ${hasVueRouter ? 
+                            '✅ 检测到Vue Router环境，可以进行路由测试' : 
+                            '⚠️ 未检测到Vue Router环境，可能不在Vue应用中'
+                        }
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('基础路由测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 基础路由测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                `;
+            }
+        }
+        
+        function testRouteGuards() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试路由守卫...</span>';
+            
+            try {
+                // 检查localStorage中的认证信息
+                const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+                const userInfo = localStorage.getItem('userInfo') || localStorage.getItem('user_info');
+                
+                // 尝试解析用户信息
+                let parsedUserInfo = null;
+                try {
+                    if (userInfo) {
+                        parsedUserInfo = JSON.parse(userInfo);
+                    }
+                } catch (e) {
+                    console.log('用户信息解析失败:', e);
+                }
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 路由守卫测试完成</span>
+                    
+                    <div class="debug-section">
+                        <h4>🔐 认证信息检查</h4>
+                        - Token存在: ${!!token}
+                        - Token值: ${token ? (token.substring(0, 20) + '...') : '无'}
+                        - 用户信息存在: ${!!userInfo}
+                        - 用户信息解析: ${parsedUserInfo ? '成功' : '失败'}
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>👤 用户信息详情</h4>
+                        ${parsedUserInfo ? 
+                            `<pre>${JSON.stringify(parsedUserInfo, null, 2)}</pre>` : 
+                            '无用户信息或解析失败'
+                        }
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>📋 路由守卫分析</h4>
+                        ${token && parsedUserInfo ? 
+                            '✅ 认证信息完整，路由守卫应该允许访问' : 
+                            '⚠️ 认证信息不完整，路由守卫可能阻止访问'
+                        }
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('路由守卫测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 路由守卫测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                `;
+            }
+        }
+        
+        function testNavigation() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试路由跳转...</span>';
+            
+            try {
+                // 测试不同的跳转方式
+                const testPaths = [
+                    '/questionnaire/fill/123',
+                    '/user',
+                    '/home',
+                    '/login'
+                ];
+                
+                let navigationTest = '';
+                testPaths.forEach(path => {
+                    const fullUrl = window.location.origin + path;
+                    navigationTest += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <strong>路径:</strong> ${path}<br>
+                            <strong>完整URL:</strong> ${fullUrl}<br>
+                            <button onclick="testSingleNavigation('${path}')" style="background: #1890ff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                                测试跳转
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 路由跳转测试准备完成</span>
+                    
+                    <div class="debug-section">
+                        <h4>🧪 跳转测试</h4>
+                        <p>点击下面的按钮测试不同的路由跳转：</p>
+                        ${navigationTest}
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>📋 测试说明</h4>
+                        - 如果跳转成功，页面应该发生变化
+                        - 如果跳转失败，可能的原因：
+                        <ul>
+                            <li>Vue Router未正确初始化</li>
+                            <li>路由配置错误</li>
+                            <li>路由守卫阻止跳转</li>
+                            <li>目标组件不存在</li>
+                        </ul>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('路由跳转测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 路由跳转测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                `;
+            }
+        }
+        
+        function testSingleNavigation(path) {
+            console.log('测试跳转到:', path);
+            
+            try {
+                // 尝试使用不同的跳转方式
+                if (path === '/login') {
+                    // 直接跳转到登录页
+                    window.location.href = path;
+                } else {
+                    // 尝试使用history API
+                    window.history.pushState({}, '', path);
+                    console.log('使用 history.pushState 跳转到:', path);
+                    
+                    // 触发popstate事件
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                }
+            } catch (error) {
+                console.error('跳转失败:', error);
+                alert(`跳转失败: ${error.message}`);
+            }
+        }
+        
+        function testUserInfo() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试用户信息...</span>';
+            
+            try {
+                // 检查所有可能的存储键
+                const storageKeys = [
+                    'token', 'userToken', 'accessToken',
+                    'userInfo', 'user_info', 'user',
+                    'auth', 'authentication'
+                ];
+                
+                let storageInfo = '';
+                storageKeys.forEach(key => {
+                    const value = localStorage.getItem(key);
+                    if (value) {
+                        storageInfo += `
+                            <div style="margin: 5px 0; padding: 5px; background: #f0f0f0; border-radius: 4px;">
+                                <strong>${key}:</strong> ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}
+                            </div>
+                        `;
+                    }
+                });
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 用户信息测试完成</span>
+                    
+                    <div class="debug-section">
+                        <h4>💾 本地存储检查</h4>
+                        ${storageInfo || '未找到任何用户相关的存储信息'}
+                    </div>
+                    
+                    <div class="debug-section">
+                        <h4>🔍 存储分析</h4>
+                        ${storageInfo ? 
+                            '✅ 找到用户存储信息，可能影响路由权限' : 
+                            '⚠️ 未找到用户存储信息，可能导致路由权限验证失败'
+                        }
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('用户信息测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 用户信息测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                `;
+            }
+        }
+        
+        // 页面加载时显示提示
+        window.onload = function() {
+            console.log('Vue Router 调试测试页面已加载');
+            console.log('当前页面路径:', window.location.pathname);
+            console.log('请确保Vue应用已正确启动');
+        };
+    </script>
+</body>
+</html>

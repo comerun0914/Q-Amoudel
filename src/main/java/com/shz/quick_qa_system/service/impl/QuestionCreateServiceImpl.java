@@ -159,6 +159,24 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             questionCreate.setSubmissionLimit((Integer) request.get("submissionLimit"));
             questionCreate.setStatus((Integer) request.get("status"));
             questionCreate.setCreatorId((Integer) request.get("creatorId"));
+            
+            // 设置问卷类型
+            Object questionnaireTypeObj = request.get("questionnaire_type");
+            if (questionnaireTypeObj != null) {
+                Integer questionnaireType;
+                if (questionnaireTypeObj instanceof Integer) {
+                    questionnaireType = (Integer) questionnaireTypeObj;
+                } else if (questionnaireTypeObj instanceof String) {
+                    questionnaireType = Integer.parseInt((String) questionnaireTypeObj);
+                } else {
+                    questionnaireType = (Integer) questionnaireTypeObj;
+                }
+                questionCreate.setQuestionnaireType(questionnaireType);
+                System.out.println("设置问卷类型: " + questionnaireType);
+            } else {
+                questionCreate.setQuestionnaireType(0); // 默认调查问卷
+                System.out.println("未设置问卷类型，使用默认值: 0");
+            }
 
             // 生成问卷ID
             Integer formId = CodeGenerator.generateFormId();
@@ -526,6 +544,7 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             enrichedItem.put("created_time", questionnaire.getCreatedTime());
             enrichedItem.put("updated_time", questionnaire.getUpdatedTime());
             enrichedItem.put("submission_limit", questionnaire.getSubmissionLimit());
+            enrichedItem.put("questionnaire_type", questionnaire.getQuestionnaireType());
             
             // 获取创建者用户名
             String creatorName = "匿名用户";
@@ -872,6 +891,21 @@ public class QuestionCreateServiceImpl extends ServiceImpl<QuestionCreateMapper,
             }
             if (request.containsKey("status")) {
                 existingQuestionnaire.setStatus((Integer) request.get("status"));
+            }
+            if (request.containsKey("questionnaire_type")) {
+                Object questionnaireTypeObj = request.get("questionnaire_type");
+                if (questionnaireTypeObj != null) {
+                    Integer questionnaireType;
+                    if (questionnaireTypeObj instanceof Integer) {
+                        questionnaireType = (Integer) questionnaireTypeObj;
+                    } else if (questionnaireTypeObj instanceof String) {
+                        questionnaireType = Integer.parseInt((String) questionnaireTypeObj);
+                    } else {
+                        questionnaireType = (Integer) questionnaireTypeObj;
+                    }
+                    existingQuestionnaire.setQuestionnaireType(questionnaireType);
+                    System.out.println("更新问卷类型: " + questionnaireType);
+                }
             }
 
             // 设置更新时间

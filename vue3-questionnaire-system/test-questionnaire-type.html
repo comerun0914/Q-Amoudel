@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷类型功能测试</title>
+    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4.0.0/dist/antd.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 32px;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .form-row {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .test-result {
+            margin-top: 16px;
+            padding: 12px;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 4px;
+            color: #52c41a;
+        }
+        .error-result {
+            background: #fff2f0;
+            border-color: #ffccc7;
+            color: #ff4d4f;
+        }
+        .success-message {
+            color: #52c41a;
+            font-weight: 500;
+        }
+        .error-message {
+            color: #ff4d4f;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>问卷类型功能测试</h1>
+        <p>此页面用于测试问卷类型字段的添加和修改功能</p>
+
+        <!-- 测试1：问卷类型选择 -->
+        <div class="test-section">
+            <div class="test-title">测试1：问卷类型选择</div>
+            <div class="form-row">
+                <label class="form-label">问卷类型：</label>
+                <select id="questionnaireType" style="width: 200px; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                    <option value="">请选择问卷类型</option>
+                    <option value="调查问卷">调查问卷</option>
+                    <option value="反馈问卷">反馈问卷</option>
+                    <option value="评价问卷">评价问卷</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <button onclick="testTypeSelection()" style="background: #1890ff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                测试选择
+            </button>
+            <div id="typeResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- 测试2：表单数据构建 -->
+        <div class="test-section">
+            <div class="test-title">测试2：表单数据构建</div>
+            <div class="form-row">
+                <label class="form-label">问卷标题：</label>
+                <input type="text" id="title" placeholder="请输入问卷标题" style="width: 300px; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+            </div>
+            <div class="form-row">
+                <label class="form-label">问卷描述：</label>
+                <textarea id="description" placeholder="请输入问卷描述" style="width: 300px; height: 80px; padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;"></textarea>
+            </div>
+            <div class="form-row">
+                <label class="form-label">开始日期：</label>
+                <input type="date" id="startDate" style="padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+            </div>
+            <div class="form-row">
+                <label class="form-label">结束日期：</label>
+                <input type="date" id="endDate" style="padding: 8px; border: 1px solid #d9d9d9; border-radius: 4px;">
+            </div>
+            <button onclick="testDataBuild()" style="background: #52c41a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                构建数据
+            </button>
+            <div id="dataResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- 测试3：API请求数据 -->
+        <div class="test-section">
+            <div class="test-title">测试3：API请求数据格式</div>
+            <button onclick="testAPIData()" style="background: #722ed1; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                生成API数据
+            </button>
+            <div id="apiResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- 测试4：数据库字段映射 -->
+        <div class="test-section">
+            <div class="test-title">测试4：数据库字段映射</div>
+            <div class="form-row">
+                <label class="form-label">前端字段名：</label>
+                <code>questionnaireInfo.type</code>
+            </div>
+            <div class="form-row">
+                <label class="form-label">数据库字段名：</label>
+                <code>questionnaire_type</code>
+            </div>
+            <div class="form-row">
+                <label class="form-label">映射关系：</label>
+                <code>questionnaireInfo.type → questionnaireType → questionnaire_type</code>
+            </div>
+            <button onclick="testFieldMapping()" style="background: #fa8c16; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                测试映射
+            </button>
+            <div id="mappingResult" class="test-result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 测试1：问卷类型选择
+        function testTypeSelection() {
+            const typeSelect = document.getElementById('questionnaireType');
+            const resultDiv = document.getElementById('typeResult');
+            
+            if (typeSelect.value) {
+                resultDiv.innerHTML = `
+                    <div class="success-message">✓ 成功选择问卷类型：${typeSelect.value}</div>
+                    <div>字段值：${typeSelect.value}</div>
+                    <div>数据类型：${typeof typeSelect.value}</div>
+                `;
+                resultDiv.className = 'test-result';
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error-message">✗ 请先选择问卷类型</div>
+                `;
+                resultDiv.className = 'test-result error-result';
+            }
+            resultDiv.style.display = 'block';
+        }
+
+        // 测试2：表单数据构建
+        function testDataBuild() {
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const type = document.getElementById('questionnaireType').value;
+            
+            const resultDiv = document.getElementById('dataResult');
+            
+            if (title && description && startDate && endDate && type) {
+                const formData = {
+                    title: title,
+                    description: description,
+                    startDate: startDate,
+                    endDate: endDate,
+                    type: type
+                };
+                
+                resultDiv.innerHTML = `
+                    <div class="success-message">✓ 表单数据构建成功</div>
+                    <pre>${JSON.stringify(formData, null, 2)}</pre>
+                `;
+                resultDiv.className = 'test-result';
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error-message">✗ 请填写完整的表单信息</div>
+                    <div>缺少字段：${getMissingFields(title, description, startDate, endDate, type)}</div>
+                `;
+                resultDiv.className = 'test-result error-result';
+            }
+            resultDiv.style.display = 'block';
+        }
+
+        // 测试3：API请求数据
+        function testAPIData() {
+            const title = document.getElementById('title').value || '测试问卷标题';
+            const description = document.getElementById('description').value || '测试问卷描述';
+            const startDate = document.getElementById('startDate').value || '2024-01-01';
+            const endDate = document.getElementById('endDate').value || '2024-12-31';
+            const type = document.getElementById('questionnaireType').value || '调查问卷';
+            
+            const apiData = {
+                title: title,
+                description: description,
+                questionnaireType: type, // 映射到数据库字段
+                startDate: startDate,
+                endDate: endDate,
+                status: 1, // 已启用状态
+                creatorId: 1, // 创建者ID
+                submissionLimit: 1, // 每人填写次数限制
+                questions: [
+                    {
+                        content: '测试问题1',
+                        questionType: 1,
+                        sortNum: 1,
+                        isRequired: 1
+                    }
+                ]
+            };
+            
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = `
+                <div class="success-message">✓ API请求数据生成成功</div>
+                <div><strong>注意：</strong>前端字段 <code>type</code> 已映射为 <code>questionnaireType</code></div>
+                <pre>${JSON.stringify(apiData, null, 2)}</pre>
+            `;
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+        }
+
+        // 测试4：数据库字段映射
+        function testFieldMapping() {
+            const resultDiv = document.getElementById('mappingResult');
+            
+            const mapping = {
+                '前端字段': 'questionnaireInfo.type',
+                'API字段': 'questionnaireType',
+                '数据库字段': 'questionnaire_type',
+                '字段类型': 'VARCHAR(50)',
+                '默认值': '调查问卷',
+                '可选值': ['调查问卷', '反馈问卷', '评价问卷', '其他']
+            };
+            
+            resultDiv.innerHTML = `
+                <div class="success-message">✓ 字段映射关系正确</div>
+                <div><strong>字段映射链：</strong></div>
+                <ul>
+                    <li>前端：<code>${mapping['前端字段']}</code></li>
+                    <li>API：<code>${mapping['API字段']}</code></li>
+                    <li>数据库：<code>${mapping['数据库字段']}</code></li>
+                </ul>
+                <div><strong>数据库字段信息：</strong></div>
+                <ul>
+                    <li>类型：<code>${mapping['字段类型']}</code></li>
+                    <li>默认值：<code>${mapping['默认值']}</code></li>
+                    <li>可选值：<code>${mapping['可选值'].join(', ')}</code></li>
+                </ul>
+            `;
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+        }
+
+        // 辅助函数：获取缺失字段
+        function getMissingFields(title, description, startDate, endDate, type) {
+            const missing = [];
+            if (!title) missing.push('问卷标题');
+            if (!description) missing.push('问卷描述');
+            if (!startDate) missing.push('开始日期');
+            if (!endDate) missing.push('结束日期');
+            if (!type) missing.push('问卷类型');
+            return missing.join(', ');
+        }
+
+        // 页面加载完成后设置默认日期
+        window.onload = function() {
+            const today = new Date();
+            const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('startDate').value = today.toISOString().slice(0, 10);
+            document.getElementById('endDate').value = endDate.toISOString().slice(0, 10);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #1890ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            width: 100%;
+        }
+        .test-button:hover {
+            background-color: #40a9ff;
+        }
+        .result-box {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .info-box {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #1890ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">问卷系统API简单测试</h1>
+        
+        <div class="info-box">
+            <h4>📋 测试说明</h4>
+            <p>这个页面用于快速测试问卷系统的API是否正常工作。</p>
+            <p><strong>注意：</strong>请确保后端服务已经启动，并且运行在正确的端口上。</p>
+        </div>
+        
+        <button class="test-button" onclick="testGetAllQuestionnaires()">
+            🧪 测试获取所有问卷列表
+        </button>
+        
+        <button class="test-button" onclick="testGetQuestionnaireDetail()">
+            📄 测试获取问卷详情 (ID: 1)
+        </button>
+        
+        <button class="test-button" onclick="testGetQuestionnaireQuestions()">
+            ❓ 测试获取问卷问题 (ID: 1)
+        </button>
+        
+        <div id="result" class="result-box">
+            点击上面的按钮开始测试...
+        </div>
+    </div>
+
+    <script>
+        // 测试获取所有问卷
+        async function testGetAllQuestionnaires() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试获取所有问卷...</span>';
+            
+            try {
+                console.log('开始测试: GET /api/questionCreate/all');
+                const response = await fetch('/api/questionCreate/all');
+                console.log('响应状态:', response.status);
+                console.log('响应头:', response.headers);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <span class="status success">✅ 成功获取问卷列表</span>
+                        
+                        状态码: ${response.status}
+                        响应时间: ${new Date().toLocaleString()}
+                        
+                        响应数据:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        如果看到问卷数据，说明API工作正常！
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <span class="status error">❌ 获取问卷列表失败</span>
+                        
+                        状态码: ${response.status}
+                        错误信息: ${data.message || '未知错误'}
+                        
+                        完整响应:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        可能的问题:
+                        1. 后端服务未启动
+                        2. API路径不正确
+                        3. 数据库连接问题
+                        4. 权限问题
+                    `;
+                }
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                    
+                    可能的问题:
+                    1. 后端服务未启动
+                    2. 网络连接问题
+                    3. CORS配置问题
+                    4. 端口配置错误
+                    
+                    请检查:
+                    1. 后端服务是否启动
+                    2. 端口是否正确 (默认8080)
+                    3. 浏览器控制台是否有更多错误信息
+                `;
+            }
+        }
+        
+        // 测试获取问卷详情
+        async function testGetQuestionnaireDetail() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试获取问卷详情...</span>';
+            
+            try {
+                console.log('开始测试: GET /api/questionCreate/detail/1');
+                const response = await fetch('/api/questionCreate/detail/1');
+                console.log('响应状态:', response.status);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <span class="status success">✅ 成功获取问卷详情</span>
+                        
+                        状态码: ${response.status}
+                        响应时间: ${new Date().toLocaleString()}
+                        
+                        响应数据:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        如果看到问卷详情数据，说明API工作正常！
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <span class="status error">❌ 获取问卷详情失败</span>
+                        
+                        状态码: ${response.status}
+                        错误信息: ${data.message || '未知错误'}
+                        
+                        完整响应:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        可能的问题:
+                        1. 问卷ID=1不存在
+                        2. 数据库中没有数据
+                        3. API实现问题
+                    `;
+                }
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                    
+                    请检查后端服务状态和网络连接
+                `;
+            }
+        }
+        
+        // 测试获取问卷问题
+        async function testGetQuestionnaireQuestions() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试获取问卷问题...</span>';
+            
+            try {
+                console.log('开始测试: GET /api/questionCreate/questions?questionnaireId=1');
+                const response = await fetch('/api/questionCreate/questions?questionnaireId=1');
+                console.log('响应状态:', response.status);
+                
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <span class="status success">✅ 成功获取问卷问题</span>
+                        
+                        状态码: ${response.status}
+                        响应时间: ${new Date().toLocaleString()}
+                        
+                        响应数据:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        如果看到问题列表数据，说明API工作正常！
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <span class="status error">❌ 获取问卷问题失败</span>
+                        
+                        状态码: ${response.status}
+                        错误信息: ${data.message || '未知错误'}
+                        
+                        完整响应:
+                        ${JSON.stringify(data, null, 2)}
+                        
+                        可能的问题:
+                        1. 问卷ID=1不存在
+                        2. 该问卷没有问题
+                        3. API实现问题
+                    `;
+                }
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                    
+                    请检查后端服务状态和网络连接
+                `;
+            }
+        }
+        
+        // 页面加载时显示提示
+        window.onload = function() {
+            console.log('API测试页面已加载');
+            console.log('请确保后端服务已启动');
+            console.log('默认API基础路径: /api/questionCreate/');
+        };
+    </script>
+</body>
+</html>

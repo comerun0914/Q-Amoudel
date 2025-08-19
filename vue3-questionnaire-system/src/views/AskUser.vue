@@ -57,12 +57,12 @@
             <a-card-meta title="链接输入" description="通过问卷链接直接填写" />
           </a-card>
 
-          <!-- 问卷代码方式 -->
+          <!-- 问卷ID方式 -->
           <a-card class="method-card" @click="showCodeMethod">
             <template #cover>
               <div class="card-icon">🔢</div>
             </template>
-            <a-card-meta title="问卷代码" description="输入6位问卷代码快速填写" />
+            <a-card-meta title="问卷ID" description="输入问卷ID快速填写" />
           </a-card>
 
           <!-- 二维码扫描方式 -->
@@ -75,14 +75,14 @@
         </div>
       </div>
 
-      <!-- 最近填写的问卷 -->
+      <!-- 可用问卷列表 -->
       <div class="recent-section">
-        <h2>最近填写的问卷</h2>
+        <h2>可用问卷列表</h2>
         <div class="recent-list">
-          <a-empty v-if="recentQuestionnaires.length === 0" description="暂无填写记录" />
+          <a-empty v-if="availableQuestionnaires.length === 0" description="暂无可用问卷" />
           <a-list
             v-else
-            :data-source="recentQuestionnaires"
+            :data-source="availableQuestionnaires"
             :loading="recentLoading"
             item-layout="horizontal"
           >
@@ -90,20 +90,33 @@
               <a-list-item>
                 <a-list-item-meta>
                   <template #title>
-                    <a @click="goToQuestionnaire(item.id)">{{ item.title }}</a>
+                    <span class="questionnaire-title">{{ item.title }}</span>
                   </template>
                   <template #description>
                     <div class="questionnaire-meta">
-                      <span>填写时间: {{ formatDate(item.fillTime) }}</span>
-                      <a-tag :color="getStatusColor(item.status)">
-                        {{ getStatusText(item.status) }}
+                      <span>问卷ID: {{ item.id }}</span>
+                      <span>描述: {{ item.description || '暂无描述' }}</span>
+                      <a-tag :color="getQuestionnaireStatusColor(item.status)">
+                        {{ getQuestionnaireStatusText(item.status) }}
                       </a-tag>
                     </div>
                   </template>
                 </a-list-item-meta>
                 <template #actions>
-                  <a-button type="link" @click="goToQuestionnaire(item.id)">
-                    继续填写
+                  <a-button 
+                    type="primary" 
+                    @click="() => { console.log('按钮被点击了！'); goToQuestionnaire(item.id); }"
+                    :disabled="item.status !== 1"
+                  >
+                    {{ item.status === 1 ? '填写问卷' : '未发布' }}
+                  </a-button>
+                  <!-- 测试按钮 -->
+                  <a-button 
+                    type="dashed" 
+                    @click="testClick(item.id)"
+                    style="margin-left: 8px;"
+                  >
+                    测试点击
                   </a-button>
                 </template>
               </a-list-item>
@@ -111,10 +124,13 @@
           </a-list>
         </div>
 
-        <!-- 历史记录按钮 -->
+        <!-- 刷新按钮 -->
         <div class="history-section">
-          <a-button @click="showHistory" type="default">
-            查看所有历史记录
+          <a-button @click="loadAvailableQuestionnaires" type="default">
+            刷新问卷列表
+          </a-button>
+          <a-button @click="showHistory" type="default" style="margin-left: 10px;">
+            查看填写历史
           </a-button>
         </div>
       </div>
@@ -143,10 +159,10 @@
       </div>
     </a-modal>
 
-    <!-- 问卷代码弹窗 -->
+    <!-- 问卷ID弹窗 -->
     <a-modal
       v-model:open="codeModalVisible"
-      title="通过代码填写问卷"
+      title="通过问卷ID填写问卷"
       width="600px"
       @ok="submitCode"
       @cancel="codeModalVisible = false"
@@ -154,15 +170,14 @@
     >
       <div class="method-content">
         <div class="input-section">
-          <a-form-item label="问卷代码">
+          <a-form-item label="问卷ID">
             <a-input
               v-model:value="questionnaireCode"
-              placeholder="请输入6位问卷代码，例如：ABC123"
+              placeholder="请输入问卷ID，例如：12345"
               size="large"
-              maxlength="6"
             />
           </a-form-item>
-          <p class="input-hint">问卷代码通常为6位字母数字组合</p>
+          <p class="input-hint">问卷ID是创建问卷时系统自动生成的唯一标识</p>
         </div>
       </div>
     </a-modal>
@@ -335,7 +350,7 @@ const codeModalVisible = ref(false)
 const qrModalVisible = ref(false)
 
 // 数据列表
-const recentQuestionnaires = ref([])
+const availableQuestionnaires = ref([])
 const historyList = ref([])
 const recentLoading = ref(false)
 const historyLoading = ref(false)
@@ -405,7 +420,7 @@ onMounted(() => {
     userRoleText.value = '测试用户';
   }
 
-  loadRecentData()
+  loadAvailableQuestionnaires()
 
   // 检查是否为移动设备
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -435,12 +450,33 @@ const submitLink = async () => {
 
   linkLoading.value = true
   try {
-    // 这里应该调用后端API验证链接
-    message.success('链接验证成功，正在跳转...')
-    // 跳转到问卷填写页面
-    router.push(`/questionnaire/fill?url=${encodeURIComponent(questionnaireLink.value)}`)
+    // 从链接中提取问卷ID
+    const url = new URL(questionnaireLink.value)
+    const pathParts = url.pathname.split('/')
+    const questionnaireId = pathParts[pathParts.length - 1]
+    
+    if (!questionnaireId || !/^\d+$/.test(questionnaireId)) {
+      message.error('无效的问卷链接，无法提取问卷ID')
+      return
+    }
+
+    // 验证问卷ID是否存在
+    const response = await fetch(`/api/questionCreate/getInfoById?id=${questionnaireId}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.code === 200 && data.data) {
+        message.success('链接验证成功，正在跳转...')
+        // 跳转到问卷填写页面
+        router.push(`/questionnaire/fill/${questionnaireId}`)
+      } else {
+        message.error('问卷不存在或已被删除')
+      }
+    } else {
+      message.error('链接验证失败，请检查链接是否正确')
+    }
   } catch (error) {
-    message.error('链接验证失败，请检查链接是否正确')
+    console.error('验证失败:', error)
+    message.error('链接验证失败，请检查链接格式是否正确')
   } finally {
     linkLoading.value = false
     linkModalVisible.value = false
@@ -449,23 +485,41 @@ const submitLink = async () => {
 
 const submitCode = async () => {
   if (!questionnaireCode.value) {
-    message.warning('请输入问卷代码')
+    message.warning('请输入问卷ID')
     return
   }
 
-  if (questionnaireCode.value.length !== 6) {
-    message.warning('问卷代码应为6位字符')
+  if (!/^\d+$/.test(questionnaireCode.value)) {
+    message.warning('问卷ID应为数字')
     return
   }
 
   codeLoading.value = true
   try {
-    // 这里应该调用后端API验证代码
-    message.success('代码验证成功，正在跳转...')
-    // 跳转到问卷填写页面
-    router.push(`/questionnaire/fill?code=${questionnaireCode.value}`)
+    // 验证问卷ID是否存在
+    const response = await fetch(`/api/questionCreate/getInfoById?id=${questionnaireCode.value}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.code === 200 && data.data) {
+        message.success('问卷ID验证成功，正在跳转...')
+        console.log('问卷验证成功，准备跳转，ID:', questionnaireCode.value)
+        // 跳转到问卷填写页面
+        try {
+          await router.push(`/questionnaire/fill/${questionnaireCode.value}`)
+          console.log('路由跳转成功')
+        } catch (error) {
+          console.error('路由跳转失败:', error)
+          message.error('跳转失败，请重试')
+        }
+      } else {
+        message.error('问卷不存在或已被删除')
+      }
+    } else {
+      message.error('问卷ID验证失败，请检查ID是否正确')
+    }
   } catch (error) {
-    message.error('代码验证失败，请检查代码是否正确')
+    console.error('验证失败:', error)
+    message.error('问卷ID验证失败，请检查网络连接')
   } finally {
     codeLoading.value = false
     codeModalVisible.value = false
@@ -509,51 +563,138 @@ const showHistory = () => {
 const loadHistoryData = async () => {
   historyLoading.value = true
   try {
-    // 模拟加载历史数据
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    historyList.value = [
-      {
-        id: 1,
-        title: '用户满意度调查',
-        fillTime: new Date('2025-01-15'),
-        status: 'completed'
-      },
-      {
-        id: 2,
-        title: '产品使用体验问卷',
-        fillTime: new Date('2025-01-10'),
-        status: 'in-progress'
+    // 从数据库获取用户填写的问卷历史
+    const response = await fetch('/api/questionnaireSubmission/userHistory', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-    ]
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      if (data.code === 200) {
+        historyList.value = data.data.map(item => ({
+          id: item.questionnaire_id,
+          title: item.questionnaire_title,
+          fillTime: new Date(item.submit_time),
+          status: item.is_complete ? 'completed' : 'in-progress'
+        }))
+      } else {
+        message.error('获取历史数据失败')
+        historyList.value = []
+      }
+    } else {
+      message.error('获取历史数据失败')
+      historyList.value = []
+    }
   } catch (error) {
+    console.error('加载历史数据失败:', error)
     message.error('加载历史数据失败')
+    historyList.value = []
   } finally {
     historyLoading.value = false
   }
 }
 
-const loadRecentData = async () => {
+const loadAvailableQuestionnaires = async () => {
   recentLoading.value = true
   try {
-    // 模拟加载最近数据
-    await new Promise(resolve => setTimeout(resolve, 800))
-    recentQuestionnaires.value = [
-      {
-        id: 1,
-        title: '用户满意度调查',
-        fillTime: new Date('2025-01-15'),
-        status: 'completed'
+    // 从数据库获取所有可用的问卷
+    const response = await fetch('/api/questionCreate/all', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
-    ]
-  } catch (error) {
-    message.error('加载最近数据失败')
-  } finally {
-    recentLoading.value = false
-  }
+    })
+    
+        if (response.ok) {
+      const data = await response.json()
+      console.log('API响应数据:', data)
+      if (data.code === 200) {
+        // 检查数据结构，data.data.list 是问卷列表
+         const questionnaireList = data.data.list || data.data || []
+         availableQuestionnaires.value = questionnaireList.map(item => ({
+           id: item.id,
+           title: item.title,
+           description: item.description,
+           status: item.status,
+           questionnaireType: item.questionnaireType || item.questionnaire_type,
+           createdTime: item.createdTime || item.created_time
+         }))
+      } else {
+        message.error('获取问卷列表失败')
+        availableQuestionnaires.value = []
+      }
+    } else {
+      message.error('获取问卷列表失败')
+      availableQuestionnaires.value = []
+    }
+      } catch (error) {
+      console.error('加载问卷列表失败:', error)
+      message.error('加载问卷列表失败: ' + (error.message || '未知错误'))
+      availableQuestionnaires.value = []
+    } finally {
+      recentLoading.value = false
+    }
+}
+
+const testClick = (id) => {
+  console.log('测试点击按钮被点击，ID:', id)
+  message.info(`测试点击成功！问卷ID: ${id}`)
 }
 
 const goToQuestionnaire = (id) => {
-  router.push(`/questionnaire/fill/${id}`)
+  // 最基础的调试信息
+  alert(`函数被调用了！ID: ${id}`)
+  
+  // 检查路由对象是否有效
+  if (!router) {
+    alert('❌ 路由对象无效')
+    message.error('路由系统未初始化')
+    return
+  }
+  
+  alert('✅ 路由对象有效，继续执行...')
+  
+  // 检查当前路由状态
+  try {
+    const currentRoute = router.currentRoute.value
+    alert(`当前路由路径: ${currentRoute.path}`)
+  } catch (error) {
+    alert(`获取当前路由失败: ${error.message}`)
+    return
+  }
+  
+  alert(`准备跳转到: /questionnaire/fill/${id}`)
+  
+  try {
+    alert('尝试执行 router.push...')
+    const result = router.push(`/questionnaire/fill/${id}`)
+    alert(`router.push 返回结果类型: ${typeof result}`)
+    
+    // 检查是否返回了 Promise
+    if (result && typeof result.then === 'function') {
+      alert('返回的是 Promise，等待结果...')
+      result.then(() => {
+        alert('✅ 路由跳转成功 (Promise resolved)')
+      }).catch((error) => {
+        alert(`❌ 路由跳转失败 (Promise rejected): ${error.message}`)
+        message.error('跳转失败，请重试')
+      })
+    } else if (result === undefined) {
+      alert('✅ 路由跳转成功 (同步，返回 undefined)')
+    } else {
+      alert(`⚠️ 路由跳转返回了意外的结果: ${result}`)
+    }
+  } catch (error) {
+    alert(`❌ 路由跳转失败 (同步错误): ${error.message}`)
+    message.error('跳转失败，请重试')
+  }
+  
+  alert('=== 路由跳转诊断完成 ===')
 }
 
 const goToUserCenter = () => {
@@ -596,6 +737,24 @@ const getStatusText = (status) => {
     completed: '已完成',
     'in-progress': '进行中',
     expired: '已过期'
+  }
+  return texts[status] || '未知'
+}
+
+const getQuestionnaireStatusColor = (status) => {
+  const colors = {
+    0: 'error',      // 禁用
+    1: 'success',    // 启用/已发布
+    2: 'warning'     // 草稿
+  }
+  return colors[status] || 'default'
+}
+
+const getQuestionnaireStatusText = (status) => {
+  const texts = {
+    0: '已禁用',
+    1: '已发布',
+    2: '草稿'
   }
   return texts[status] || '未知'
 }
@@ -782,6 +941,12 @@ onUnmounted(() => {
   display: flex;
   gap: 16px;
   align-items: center;
+}
+
+.questionnaire-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
 }
 
 .history-section {

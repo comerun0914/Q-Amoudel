@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷类型后端修复测试</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/ant-design-vue@4/dist/antd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4/dist/reset.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 10px;
+        }
+        .result-box {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .error-box {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .form-item {
+            margin-bottom: 16px;
+        }
+        .form-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .btn-group {
+            margin-top: 16px;
+        }
+        .btn-group button {
+            margin-right: 8px;
+        }
+        .log-area {
+            background: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <h1>问卷类型后端修复测试</h1>
+            <p>此页面用于测试问卷类型字段的后端修复是否正常工作</p>
+
+            <!-- 测试1: 创建问卷 -->
+            <div class="test-section">
+                <h3>测试1: 创建问卷（包含问卷类型）</h3>
+                <div class="form-item">
+                    <label>问卷标题:</label>
+                    <input v-model="createForm.title" placeholder="请输入问卷标题" style="width: 300px; padding: 8px;">
+                </div>
+                <div class="form-item">
+                    <label>问卷类型:</label>
+                    <select v-model="createForm.type" style="width: 200px; padding: 8px;">
+                        <option value="调查问卷">调查问卷</option>
+                        <option value="反馈问卷">反馈问卷</option>
+                        <option value="评价问卷">评价问卷</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-item">
+                    <label>问卷描述:</label>
+                    <textarea v-model="createForm.description" placeholder="请输入问卷描述" style="width: 300px; height: 80px; padding: 8px;"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button @click="testCreateQuestionnaire" :disabled="creating">创建问卷</button>
+                </div>
+                <div v-if="createResult" class="result-box">
+                    <h4>创建结果:</h4>
+                    <pre>{{ JSON.stringify(createResult, null, 2) }}</pre>
+                </div>
+            </div>
+
+            <!-- 测试2: 获取问卷详情 -->
+            <div class="test-section">
+                <h3>测试2: 获取问卷详情</h3>
+                <div class="form-item">
+                    <label>问卷ID:</label>
+                    <input v-model="detailForm.id" placeholder="请输入问卷ID" style="width: 200px; padding: 8px;">
+                </div>
+                <div class="btn-group">
+                    <button @click="testGetQuestionnaireDetail" :disabled="loadingDetail">获取详情</button>
+                </div>
+                <div v-if="detailResult" class="result-box">
+                    <h4>问卷详情:</h4>
+                    <pre>{{ JSON.stringify(detailResult, null, 2) }}</pre>
+                </div>
+            </div>
+
+            <!-- 测试3: 获取问卷列表 -->
+            <div class="test-section">
+                <h3>测试3: 获取问卷列表</h3>
+                <div class="btn-group">
+                    <button @click="testGetQuestionnaireList" :disabled="loadingList">获取列表</button>
+                </div>
+                <div v-if="listResult" class="result-box">
+                    <h4>问卷列表:</h4>
+                    <div v-for="item in listResult.list" :key="item.id" style="margin-bottom: 10px; padding: 10px; border: 1px solid #e8e8e8; border-radius: 4px;">
+                        <strong>ID:</strong> {{ item.id }} | 
+                        <strong>标题:</strong> {{ item.title }} | 
+                        <strong>类型:</strong> {{ item.questionnaire_type }} | 
+                        <strong>状态:</strong> {{ item.status }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试4: 更新问卷 -->
+            <div class="test-section">
+                <h3>测试4: 更新问卷类型</h3>
+                <div class="form-item">
+                    <label>问卷ID:</label>
+                    <input v-model="updateForm.id" placeholder="请输入问卷ID" style="width: 200px; padding: 8px;">
+                </div>
+                <div class="form-item">
+                    <label>新问卷类型:</label>
+                    <select v-model="updateForm.type" style="width: 200px; padding: 8px;">
+                        <option value="调查问卷">调查问卷</option>
+                        <option value="反馈问卷">反馈问卷</option>
+                        <option value="评价问卷">评价问卷</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button @click="testUpdateQuestionnaire" :disabled="updating">更新问卷</button>
+                </div>
+                <div v-if="updateResult" class="result-box">
+                    <h4>更新结果:</h4>
+                    <pre>{{ JSON.stringify(updateResult, null, 2) }}</pre>
+                </div>
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="test-section">
+                <h3>操作日志</h3>
+                <div class="log-area">
+                    <div v-for="log in logs" :key="log.id" :style="{ color: log.type === 'error' ? 'red' : log.type === 'success' ? 'green' : 'black' }">
+                        [{{ log.time }}] {{ log.message }}
+                    </div>
+                </div>
+                <button @click="clearLogs" style="margin-top: 10px;">清空日志</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive } = Vue;
+
+        createApp({
+            setup() {
+                // 响应式数据
+                const createForm = reactive({
+                    title: '测试问卷类型',
+                    type: '其他',
+                    description: '这是一个测试问卷类型的问卷'
+                });
+
+                const detailForm = reactive({
+                    id: ''
+                });
+
+                const updateForm = reactive({
+                    id: '',
+                    type: '反馈问卷'
+                });
+
+                const createResult = ref(null);
+                const detailResult = ref(null);
+                const listResult = ref(null);
+                const updateResult = ref(null);
+
+                const creating = ref(false);
+                const loadingDetail = ref(false);
+                const loadingList = ref(false);
+                const updating = ref(false);
+
+                const logs = ref([]);
+
+                // 问卷类型映射
+                const QUESTIONNAIRE_TYPE_MAP = {
+                    '调查问卷': 0,
+                    '反馈问卷': 1,
+                    '评价问卷': 2,
+                    '其他': 3
+                };
+
+                const QUESTIONNAIRE_TYPE_REVERSE_MAP = {
+                    0: '调查问卷',
+                    1: '反馈问卷',
+                    2: '评价问卷',
+                    3: '其他'
+                };
+
+                // 工具函数
+                const convertChineseTypeToNumber = (chineseType) => {
+                    if (!chineseType) return 0;
+                    return QUESTIONNAIRE_TYPE_MAP[chineseType] !== undefined ? QUESTIONNAIRE_TYPE_MAP[chineseType] : 0;
+                };
+
+                const convertNumberToChineseType = (numberType) => {
+                    if (numberType === null || numberType === undefined) return '调查问卷';
+                    return QUESTIONNAIRE_TYPE_REVERSE_MAP[numberType] || '调查问卷';
+                };
+
+                const addLog = (message, type = 'info') => {
+                    const now = new Date().toLocaleTimeString();
+                    logs.value.unshift({
+                        id: Date.now(),
+                        time: now,
+                        message,
+                        type
+                    });
+                    if (logs.value.length > 100) {
+                        logs.value = logs.value.slice(0, 100);
+                    }
+                };
+
+                const clearLogs = () => {
+                    logs.value = [];
+                };
+
+                // 测试方法
+                const testCreateQuestionnaire = async () => {
+                    try {
+                        creating.value = true;
+                        addLog('开始创建问卷...');
+
+                        const dataToSend = {
+                            title: createForm.title,
+                            description: createForm.description,
+                            questionnaire_type: convertChineseTypeToNumber(createForm.type),
+                            startDate: '2025-01-01',
+                            endDate: '2025-12-31',
+                            status: 1,
+                            creatorId: 1,
+                            submissionLimit: 1,
+                            questions: [
+                                {
+                                    content: '测试问题',
+                                    questionType: 1,
+                                    sortNum: 1,
+                                    isRequired: 1,
+                                    options: [
+                                        {
+                                            optionContent: '选项1',
+                                            sortNum: 1,
+                                            isDefault: 1
+                                        }
+                                    ]
+                                }
+                            ]
+                        };
+
+                        addLog(`发送数据: ${JSON.stringify(dataToSend, null, 2)}`);
+
+                        const response = await fetch('/questionCreate/createWithQuestions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(dataToSend)
+                        });
+
+                        const result = await response.json();
+                        addLog(`创建问卷响应: ${JSON.stringify(result, null, 2)}`);
+
+                        if (result.code === 200) {
+                            createResult.value = result;
+                            addLog('问卷创建成功！', 'success');
+                        } else {
+                            addLog(`问卷创建失败: ${result.message}`, 'error');
+                        }
+                    } catch (error) {
+                        addLog(`创建问卷出错: ${error.message}`, 'error');
+                    } finally {
+                        creating.value = false;
+                    }
+                };
+
+                const testGetQuestionnaireDetail = async () => {
+                    try {
+                        loadingDetail.value = true;
+                        addLog(`开始获取问卷详情，ID: ${detailForm.id}`);
+
+                        const response = await fetch(`/questionCreate/detail/${detailForm.id}`);
+                        const result = await response.json();
+                        addLog(`获取详情响应: ${JSON.stringify(result, null, 2)}`);
+
+                        if (result.code === 200) {
+                            detailResult.value = result;
+                            addLog('获取问卷详情成功！', 'success');
+                        } else {
+                            addLog(`获取问卷详情失败: ${result.message}`, 'error');
+                        }
+                    } catch (error) {
+                        addLog(`获取问卷详情出错: ${error.message}`, 'error');
+                    } finally {
+                        loadingDetail.value = false;
+                    }
+                };
+
+                const testGetQuestionnaireList = async () => {
+                    try {
+                        loadingList.value = true;
+                        addLog('开始获取问卷列表...');
+
+                        const response = await fetch('/questionCreate/list?creatorId=1&page=1&size=10');
+                        const result = await response.json();
+                        addLog(`获取列表响应: ${JSON.stringify(result, null, 2)}`);
+
+                        if (result.code === 200) {
+                            listResult.value = result;
+                            addLog('获取问卷列表成功！', 'success');
+                        } else {
+                            addLog(`获取问卷列表失败: ${result.message}`, 'error');
+                        }
+                    } catch (error) {
+                        addLog(`获取问卷列表出错: ${error.message}`, 'error');
+                    } finally {
+                        loadingList.value = false;
+                    }
+                };
+
+                const testUpdateQuestionnaire = async () => {
+                    try {
+                        updating.value = true;
+                        addLog(`开始更新问卷，ID: ${updateForm.id}`);
+
+                        const dataToSend = {
+                            id: parseInt(updateForm.id),
+                            title: '更新后的问卷标题',
+                            description: '更新后的问卷描述',
+                            questionnaire_type: convertChineseTypeToNumber(updateForm.type),
+                            startDate: '2025-01-01',
+                            endDate: '2025-12-31',
+                            status: 1,
+                            creatorId: 1,
+                            submissionLimit: 1
+                        };
+
+                        addLog(`发送更新数据: ${JSON.stringify(dataToSend, null, 2)}`);
+
+                        const response = await fetch(`/questionCreate/update/${updateForm.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(dataToSend)
+                        });
+
+                        const result = await response.json();
+                        addLog(`更新问卷响应: ${JSON.stringify(result, null, 2)}`);
+
+                        if (result.code === 200) {
+                            updateResult.value = result;
+                            addLog('问卷更新成功！', 'success');
+                        } else {
+                            addLog(`问卷更新失败: ${result.message}`, 'error');
+                        }
+                    } catch (error) {
+                        addLog(`更新问卷出错: ${error.message}`, 'error');
+                    } finally {
+                        updating.value = false;
+                    }
+                };
+
+                return {
+                    createForm,
+                    detailForm,
+                    updateForm,
+                    createResult,
+                    detailResult,
+                    listResult,
+                    updateResult,
+                    creating,
+                    loadingDetail,
+                    loadingList,
+                    updating,
+                    logs,
+                    testCreateQuestionnaire,
+                    testGetQuestionnaireDetail,
+                    testGetQuestionnaireList,
+                    testUpdateQuestionnaire,
+                    clearLogs,
+                    convertChineseTypeToNumber,
+                    convertNumberToChineseType
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -68,6 +68,11 @@ public class QuestionCreate implements Serializable {
     private Integer creatorId;
 
     /**
+     * 问卷类型：0-调查问卷、1-反馈问卷、2-评价问卷、3-其他
+     */
+    private Integer questionnaireType;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdTime;

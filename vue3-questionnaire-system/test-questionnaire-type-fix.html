@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷类型修改测试</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/ant-design-vue@4/dist/antd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4/dist/reset.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .test-section {
+            margin-bottom: 32px;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+        .form-item {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .result-display {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .btn-test {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+        .btn-test:hover {
+            background: #40a9ff;
+        }
+        .btn-test:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="test-container">
+            <h1>问卷类型修改功能测试</h1>
+            
+            <!-- 测试1: 创建问卷类型选择 -->
+            <div class="test-section">
+                <div class="test-title">测试1: 创建问卷类型选择</div>
+                <div class="form-item">
+                    <label class="form-label">问卷类型:</label>
+                    <a-select
+                        v-model:value="createForm.type"
+                        placeholder="请选择问卷类型"
+                        style="width: 200px"
+                    >
+                        <a-select-option value="survey">调查问卷</a-select-option>
+                        <a-select-option value="feedback">反馈问卷</a-select-option>
+                        <a-select-option value="evaluation">评价问卷</a-select-option>
+                        <a-select-option value="other">其他</a-select-option>
+                    </a-select>
+                </div>
+                <button class="btn-test" @click="testCreateForm">测试创建表单数据</button>
+                <div class="result-display" v-if="createResult">
+                    {{ createResult }}
+                </div>
+            </div>
+
+            <!-- 测试2: 编辑问卷类型选择 -->
+            <div class="test-section">
+                <div class="test-title">测试2: 编辑问卷类型选择</div>
+                <div class="form-item">
+                    <label class="form-label">问卷类型:</label>
+                    <a-select
+                        v-model:value="editForm.type"
+                        placeholder="请选择问卷类型"
+                        style="width: 200px"
+                    >
+                        <a-select-option value="survey">调查问卷</a-select-option>
+                        <a-select-option value="feedback">反馈问卷</a-select-option>
+                        <a-select-option value="evaluation">评价问卷</a-select-option>
+                        <a-select-option value="other">其他</a-select-option>
+                    </a-select>
+                </div>
+                <button class="btn-test" @click="testEditForm">测试编辑表单数据</button>
+                <div class="result-display" v-if="editResult">
+                    {{ editResult }}
+                </div>
+            </div>
+
+            <!-- 测试3: 类型值映射测试 -->
+            <div class="test-section">
+                <div class="test-title">测试3: 类型值映射测试</div>
+                <button class="btn-test" @click="testTypeMapping">测试类型映射</button>
+                <div class="result-display" v-if="mappingResult">
+                    {{ mappingResult }}
+                </div>
+            </div>
+
+            <!-- 测试4: 模拟后端数据 -->
+            <div class="test-section">
+                <div class="test-title">测试4: 模拟后端数据</div>
+                <button class="btn-test" @click="testBackendData">测试后端数据</button>
+                <div class="result-display" v-if="backendResult">
+                    {{ backendResult }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive } = Vue;
+
+        createApp({
+            setup() {
+                // 创建表单数据
+                const createForm = reactive({
+                    title: '测试问卷',
+                    type: 'survey', // 默认值
+                    description: '这是一个测试问卷'
+                });
+
+                // 编辑表单数据
+                const editForm = reactive({
+                    title: '编辑问卷',
+                    type: 'feedback', // 默认值
+                    description: '这是一个编辑问卷'
+                });
+
+                // 测试结果
+                const createResult = ref('');
+                const editResult = ref('');
+                const mappingResult = ref('');
+                const backendResult = ref('');
+
+                // 测试创建表单数据
+                const testCreateForm = () => {
+                    const data = {
+                        title: createForm.title,
+                        description: createForm.description,
+                        questionnaire_type: createForm.type, // 使用数据库字段名
+                        status: 1,
+                        creatorId: 1
+                    };
+                    
+                    createResult.value = `创建表单数据:\n${JSON.stringify(data, null, 2)}`;
+                };
+
+                // 测试编辑表单数据
+                const testEditForm = () => {
+                    const data = {
+                        title: editForm.title,
+                        description: editForm.description,
+                        questionnaire_type: editForm.type, // 使用数据库字段名
+                        status: 2
+                    };
+                    
+                    editResult.value = `编辑表单数据:\n${JSON.stringify(data, null, 2)}`;
+                };
+
+                // 测试类型映射
+                const testTypeMapping = () => {
+                    const typeMap = {
+                        'survey': '调查问卷',
+                        'feedback': '反馈问卷',
+                        'evaluation': '评价问卷',
+                        'other': '其他'
+                    };
+
+                    const testTypes = ['survey', 'feedback', 'evaluation', 'other'];
+                    const mapping = testTypes.map(type => ({
+                        value: type,
+                        label: typeMap[type] || '未知类型'
+                    }));
+
+                    mappingResult.value = `类型映射:\n${JSON.stringify(mapping, null, 2)}`;
+                };
+
+                // 测试后端数据
+                const testBackendData = () => {
+                    // 模拟后端返回的数据
+                    const mockBackendData = {
+                        questionnaire: {
+                            id: 1,
+                            title: '测试问卷',
+                            description: '这是一个测试问卷',
+                            questionnaire_type: 'survey', // 后端字段名
+                            status: 1,
+                            startDate: '2024-01-01',
+                            endDate: '2024-12-31'
+                        }
+                    };
+
+                    // 前端处理逻辑
+                    const processedData = {
+                        id: mockBackendData.questionnaire.id,
+                        title: mockBackendData.questionnaire.title,
+                        type: mockBackendData.questionnaire.questionnaire_type || mockBackendData.questionnaire.type, // 优先使用questionnaire_type字段
+                        description: mockBackendData.questionnaire.description,
+                        status: mockBackendData.questionnaire.status
+                    };
+
+                    backendResult.value = `模拟后端数据:\n${JSON.stringify(mockBackendData, null, 2)}\n\n处理后数据:\n${JSON.stringify(processedData, null, 2)}`;
+                };
+
+                return {
+                    createForm,
+                    editForm,
+                    createResult,
+                    editResult,
+                    mappingResult,
+                    backendResult,
+                    testCreateForm,
+                    testEditForm,
+                    testTypeMapping,
+                    testBackendData
+                };
+            }
+        }).use(antd).mount('#app');
+    </script>
+</body>
+</html>

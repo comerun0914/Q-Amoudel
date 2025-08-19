@@ -3,15 +3,16 @@
     <div class="page-header">
       <div class="header-left">
         <div class="title-with-back">
-          <a-button 
-            type="link" 
-            size="large" 
+          <button 
             @click="goToHome"
             class="back-home-btn"
           >
-            <HomeOutlined />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9,22 9,12 15,12 15,22"/>
+            </svg>
             主页
-          </a-button>
+          </button>
           <h1>创建问卷</h1>
         </div>
         <p>设计您的问卷内容，支持多种题型</p>
@@ -56,10 +57,10 @@
                   placeholder="请选择问卷类型"
                   size="large"
                 >
-                  <a-select-option value="survey">调查问卷</a-select-option>
-                  <a-select-option value="feedback">反馈问卷</a-select-option>
-                  <a-select-option value="evaluation">评价问卷</a-select-option>
-                  <a-select-option value="other">其他</a-select-option>
+                  <a-select-option value="调查问卷">调查问卷</a-select-option>
+                  <a-select-option value="反馈问卷">反馈问卷</a-select-option>
+                  <a-select-option value="评价问卷">评价问卷</a-select-option>
+                  <a-select-option value="其他">其他</a-select-option>
                 </a-select>
               </a-form-item>
             </a-col>
@@ -372,12 +373,12 @@ import {
   UploadOutlined,
   SaveOutlined,
   RocketOutlined,
-  DragOutlined,
-  HomeOutlined
+  DragOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG, UTILS } from '@/api/config'
 import { api } from '@/utils/request'
 import QuestionModal from '@/components/Questionnaire/QuestionModal.vue'
+import { convertChineseTypeToNumber } from '@/utils/questionnaireTypeMapping'
 
 // 使用组合式API
 const router = useRouter()
@@ -438,7 +439,7 @@ const getCurrentUserInfo = () => {
 // 问卷基本信息
 const questionnaireInfo = reactive({
   title: '',
-  type: '',
+  type: '调查问卷', // 设置默认文件类型
   description: '',
   startDate: null,
   endDate: null,
@@ -677,7 +678,7 @@ const saveAsDraft = async () => {
     const saveData = {
       title: questionnaireInfo.title,
       description: questionnaireInfo.description,
-      type: questionnaireInfo.type,
+      questionnaire_type: convertChineseTypeToNumber(questionnaireInfo.type), // 转换为数据库tinyint值
       startDate: questionnaireInfo.startDate,
       endDate: questionnaireInfo.endDate,
       anonymous: questionnaireInfo.anonymous,
@@ -769,6 +770,7 @@ const saveAsDraft = async () => {
             id: questionnaireId,
             title: questionnaireInfo.title,
             description: questionnaireInfo.description,
+            questionnaireType: questionnaireInfo.type, // 添加文件类型信息
             totalQuestions: questions.value.length,
             startDate: questionnaireInfo.startDate,
             endDate: questionnaireInfo.endDate,
@@ -821,7 +823,7 @@ const publishQuestionnaire = async () => {
     const publishData = {
       title: questionnaireInfo.title,
       description: questionnaireInfo.description,
-      type: questionnaireInfo.type,
+      questionnaire_type: convertChineseTypeToNumber(questionnaireInfo.type), // 转换为数据库tinyint值
       startDate: questionnaireInfo.startDate,
       endDate: questionnaireInfo.endDate,
       anonymous: questionnaireInfo.anonymous,
@@ -912,6 +914,7 @@ const publishQuestionnaire = async () => {
             id: questionnaireId,
             title: questionnaireInfo.title,
             description: questionnaireInfo.description,
+            questionnaireType: questionnaireInfo.type, // 保持前端字段名用于显示
             totalQuestions: questions.value.length,
             startDate: questionnaireInfo.startDate,
             endDate: questionnaireInfo.endDate,
@@ -1096,7 +1099,7 @@ const autoSave = async () => {
       const saveData = {
         title: questionnaireInfo.title,
         description: questionnaireInfo.description,
-        type: questionnaireInfo.type,
+        questionnaire_type: questionnaireInfo.type, // 使用数据库字段名
         startDate: questionnaireInfo.startDate,
         endDate: questionnaireInfo.endDate,
         anonymous: questionnaireInfo.anonymous,
@@ -1145,6 +1148,12 @@ const loadDraft = () => {
         title: '发现草稿',
         content: '检测到未保存的草稿，是否要恢复？',
         onOk: () => {
+          // 恢复草稿数据，确保文件类型字段正确映射
+          if (draftData.questionnaire_type) {
+            draftData.type = draftData.questionnaire_type
+          } else if (draftData.questionnaireType) {
+            draftData.type = draftData.questionnaireType
+          }
           Object.assign(questionnaireInfo, draftData)
           questions.value = draftData.questions || []
           message.success('草稿已恢复')
@@ -1168,17 +1177,17 @@ const saveQuestionnaire = async () => {
     // 验证表单
     await infoFormRef.value?.validate()
 
-    // 构建保存数据，根据数据库表结构
-    const saveData = {
-      title: questionnaireInfo.title,
-      description: questionnaireInfo.description,
-      type: questionnaireInfo.type,
-      startDate: questionnaireInfo.startDate,
-      endDate: questionnaireInfo.endDate,
-      anonymous: questionnaireInfo.anonymous,
-      status: 0, // 草稿状态
-      creatorId: getCurrentUserId(), // 临时设置，实际应该从用户状态获取
-      submissionLimit: 1, // 默认每人填写1次
+            // 构建保存数据，根据数据库表结构
+        const saveData = {
+          title: questionnaireInfo.title,
+          description: questionnaireInfo.description,
+          questionnaire_type: questionnaireInfo.type, // 使用数据库字段名
+          startDate: questionnaireInfo.startDate,
+          endDate: questionnaireInfo.endDate,
+          anonymous: questionnaireInfo.anonymous,
+          status: 0, // 草稿状态
+          creatorId: getCurrentUserId(), // 临时设置，实际应该从用户状态获取
+          submissionLimit: 1, // 默认每人填写1次
       questions: questions.value.map((q, index) => {
         const questionData = {
           content: q.title,
@@ -1593,5 +1602,33 @@ const goToHome = () => {
   .matrix-preview {
     flex-direction: column;
   }
+}
+
+/* 主页按钮统一样式 */
+.back-home-btn {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.back-home-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.back-home-btn svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

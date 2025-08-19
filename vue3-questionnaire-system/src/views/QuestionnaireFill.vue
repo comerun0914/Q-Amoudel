@@ -5,12 +5,13 @@
       <div class="header-content">
         <div class="header-left">
           <div class="back-buttons">
-            <a-button class="btn-home" @click="goToHome">
-              <template #icon>
-                <HomeOutlined />
-              </template>
+            <button class="btn-home" @click="goToHome">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
+              </svg>
               主页
-            </a-button>
+            </button>
             <a-button class="btn-back" @click="goBack" :loading="backLoading">
               <template #icon>
                 <ArrowLeftOutlined />
@@ -259,14 +260,58 @@ import {
   SaveOutlined,
   ClockCircleOutlined,
   CalendarOutlined,
-  SendOutlined,
-  HomeOutlined
+  SendOutlined
 } from '@ant-design/icons-vue'
 import { questionnaireApi, questionnaireUtils } from '@/api/questionnaire'
 import { CONFIG } from '@/api/config'
 
 const router = useRouter()
 const route = useRoute()
+
+// 工具函数：从本地存储获取用户ID
+const getCurrentUserId = () => {
+  const userInfoStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO);
+  if (userInfoStr) {
+    try {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo && userInfo.id) {
+        return userInfo.id;
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error);
+    }
+  }
+  return null; // 允许匿名填写
+};
+
+// 工具函数：从本地存储获取用户信息
+const getCurrentUserInfo = () => {
+  const userInfoStr = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_INFO);
+  if (userInfoStr) {
+    try {
+      const userInfo = JSON.parse(userInfoStr);
+      if (userInfo && userInfo.id) {
+        return userInfo;
+      }
+    } catch (error) {
+      console.error('解析用户信息失败:', error);
+    }
+  }
+  return null;
+};
+
+// 获取客户端IP地址
+const getClientIP = async () => {
+  try {
+    // 尝试从第三方服务获取IP
+    const response = await fetch('https://api.ipify.org?format=json');
+    const data = await response.json();
+    return data.ip;
+  } catch (error) {
+    console.error('获取IP地址失败:', error);
+    return '127.0.0.1'; // 默认IP
+  }
+};
 
 // 响应式数据
 const loading = ref(true)
@@ -416,13 +461,47 @@ const loadQuestionnaire = async () => {
 
     if (questionnaireId) {
       // 根据数据库表结构，从question_create表获取问卷数据
-      response = await questionnaireApi.getQuestionnaireDetail(questionnaireId)
+      const questionnaireResponse = await questionnaireApi.getQuestionnaireDetail(questionnaireId)
+      if (questionnaireResponse.code !== 200) {
+        throw new Error(questionnaireResponse.message || '获取问卷信息失败')
+      }
+      
+      // 获取问卷问题列表
+      const questionsResponse = await questionnaireApi.getQuestionnaireQuestions(questionnaireId)
+      if (questionsResponse.code !== 200) {
+        throw new Error(questionsResponse.message || '获取问题列表失败')
+      }
+      
+      response = {
+        code: 200,
+        data: {
+          questionnaire: questionnaireResponse.data,
+          questions: questionsResponse.data
+        }
+      }
     } else if (url) {
       // 根据URL获取问卷
       response = await questionnaireApi.getQuestionnaireByUrl(url)
     } else if (code) {
-      // 根据代码获取问卷
-      response = await questionnaireApi.getQuestionnaireByCode(code)
+      // 根据代码获取问卷 - 现在代码就是问卷ID
+      const questionnaireResponse = await questionnaireApi.getQuestionnaireDetail(code)
+      if (questionnaireResponse.code !== 200) {
+        throw new Error(questionnaireResponse.message || '获取问卷信息失败')
+      }
+      
+      // 获取问卷问题列表
+      const questionsResponse = await questionnaireApi.getQuestionnaireQuestions(code)
+      if (questionsResponse.code !== 200) {
+        throw new Error(questionsResponse.message || '获取问题列表失败')
+      }
+      
+      response = {
+        code: 200,
+        data: {
+          questionnaire: questionnaireResponse.data,
+          questions: questionsResponse.data
+        }
+      }
     } else {
       throw new Error('缺少问卷标识')
     }
@@ -432,9 +511,15 @@ const loadQuestionnaire = async () => {
 
       // 根据后端数据结构映射
       const questionnaire = data.questionnaire || data
+      
+      // 检查问卷状态，只有已发布的问卷才能填写
+      if (questionnaire.status !== 1) {
+        throw new Error('该问卷尚未发布，无法填写')
+      }
+      
       questionnaireTitle.value = questionnaire.title || '问卷标题'
       questionnaireDescription.value = questionnaire.description || '问卷描述信息'
-      startTime.value = questionnaire.createTime ? new Date(questionnaire.createTime).toLocaleString('zh-CN') : '-'
+      startTime.value = questionnaire.startDate ? new Date(questionnaire.startDate).toLocaleString('zh-CN') : '-'
       estimatedTime.value = `${questionnaire.estimatedTime || 10} 分钟`
 
       // 初始化问题数据，根据数据库表结构
@@ -446,8 +531,12 @@ const loadQuestionnaire = async () => {
         return {
           ...q,
           answer,
-          // 确保必填字段存在
-          isRequired: q.isRequired !== undefined ? q.isRequired : false
+          // 确保必填字段存在，后端返回的是Integer类型（1=是，0=否）
+          isRequired: q.isRequired === 1,
+          // 确保问题内容字段正确映射
+          title: q.content || q.title || '问题标题',
+          // 确保问题类型字段正确映射
+          type: q.questionType || q.type
         }
       })
 
@@ -526,6 +615,13 @@ const submitQuestionnaire = async () => {
   submitLoading.value = true
 
   try {
+    // 获取问卷ID（支持多种方式）
+    const questionnaireId = route.params.id || route.query.code
+    
+    if (!questionnaireId) {
+      throw new Error('无法获取问卷ID')
+    }
+
     // 收集所有答案，根据数据库表结构
     const answers = questions.value.map(question => ({
       questionId: question.id,
@@ -533,18 +629,81 @@ const submitQuestionnaire = async () => {
       questionType: question.questionType
     }))
 
+    // 构建提交数据，根据数据库表结构
+    const submissionData = {
+      questionnaireId: questionnaireId,
+      answers: answers,
+      submitTime: new Date().toISOString(),
+      duration: Math.floor((Date.now() - startTimeStamp.value) / 1000), // 转换为秒
+      // 添加用户信息（如果有的话）
+      userId: getCurrentUserId(),
+      submitterName: getCurrentUserInfo()?.username || null,
+      submitterEmail: getCurrentUserInfo()?.email || null,
+      submitterPhone: getCurrentUserInfo()?.phone || null,
+      ipAddress: await getClientIP(),
+      userAgent: navigator.userAgent,
+      startTime: new Date(startTimeStamp.value).toISOString(),
+      isComplete: true,
+      status: 1
+    }
+
     // 根据数据库表结构，保存到questionnaire_submission和question_answer表
-    await questionnaireApi.submitQuestionnaire({
-      questionnaireId: route.params.id,
-      answers,
-      submitTime: Date.now(),
-      duration: Date.now() - startTimeStamp.value
+    // 首先创建提交记录
+    const submissionResponse = await questionnaireApi.createSubmission({
+      questionnaireId: questionnaireId,
+      userId: getCurrentUserId(),
+      submitterName: getCurrentUserInfo()?.username || null,
+      submitterEmail: getCurrentUserInfo()?.email || null,
+      submitterPhone: getCurrentUserInfo()?.phone || null,
+      ipAddress: await getClientIP(),
+      userAgent: navigator.userAgent,
+      startTime: new Date(startTimeStamp.value).toISOString(),
+      submitTime: submissionData.submitTime,
+      durationSeconds: submissionData.duration,
+      status: 1,
+      isComplete: true
     })
 
-    message.success('问卷提交成功！')
+    if (submissionResponse.code !== 200) {
+      throw new Error('创建提交记录失败: ' + submissionResponse.message)
+    }
 
-    // 跳转到成功页面
-    router.push('/questionnaire/success')
+    const submissionId = submissionResponse.data.id
+
+    // 然后保存所有答案
+    const answerPromises = answers.map(async (answer) => {
+      const answerData = {
+        submissionId: submissionId,
+        questionId: answer.questionId,
+        questionType: answer.questionType,
+        answerJson: JSON.stringify(answer.answer)
+      }
+
+      return await questionnaireApi.createQuestionAnswer(answerData)
+    })
+
+    await Promise.all(answerPromises)
+
+    const response = { code: 200, message: '提交成功' }
+
+    if (response.code === 200) {
+      message.success('问卷提交成功！')
+      
+      // 跳转到成功页面，传递问卷信息
+      router.push({
+        path: '/questionnaire/success',
+        query: {
+          id: questionnaireId,
+          title: questionnaireTitle.value,
+          description: questionnaireDescription.value,
+          action: 'submit',
+          submitTime: submissionData.submitTime,
+          duration: submissionData.duration
+        }
+      })
+    } else {
+      throw new Error(response.message || '提交失败')
+    }
   } catch (error) {
     console.error('问卷提交失败:', error)
     message.error('问卷提交失败: ' + (error.message || '未知错误'))
@@ -708,6 +867,23 @@ onUnmounted(() => {
   height: 40px;
   padding: 0 16px;
   border-radius: 6px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-home:hover {
+  background-color: #40a9ff;
+}
+
+.btn-home:focus {
+  outline: none;
+}
+
+.btn-home svg {
+  fill: white;
 }
 
 .btn-back {
@@ -1053,5 +1229,33 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 12px;
   }
+}
+
+/* 主页按钮统一样式 */
+.btn-home {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-home:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.btn-home svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

@@ -3,16 +3,17 @@
     <div class="page-header">
       <div class="header-left">
         <div class="title-with-back">
-          <a-button 
-            type="link" 
-            size="large" 
+          <button 
             @click="goToHome"
             class="back-home-btn"
           >
-            <HomeOutlined />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9,22 9,12 15,12 15,22"/>
+            </svg>
             主页
-          </a-button>
-          <h1>数据统计</h1>
+          </button>
+          <h1>问卷统计</h1>
         </div>
         <p>分析问卷数据，生成可视化报告</p>
       </div>
@@ -225,8 +226,7 @@ import {
   RiseOutlined,
   ClockCircleOutlined,
   CalendarOutlined,
-  ReloadOutlined,
-  HomeOutlined
+  ReloadOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG, UTILS } from '@/api/config'
 import { api } from '@/utils/request'
@@ -1169,32 +1169,47 @@ onMounted(() => {
 
   .header-actions {
     width: 100%;
-    flex-direction: column;
-    gap: 12px;
+    justify-content: stretch;
   }
 
-  .header-actions .ant-select {
-    width: 100% !important;
+  .header-actions .ant-btn {
+    flex: 1;
   }
 
-  .overview-cards .ant-col {
-    margin-bottom: 16px;
+  .statistics-grid {
+    grid-template-columns: 1fr;
   }
 
-  .question-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .chart-container {
+    padding: 16px;
   }
+}
 
-  .table-actions {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
+/* 主页按钮统一样式 */
+.back-home-btn {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: none;
+}
 
-  .table-actions .ant-input-search {
-    width: 100% !important;
-  }
+.back-home-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.back-home-btn svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

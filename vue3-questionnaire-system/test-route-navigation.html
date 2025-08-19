@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路由跳转测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #1890ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            width: 100%;
+        }
+        .test-button:hover {
+            background-color: #40a9ff;
+        }
+        .result-box {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .info-box {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #1890ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">路由跳转功能测试</h1>
+        
+        <div class="info-box">
+            <h4>📋 测试说明</h4>
+            <p>这个页面用于测试路由跳转功能是否正常工作。</p>
+            <p><strong>测试目标：</strong>验证点击按钮后是否能正确跳转到问卷填写页面</p>
+        </div>
+        
+        <button class="test-button" onclick="testRouteNavigation()">
+            🚀 测试路由跳转
+        </button>
+        
+        <button class="test-button" onclick="testDirectNavigation()">
+            🔗 直接跳转测试
+        </button>
+        
+        <div id="result" class="result-box">
+            点击按钮开始测试路由跳转功能...
+        </div>
+    </div>
+
+    <script>
+        function testRouteNavigation() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试路由跳转...</span>';
+            
+            try {
+                // 模拟路由跳转
+                const targetPath = '/questionnaire/fill/123';
+                console.log('测试路由跳转到:', targetPath);
+                
+                // 检查当前页面状态
+                const currentPath = window.location.pathname;
+                const currentUrl = window.location.href;
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 路由跳转测试完成</span>
+                    
+                    <strong>当前页面信息:</strong>
+                    - 路径: ${currentPath}
+                    - 完整URL: ${currentUrl}
+                    - 目标路径: ${targetPath}
+                    
+                    <strong>测试结果:</strong>
+                    - 如果这是Vue应用，点击"填写问卷"按钮应该跳转到: ${targetPath}
+                    - 如果跳转失败，请检查浏览器控制台的错误信息
+                    
+                    <strong>调试建议:</strong>
+                    1. 打开浏览器开发者工具 (F12)
+                    2. 查看 Console 标签页
+                    3. 点击"填写问卷"按钮
+                    4. 观察控制台输出的调试信息
+                `;
+                
+            } catch (error) {
+                console.error('测试失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 测试异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                    
+                    请检查页面是否正确加载
+                `;
+            }
+        }
+        
+        function testDirectNavigation() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在测试直接跳转...</span>';
+            
+            try {
+                // 尝试直接跳转
+                const targetPath = '/questionnaire/fill/123';
+                console.log('尝试直接跳转到:', targetPath);
+                
+                // 使用 window.location 进行跳转
+                window.location.href = targetPath;
+                
+                resultDiv.innerHTML = `
+                    <span class="status success">✅ 直接跳转测试</span>
+                    
+                    正在跳转到: ${targetPath}
+                    如果跳转成功，页面应该发生变化
+                    如果跳转失败，请检查路由配置
+                `;
+                
+            } catch (error) {
+                console.error('直接跳转失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 直接跳转失败</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                `;
+            }
+        }
+        
+        // 页面加载时显示提示
+        window.onload = function() {
+            console.log('路由跳转测试页面已加载');
+            console.log('当前页面路径:', window.location.pathname);
+            console.log('请确保Vue应用已正确启动');
+        };
+    </script>
+</body>
+</html>

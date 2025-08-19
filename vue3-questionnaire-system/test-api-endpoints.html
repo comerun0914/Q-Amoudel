@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API端点测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #1890ff;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+        .test-item h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .test-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #40a9ff;
+        }
+        .button.secondary {
+            background-color: #52c41a;
+        }
+        .button.secondary:hover {
+            background-color: #73d13d;
+        }
+        .result-box {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .endpoint-info {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .endpoint-info h5 {
+            margin: 0 0 8px 0;
+            color: #1890ff;
+        }
+        .endpoint-info p {
+            margin: 4px 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="test-title">API端点测试</h1>
+    
+    <div class="test-section">
+        <h2>测试说明</h2>
+        <p>这个页面用于测试问卷系统的各个API端点是否正常工作。点击下面的按钮来测试不同的API。</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>问卷列表API测试</h2>
+        
+        <div class="endpoint-info">
+            <h5>📋 获取所有问卷列表</h5>
+            <p><strong>端点：</strong>GET /api/questionCreate/all</p>
+            <p><strong>参数：</strong>page (默认1), size (默认50), keyword, status, dateFilter (可选)</p>
+            <p><strong>用途：</strong>获取系统中所有可用的问卷</p>
+        </div>
+        
+        <div class="test-item">
+            <h4>1. 测试获取所有问卷（默认参数）</h4>
+            <p>测试不传递任何参数获取问卷列表</p>
+            <button class="button" onclick="testGetAllQuestionnaires()">测试获取所有问卷</button>
+            <div id="result1" class="result-box">点击按钮开始测试...</div>
+        </div>
+        
+        <div class="test-item">
+            <h4>2. 测试获取已发布问卷</h4>
+            <p>测试获取状态为1（已发布）的问卷</p>
+            <button class="button" onclick="testGetPublishedQuestionnaires()">测试获取已发布问卷</button>
+            <div id="result2" class="result-box">点击按钮开始测试...</div>
+        </div>
+        
+        <div class="test-item">
+            <h4>3. 测试分页获取问卷</h4>
+            <p>测试分页功能，获取第一页，每页10条</p>
+            <button class="button" onclick="testGetQuestionnairesWithPagination()">测试分页获取</button>
+            <div id="result3" class="result-box">点击按钮开始测试...</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>问卷详情API测试</h2>
+        
+        <div class="endpoint-info">
+            <h5>📄 获取问卷详情</h5>
+            <p><strong>端点：</strong>GET /api/questionCreate/detail/{id}</p>
+            <p><strong>参数：</strong>id (路径参数)</p>
+            <p><strong>用途：</strong>根据问卷ID获取问卷详细信息</p>
+        </div>
+        
+        <div class="test-item">
+            <h4>4. 测试获取问卷详情</h4>
+            <p>输入一个问卷ID来测试获取详情功能</p>
+            <input type="number" id="questionnaireId" placeholder="输入问卷ID" style="padding: 8px; margin-right: 10px; border: 1px solid #d9d9d9; border-radius: 4px;">
+            <button class="button" onclick="testGetQuestionnaireDetail()">测试获取详情</button>
+            <div id="result4" class="result-box">输入问卷ID后点击按钮开始测试...</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>问卷问题API测试</h2>
+        
+        <div class="endpoint-info">
+            <h5>❓ 获取问卷问题列表</h5>
+            <p><strong>端点：</strong>GET /api/questionCreate/questions</p>
+            <p><strong>参数：</strong>questionnaireId (查询参数)</p>
+            <p><strong>用途：</strong>根据问卷ID获取该问卷的所有问题</p>
+        </div>
+        
+        <div class="test-item">
+            <h4>5. 测试获取问卷问题</h4>
+            <p>输入一个问卷ID来测试获取问题列表功能</p>
+            <input type="number" id="questionnaireIdForQuestions" placeholder="输入问卷ID" style="padding: 8px; margin-right: 10px; border: 1px solid #d9d9d9; border-radius: 4px;">
+            <button class="button" onclick="testGetQuestionnaireQuestions()">测试获取问题</button>
+            <div id="result5" class="result-box">输入问卷ID后点击按钮开始测试...</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试结果总结</h2>
+        <div id="testSummary">
+            <p>点击上面的测试按钮开始测试，结果将显示在这里...</p>
+        </div>
+    </div>
+
+    <script>
+        // 测试获取所有问卷（默认参数）
+        async function testGetAllQuestionnaires() {
+            const resultDiv = document.getElementById('result1');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/api/questionCreate/all');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="status success">✅ 成功</span>\n\n状态码: ${response.status}\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取所有问卷', true, data.message || '成功');
+                } else {
+                    resultDiv.innerHTML = `<span class="status error">❌ 失败</span>\n\n状态码: ${response.status}\n错误信息:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取所有问卷', false, data.message || '请求失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">❌ 异常</span>\n\n错误信息:\n${error.message}`;
+                updateTestSummary('获取所有问卷', false, error.message);
+            }
+        }
+        
+        // 测试获取已发布问卷
+        async function testGetPublishedQuestionnaires() {
+            const resultDiv = document.getElementById('result2');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/api/questionCreate/all?status=1');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="status success">✅ 成功</span>\n\n状态码: ${response.status}\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取已发布问卷', true, data.message || '成功');
+                } else {
+                    resultDiv.innerHTML = `<span class="status error">❌ 失败</span>\n\n状态码: ${response.status}\n错误信息:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取已发布问卷', false, data.message || '请求失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">❌ 异常</span>\n\n错误信息:\n${error.message}`;
+                updateTestSummary('获取已发布问卷', false, error.message);
+            }
+        }
+        
+        // 测试分页获取问卷
+        async function testGetQuestionnairesWithPagination() {
+            const resultDiv = document.getElementById('result3');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch('/api/questionCreate/all?page=1&size=10');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="status success">✅ 成功</span>\n\n状态码: ${response.status}\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('分页获取问卷', true, data.message || '成功');
+                } else {
+                    resultDiv.innerHTML = `<span class="status error">❌ 失败</span>\n\n状态码: ${response.status}\n错误信息:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('分页获取问卷', false, data.message || '请求失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">❌ 异常</span>\n\n错误信息:\n${error.message}`;
+                updateTestSummary('分页获取问卷', false, error.message);
+            }
+        }
+        
+        // 测试获取问卷详情
+        async function testGetQuestionnaireDetail() {
+            const questionnaireId = document.getElementById('questionnaireId').value;
+            if (!questionnaireId) {
+                alert('请输入问卷ID');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result4');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch(`/api/questionCreate/detail/${questionnaireId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="status success">✅ 成功</span>\n\n状态码: ${response.status}\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取问卷详情', true, data.message || '成功');
+                } else {
+                    resultDiv.innerHTML = `<span class="status error">❌ 失败</span>\n\n状态码: ${response.status}\n错误信息:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取问卷详情', false, data.message || '请求失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">❌ 异常</span>\n\n错误信息:\n${error.message}`;
+                updateTestSummary('获取问卷详情', false, error.message);
+            }
+        }
+        
+        // 测试获取问卷问题
+        async function testGetQuestionnaireQuestions() {
+            const questionnaireId = document.getElementById('questionnaireIdForQuestions').value;
+            if (!questionnaireId) {
+                alert('请输入问卷ID');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result5');
+            resultDiv.textContent = '正在测试...';
+            
+            try {
+                const response = await fetch(`/api/questionCreate/questions?questionnaireId=${questionnaireId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="status success">✅ 成功</span>\n\n状态码: ${response.status}\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取问卷问题', true, data.message || '成功');
+                } else {
+                    resultDiv.innerHTML = `<span class="status error">❌ 失败</span>\n\n状态码: ${response.status}\n错误信息:\n${JSON.stringify(data, null, 2)}`;
+                    updateTestSummary('获取问卷问题', false, data.message || '请求失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status error">❌ 异常</span>\n\n错误信息:\n${error.message}`;
+                updateTestSummary('获取问卷问题', false, error.message);
+            }
+        }
+        
+        // 更新测试总结
+        function updateTestSummary(testName, success, message) {
+            const summaryDiv = document.getElementById('testSummary');
+            const currentContent = summaryDiv.innerHTML;
+            
+            const statusIcon = success ? '✅' : '❌';
+            const statusClass = success ? 'success' : 'error';
+            
+            const newTestResult = `<div style="margin: 8px 0;"><span class="status ${statusClass}">${statusIcon} ${testName}</span>: ${message}</div>`;
+            
+            if (currentContent.includes('点击上面的测试按钮开始测试')) {
+                summaryDiv.innerHTML = newTestResult;
+            } else {
+                summaryDiv.innerHTML += newTestResult;
+            }
+        }
+    </script>
+</body>
+</html>

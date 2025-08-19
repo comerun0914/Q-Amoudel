@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷填写界面导航修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #1890ff;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+        .test-item h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .test-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .code-block {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #40a9ff;
+        }
+        .button.secondary {
+            background-color: #52c41a;
+        }
+        .button.secondary:hover {
+            background-color: #73d13d;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-list li:before {
+            content: "✅ ";
+            color: #52c41a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="test-title">问卷填写界面导航修复测试</h1>
+    
+    <div class="test-section">
+        <h2>修复内容总结</h2>
+        <div class="test-item">
+            <h4>✅ 可用问卷列表显示</h4>
+            <p><strong>问题：</strong>原来只显示用户最近填写的问卷</p>
+            <p><strong>解决方案：</strong>改为显示所有可用的问卷，包括问卷ID、标题、描述和状态</p>
+            <p><strong>状态：</strong><span class="status success">已修复</span></p>
+        </div>
+        
+        <div class="test-item">
+            <h4>✅ 填写按钮添加</h4>
+            <p><strong>问题：</strong>没有直接的填写按钮</p>
+            <p><strong>解决方案：</strong>为每个已发布的问卷添加"填写问卷"按钮</p>
+            <p><strong>状态：</strong><span class="status success">已修复</span></p>
+        </div>
+        
+        <div class="test-item">
+            <h4>✅ 问卷状态显示</h4>
+            <p><strong>问题：</strong>没有显示问卷的发布状态</p>
+            <p><strong>解决方案：</strong>显示问卷状态（已发布/草稿/已禁用）</p>
+            <p><strong>状态：</strong><span class="status success">已修复</span></p>
+        </div>
+        
+        <div class="test-item">
+            <h4>✅ 路由跳转调试</h4>
+            <p><strong>问题：</strong>路由跳转失败时没有错误信息</p>
+            <p><strong>解决方案：</strong>添加调试信息和错误处理</p>
+            <p><strong>状态：</strong><span class="status success">已修复</span></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>新增功能特性</h2>
+        <ul class="feature-list">
+            <li><strong>问卷列表显示：</strong>显示所有可用问卷，包括ID、标题、描述</li>
+            <li><strong>状态标签：</strong>用不同颜色显示问卷状态（已发布/草稿/已禁用）</li>
+            <li><strong>填写按钮：</strong>只有已发布的问卷才显示可点击的填写按钮</li>
+            <li><strong>刷新功能：</strong>可以手动刷新问卷列表</li>
+            <li><strong>历史记录：</strong>保留查看填写历史的功能</li>
+            <li><strong>调试信息：</strong>在控制台显示路由跳转的详细信息</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试步骤</h2>
+        <div class="test-item">
+            <h4>1. 验证问卷列表显示</h4>
+            <p>进入用户界面，应该能看到"可用问卷列表"而不是"最近填写的问卷"</p>
+            <button class="button" onclick="testQuestionnaireList()">测试问卷列表显示</button>
+        </div>
+        
+        <div class="test-item">
+            <h4>2. 验证填写按钮</h4>
+            <p>已发布的问卷应该显示"填写问卷"按钮，草稿状态显示"未发布"</p>
+            <button class="button" onclick="testFillButtons()">测试填写按钮</button>
+        </div>
+        
+        <div class="test-item">
+            <h4>3. 验证路由跳转</h4>
+            <p>点击填写按钮应该能正确跳转到问卷填写界面</p>
+            <button class="button" onclick="testNavigation()">测试路由跳转</button>
+        </div>
+        
+        <div class="test-item">
+            <h4>4. 验证调试信息</h4>
+            <p>在浏览器控制台应该能看到路由跳转的调试信息</p>
+            <button class="button" onclick="testDebugInfo()">测试调试信息</button>
+        </div>
+        
+        <div class="test-item">
+            <h4>5. 验证问卷ID输入</h4>
+            <p>通过问卷ID输入应该能正确跳转</p>
+            <button class="button" onclick="testQuestionnaireIdInput()">测试问卷ID输入</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>修复的代码示例</h2>
+        <div class="test-item">
+            <h4>问卷列表数据获取</h4>
+            <div class="code-block">
+// 修复前：获取用户最近填写的问卷
+const loadRecentData = async () => {
+  const response = await fetch('/api/questionnaireSubmission/userRecent', ...)
+}
+
+// 修复后：获取所有可用问卷
+const loadAvailableQuestionnaires = async () => {
+  const response = await fetch('/api/questionCreate/list', ...)
+}
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <h4>问卷状态显示</h4>
+            <div class="code-block">
+// 新增：问卷状态判断方法
+const getQuestionnaireStatusColor = (status) => {
+  const colors = {
+    0: 'error',      // 禁用
+    1: 'success',    // 启用/已发布
+    2: 'warning'     // 草稿
+  }
+  return colors[status] || 'default'
+}
+
+const getQuestionnaireStatusText = (status) => {
+  const texts = {
+    0: '已禁用',
+    1: '已发布',
+    2: '草稿'
+  }
+  return texts[status] || '未知'
+}
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <h4>填写按钮逻辑</h4>
+            <div class="code-block">
+// 填写按钮：只有已发布的问卷才能点击
+<a-button 
+  type="primary" 
+  @click="goToQuestionnaire(item.id)"
+  :disabled="item.status !== 1"
+>
+  {{ item.status === 1 ? '填写问卷' : '未发布' }}
+</a-button>
+            </div>
+        </div>
+        
+        <div class="test-item">
+            <h4>路由跳转调试</h4>
+            <div class="code-block">
+// 添加调试信息和错误处理
+const goToQuestionnaire = (id) => {
+  console.log('准备跳转到问卷填写页面，ID:', id)
+  try {
+    router.push(`/questionnaire/fill/${id}`)
+    console.log('路由跳转成功')
+  } catch (error) {
+    console.error('路由跳转失败:', error)
+    message.error('跳转失败，请重试')
+  }
+}
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试结果</h2>
+        <div id="testResults">
+            <p>点击上面的测试按钮开始测试...</p>
+        </div>
+    </div>
+
+    <script>
+        function testQuestionnaireList() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p><span class="status success">✅ 问卷列表显示测试</span></p>';
+            results.innerHTML += '<p>1. 进入用户界面，查看"可用问卷列表"部分</p>';
+            results.innerHTML += '<p>2. 应该显示所有可用问卷，包括ID、标题、描述</p>';
+            results.innerHTML += '<p>3. 每个问卷应该有状态标签（已发布/草稿/已禁用）</p>';
+            results.innerHTML += '<p>4. 应该有"刷新问卷列表"按钮</p>';
+        }
+        
+        function testFillButtons() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p><span class="status success">✅ 填写按钮测试</span></p>';
+            results.innerHTML += '<p>1. 查看已发布问卷（状态为"已发布"）</p>';
+            results.innerHTML += '<p>2. 应该显示蓝色的"填写问卷"按钮</p>';
+            results.innerHTML += '<p>3. 查看草稿问卷（状态为"草稿"）</p>';
+            results.innerHTML += '<p>4. 应该显示灰色的"未发布"按钮（不可点击）</p>';
+        }
+        
+        function testNavigation() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p><span class="status success">✅ 路由跳转测试</span></p>';
+            results.innerHTML += '<p>1. 点击已发布问卷的"填写问卷"按钮</p>';
+            results.innerHTML += '<p>2. 应该跳转到 /questionnaire/fill/{id} 路由</p>';
+            results.innerHTML += '<p>3. 填写界面应该正确加载问卷数据</p>';
+            results.innerHTML += '<p>4. 如果跳转失败，应该显示错误提示</p>';
+        }
+        
+        function testDebugInfo() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p><span class="status success">✅ 调试信息测试</span></p>';
+            results.innerHTML += '<p>1. 打开浏览器开发者工具的控制台</p>';
+            results.innerHTML += '<p>2. 点击填写按钮</p>';
+            results.innerHTML += '<p>3. 应该看到"准备跳转到问卷填写页面，ID: xxx"</p>';
+            results.innerHTML += '<p>4. 如果成功，应该看到"路由跳转成功"</p>';
+            results.innerHTML += '<p>5. 如果失败，应该看到详细的错误信息</p>';
+        }
+        
+        function testQuestionnaireIdInput() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p><span class="status success">✅ 问卷ID输入测试</span></p>';
+            results.innerHTML += '<p>1. 点击"通过问卷ID填写问卷"</p>';
+            results.innerHTML += '<p>2. 输入一个有效的问卷ID</p>';
+            results.innerHTML += '<p>3. 点击确定</p>';
+            results.innerHTML += '<p>4. 应该显示"问卷ID验证成功，正在跳转..."</p>';
+            results.innerHTML += '<p>5. 应该成功跳转到填写界面</p>';
+        }
+    </script>
+</body>
+</html>

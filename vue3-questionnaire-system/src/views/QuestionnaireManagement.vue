@@ -5,15 +5,16 @@
       <div class="header-content">
         <div class="title-section">
           <div class="title-with-back">
-            <a-button 
-              type="link" 
-              size="large" 
+            <button 
               @click="goToHome"
               class="back-home-btn"
             >
-              <HomeOutlined />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9,22 9,12 15,12 15,22"/>
+              </svg>
               主页
-            </a-button>
+            </button>
             <h1 class="page-title">问卷管理</h1>
           </div>
           <p class="page-subtitle">管理您的所有问卷，包括创建、编辑、删除和数据分析</p>
@@ -46,7 +47,7 @@
             </template>
           </a-input>
         </a-col>
-        <a-col :span="4">
+        <a-col :span="3">
           <a-select
             v-model:value="searchForm.status"
             placeholder="状态筛选"
@@ -59,6 +60,20 @@
             <a-select-option value="0">已禁用</a-select-option>
           </a-select>
         </a-col>
+        <a-col :span="3">
+          <a-select
+            v-model:value="searchForm.questionnaireType"
+            placeholder="问卷类型"
+            size="large"
+            @change="handleSearch"
+          >
+            <a-select-option value="">全部类型</a-select-option>
+            <a-select-option value="调查问卷">调查问卷</a-select-option>
+            <a-select-option value="反馈问卷">反馈问卷</a-select-option>
+            <a-select-option value="评价问卷">评价问卷</a-select-option>
+            <a-select-option value="其他">其他</a-select-option>
+          </a-select>
+        </a-col>
         <a-col :span="4">
           <a-range-picker
             v-model:value="searchForm.dateRange"
@@ -67,7 +82,7 @@
             @change="handleSearch"
           />
         </a-col>
-        <a-col :span="4">
+        <a-col :span="3">
           <a-input
             v-model:value="searchForm.creator"
             placeholder="创建者用户名"
@@ -81,7 +96,7 @@
             搜索
           </a-button>
         </a-col>
-        <a-col :span="3">
+        <a-col :span="2">
           <a-button size="large" @click="clearFilters">
             <ReloadOutlined />
             重置
@@ -334,12 +349,12 @@ import {
   ReloadOutlined,
   WechatOutlined,
   WeiboOutlined,
-  MailOutlined,
-  HomeOutlined
+  MailOutlined
 } from '@ant-design/icons-vue';
 import { CONFIG, UTILS } from '../api/config';
 import { api } from '../utils/request';
 import { Statistic } from 'ant-design-vue';
+import { convertNumberToChineseType } from '../utils/questionnaireTypeMapping';
 
 // 响应式数据
 const router = useRouter();
@@ -377,7 +392,7 @@ const getCurrentUserId = () => {
 const searchForm = reactive({
   keyword: '',
   status: '',
-  type: '',
+  questionnaireType: '', // 添加文件类型字段
   dateRange: [],
   dateFilter: '', // 添加dateFilter字段
   creator: ''
@@ -430,6 +445,14 @@ const tableColumns = [
     key: 'creator_id',
     width: 90,
     responsive: ['md']
+  },
+  {
+    title: '问卷类型',
+    dataIndex: 'questionnaire_type', // 对应数据库questionnaire_type字段
+    key: 'questionnaire_type',
+    width: 100,
+    responsive: ['md'],
+    customRender: ({ text }) => convertNumberToChineseType(text)
   },
   {
     title: '状态',
@@ -510,7 +533,10 @@ const handleSearch = () => {
 const clearFilters = () => {
   searchForm.keyword = '';
   searchForm.status = '';
+  searchForm.questionnaireType = ''; // 重置文件类型字段
   searchForm.dateFilter = ''; // 重置dateFilter字段
+  searchForm.dateRange = [];
+  searchForm.creator = '';
   pagination.current = 1;
   fetchQuestionnaires();
 };
@@ -1177,5 +1203,33 @@ onUnmounted(() => {
 
 .ant-table-body::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* 主页按钮统一样式 */
+.back-home-btn {
+  background: white;
+  border: 1px solid #d9d9d9;
+  color: #595959;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.back-home-btn:hover {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.back-home-btn svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

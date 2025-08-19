@@ -3,15 +3,16 @@
     <div class="page-header">
       <div class="header-left">
         <div class="title-with-back">
-          <a-button 
-            type="link" 
-            size="large" 
+          <button 
             @click="goToHome"
             class="back-home-btn"
           >
-            <HomeOutlined />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9,22 9,12 15,12 15,22"/>
+            </svg>
             主页
-          </a-button>
+          </button>
           <h1>问卷预览</h1>
         </div>
         <p>预览问卷的完整内容和填写界面</p>
@@ -150,11 +151,11 @@ import { message } from 'ant-design-vue'
 import {
   ArrowLeftOutlined,
   EyeOutlined,
-  QuestionCircleOutlined,
-  HomeOutlined
+  QuestionCircleOutlined
 } from '@ant-design/icons-vue'
 import { CONFIG } from '@/api/config'
 import { api } from '@/utils/request'
+import { convertNumberToChineseType } from '@/utils/questionnaireTypeMapping'
 
 // 使用组合式API
 const router = useRouter()
@@ -171,13 +172,11 @@ const questionnaireId = computed(() => route.params.id)
 
 // 获取问卷类型名称
 const getQuestionnaireTypeName = (type) => {
-  const typeMap = {
-    'survey': '调查问卷',
-    'feedback': '反馈问卷',
-    'evaluation': '评价问卷',
-    'other': '其他'
+  // 如果type是数字，转换为中文；如果是中文，直接返回
+  if (typeof type === 'number' || (typeof type === 'string' && /^\d+$/.test(type))) {
+    return convertNumberToChineseType(parseInt(type))
   }
-  return typeMap[type] || '未知类型'
+  return type || '未知类型'
 }
 
 // 获取问题类型名称
@@ -331,7 +330,7 @@ const loadQuestionnaire = async () => {
       questionnaireInfo.value = {
         title: previewData.questionnaireInfo?.title || '问卷标题',
         description: previewData.questionnaireInfo?.description || '问卷描述',
-        type: 'survey', // 默认类型
+        type: '调查问卷', // 默认类型
         anonymous: false, // 默认非匿名
         startDate: previewData.questionnaireInfo?.startDate,
         endDate: previewData.questionnaireInfo?.endDate
@@ -781,20 +780,8 @@ onMounted(() => {
     flex: 1;
   }
 
-  .header-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .title-with-back {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .back-home-btn {
-    width: 100%;
+  .question-item {
+    padding: 16px;
   }
 
   .question-header {
@@ -803,8 +790,42 @@ onMounted(() => {
     gap: 8px;
   }
 
-  .questionnaire-meta {
-    justify-content: flex-start;
+  .question-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
   }
+
+  .matrix-preview {
+    flex-direction: column;
+  }
+}
+
+/* 主页按钮统一样式 */
+.back-home-btn {
+  background: #1890ff;
+  border: 1px solid #1890ff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.back-home-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+.back-home-btn svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

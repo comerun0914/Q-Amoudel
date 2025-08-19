@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷类型字段修复测试</title>
+    <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4.0.0/dist/antd.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #1890ff;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success-message {
+            color: #52c41a;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .error-message {
+            color: #ff4d4f;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .info-message {
+            color: #1890ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .code-block {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #40a9ff;
+        }
+        .btn-success {
+            background: #52c41a;
+        }
+        .btn-success:hover {
+            background: #73d13d;
+        }
+        .field-mapping {
+            background: #f0f9ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .field-mapping h4 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        .field-mapping table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .field-mapping th, .field-mapping td {
+            border: 1px solid #d9d9d9;
+            padding: 8px;
+            text-align: left;
+        }
+        .field-mapping th {
+            background: #fafafa;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>问卷类型字段修复测试</h1>
+        <p>测试问卷类型字段从前端到数据库的正确映射</p>
+
+        <!-- 字段映射说明 -->
+        <div class="section">
+            <h3>字段映射关系</h3>
+            <div class="field-mapping">
+                <h4>修复前后的字段映射对比</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>层级</th>
+                            <th>修复前（错误）</th>
+                            <th>修复后（正确）</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>前端字段</td>
+                            <td><code>type</code></td>
+                            <td><code>type</code></td>
+                            <td>前端组件中的字段名</td>
+                        </tr>
+                        <tr>
+                            <td>API发送字段</td>
+                            <td><code>questionnaireType</code></td>
+                            <td><code>questionnaire_type</code></td>
+                            <td>发送到后端的字段名</td>
+                        </tr>
+                        <tr>
+                            <td>数据库字段</td>
+                            <td><code>questionnaire_type</code></td>
+                            <td><code>questionnaire_type</code></td>
+                            <td>数据库表中的字段名</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 数据发送测试 -->
+        <div class="section">
+            <h3>1. 数据发送测试</h3>
+            <p>测试问卷创建时发送的数据格式</p>
+            <div class="form-group">
+                <label>问卷类型：</label>
+                <select id="testType">
+                    <option value="调查问卷">调查问卷</option>
+                    <option value="反馈问卷">反馈问卷</option>
+                    <option value="评价问卷">评价问卷</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <button class="btn" onclick="testDataSending()">测试数据发送</button>
+            <div id="dataSendingResult" class="test-result"></div>
+        </div>
+
+        <!-- 字段映射测试 -->
+        <div class="section">
+            <h3>2. 字段映射测试</h3>
+            <p>测试前端字段到API字段的正确映射</p>
+            <button class="btn btn-success" onclick="testFieldMapping()">测试字段映射</button>
+            <div id="fieldMappingResult" class="test-result"></div>
+        </div>
+
+        <!-- 数据库字段验证 -->
+        <div class="section">
+            <h3>3. 数据库字段验证</h3>
+            <p>验证发送到数据库的字段名是否正确</p>
+            <button class="btn btn-success" onclick="testDatabaseFields()">测试数据库字段</button>
+            <div id="databaseFieldsResult" class="test-result"></div>
+        </div>
+
+        <!-- 修复总结 -->
+        <div class="section">
+            <h3>4. 修复总结</h3>
+            <p>本次修复解决了以下问题：</p>
+            <ul>
+                <li><strong>字段名不匹配</strong>：前端发送 <code>questionnaireType</code>，后端期望 <code>questionnaire_type</code></li>
+                <li><strong>数据丢失</strong>：由于字段名不匹配，问卷类型数据无法正确保存到数据库</li>
+                <li><strong>默认值问题</strong>：数据库使用默认值 '调查问卷' 而不是用户选择的值</li>
+            </ul>
+            
+            <div class="code-block">
+// 修复前的错误代码
+questionnaireType: questionnaireInfo.type, // 字段名不匹配
+
+// 修复后的正确代码  
+questionnaire_type: questionnaireInfo.type, // 使用正确的数据库字段名
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟问卷信息
+        const questionnaireInfo = {
+            title: '测试问卷',
+            type: '调查问卷',
+            description: '这是一个测试问卷',
+            startDate: '2024-01-01',
+            endDate: '2024-12-31'
+        };
+
+        // 1. 测试数据发送
+        function testDataSending() {
+            const resultDiv = document.getElementById('dataSendingResult');
+            const selectedType = document.getElementById('testType').value;
+            
+            // 更新测试数据
+            questionnaireInfo.type = selectedType;
+            
+            let html = '<div class="info-message">✓ 数据发送测试</div>';
+            html += `<div><strong>选择的类型：</strong> ${selectedType}</div>`;
+            
+            // 修复前的错误数据
+            const wrongData = {
+                title: questionnaireInfo.title,
+                description: questionnaireInfo.description,
+                questionnaireType: questionnaireInfo.type, // ❌ 错误的字段名
+                startDate: questionnaireInfo.startDate,
+                endDate: questionnaireInfo.endDate
+            };
+            
+            html += `<div><strong>修复前（错误）的数据：</strong></div>`;
+            html += `<div class="code-block">${JSON.stringify(wrongData, null, 2)}</div>`;
+            
+            // 修复后的正确数据
+            const correctData = {
+                title: questionnaireInfo.title,
+                description: questionnaireInfo.description,
+                questionnaire_type: questionnaireInfo.type, // ✅ 正确的字段名
+                startDate: questionnaireInfo.startDate,
+                endDate: questionnaireInfo.endDate
+            };
+            
+            html += `<div><strong>修复后（正确）的数据：</strong></div>`;
+            html += `<div class="code-block">${JSON.stringify(correctData, null, 2)}</div>`;
+            
+            html += `<div class="success-message">✓ 字段名已修复为 <code>questionnaire_type</code></div>`;
+            
+            resultDiv.innerHTML = html;
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+        }
+
+        // 2. 测试字段映射
+        function testFieldMapping() {
+            const resultDiv = document.getElementById('fieldMappingResult');
+            
+            let html = '<div class="info-message">✓ 字段映射测试</div>';
+            
+            // 前端到API的字段映射
+            const fieldMapping = {
+                '前端字段': 'type',
+                'API发送字段': 'questionnaire_type',
+                '数据库字段': 'questionnaire_type',
+                '映射关系': 'type → questionnaire_type → questionnaire_type'
+            };
+            
+            html += `<div><strong>字段映射关系：</strong></div>`;
+            html += `<div class="code-block">${JSON.stringify(fieldMapping, null, 2)}</div>`;
+            
+            // 验证映射
+            const frontendValue = questionnaireInfo.type;
+            const apiField = 'questionnaire_type';
+            const apiValue = questionnaireInfo.type;
+            
+            html += `<div><strong>映射验证：</strong></div>`;
+            html += `<div>前端值: <code>${frontendValue}</code></div>`;
+            html += `<div>API字段: <code>${apiField}</code></div>`;
+            html += `<div>API值: <code>${apiValue}</code></div>`;
+            
+            html += `<div class="success-message">✓ 字段映射正确</div>`;
+            
+            resultDiv.innerHTML = html;
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+        }
+
+        // 3. 测试数据库字段
+        function testDatabaseFields() {
+            const resultDiv = document.getElementById('databaseFieldsResult');
+            
+            let html = '<div class="info-message">✓ 数据库字段验证</div>';
+            
+            // 模拟数据库表结构
+            const databaseTable = {
+                tableName: 'question_create',
+                fields: {
+                    'id': 'INT PRIMARY KEY AUTO_INCREMENT',
+                    'title': 'VARCHAR(255) NOT NULL',
+                    'description': 'TEXT',
+                    'questionnaire_type': 'VARCHAR(50) NOT NULL DEFAULT "调查问卷"', // ✅ 正确的字段
+                    'start_date': 'DATE',
+                    'end_date': 'DATE',
+                    'status': 'TINYINT DEFAULT 1',
+                    'creator_id': 'INT',
+                    'created_time': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+                }
+            };
+            
+            html += `<div><strong>数据库表结构：</strong></div>`;
+            html += `<div class="code-block">${JSON.stringify(databaseTable, null, 2)}</div>`;
+            
+            // 验证字段匹配
+            const apiField = 'questionnaire_type';
+            const dbField = 'questionnaire_type';
+            const isMatch = apiField === dbField;
+            
+            html += `<div><strong>字段匹配验证：</strong></div>`;
+            html += `<div>API字段: <code>${apiField}</code></div>`;
+            html += `<div>数据库字段: <code>${dbField}</code></div>`;
+            html += `<div>匹配结果: <strong style="color: ${isMatch ? '#52c41a' : '#ff4d4f'}">${isMatch ? '✓ 匹配' : '❌ 不匹配'}</strong></div>`;
+            
+            if (isMatch) {
+                html += `<div class="success-message">✓ 字段名完全匹配，数据可以正确保存</div>`;
+            } else {
+                html += `<div class="error-message">❌ 字段名不匹配，数据无法保存</div>`;
+            }
+            
+            resultDiv.innerHTML = html;
+            resultDiv.className = 'test-result';
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

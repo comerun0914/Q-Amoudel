@@ -84,6 +84,80 @@
             </svg>
             创建者: <span>{{ creatorName }}</span>
           </span>
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3h18v18H3zM9 9h6v6H9z"/>
+            </svg>
+            问卷类型: <span>{{ questionnaireType }}</span>
+          </span>
+          <span class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"/>
+              <path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"/>
+              <path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"/>
+              <path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"/>
+            </svg>
+            问卷代码: <span class="questionnaire-code">{{ questionnaireId }}</span>
+            <a-button type="link" size="small" @click="copyQuestionnaireCode">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </a-button>
+          </span>
+        </div>
+      </div>
+
+      <!-- 填写说明 -->
+      <div class="fill-instructions">
+        <h3>如何填写问卷</h3>
+        <div class="instruction-cards">
+          <div class="instruction-card">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h4>方式一：直接链接</h4>
+              <p>将以下链接发送给填写者，点击即可直接填写问卷</p>
+              <div class="link-input-group">
+                <input 
+                  id="fillLinkInput" 
+                  type="text" 
+                  :value="fillLink" 
+                  readonly 
+                  class="link-input"
+                />
+                <button class="btn-copy" @click="copyLink('fillLinkInput')">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  复制
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="instruction-card">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"/>
+                <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"/>
+                <path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"/>
+                <path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"/>
+                <path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h4>方式二：问卷代码</h4>
+              <p>告诉填写者使用问卷代码填写，代码：<strong>{{ questionnaireId }}</strong></p>
+              <p class="code-hint">填写者可以在主页输入此代码来填写问卷</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -130,7 +204,27 @@
       <!-- 问卷链接信息 -->
       <div class="questionnaire-links">
         <div class="link-section">
-          <h3>问卷访问链接</h3>
+          <h3>问卷访问信息</h3>
+          <div class="link-item">
+            <label>问卷ID：</label>
+            <div class="link-input-group">
+              <input 
+                type="text" 
+                :value="questionnaireId" 
+                readonly 
+                class="link-input"
+                id="questionnaireIdInput"
+              />
+              <button class="copy-btn" @click="copyQuestionnaireId">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                复制ID
+              </button>
+            </div>
+            <p class="link-hint">用户可以通过问卷ID在用户界面快速填写问卷</p>
+          </div>
           <div class="link-item">
             <label>填写链接：</label>
             <div class="link-input-group">
@@ -149,6 +243,7 @@
                 复制
               </button>
             </div>
+            <p class="link-hint">用户可以直接点击此链接填写问卷</p>
           </div>
           <div class="link-item">
             <label>预览链接：</label>
@@ -168,6 +263,7 @@
                 复制
               </button>
             </div>
+            <p class="link-hint">预览问卷内容和格式</p>
           </div>
         </div>
       </div>
@@ -239,16 +335,7 @@
       </div>
     </div>
 
-    <!-- 成功提示 -->
-    <div class="toast" :class="{ 'show': toastVisible }">
-      <div class="toast-content">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-          <polyline points="22,4 12,14.01 9,11.01"/>
-        </svg>
-        <span>{{ toastMessage }}</span>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -256,6 +343,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { convertNumberToChineseType } from '@/utils/questionnaireTypeMapping'
 
 const router = useRouter()
 const route = useRoute()
@@ -269,14 +357,13 @@ const startTime = ref('')
 const endTime = ref('')
 const creatorName = ref('')
 const creationTime = ref('')
+const questionnaireType = ref('调查问卷') // 添加文件类型字段
 const fillLink = ref('')
 const previewLink = ref('')
 const actionType = ref('') // 操作类型：create, draft, publish, update, update_draft
 
 // 弹窗状态
 const shareModalVisible = ref(false)
-const toastVisible = ref(false)
-const toastMessage = ref('')
 
 // 根据操作类型获取相应的提示信息
 const getActionInfo = () => {
@@ -324,6 +411,7 @@ const handleExport = () => {
   const exportData = {
     问卷标题: questionnaireTitle.value,
     问卷ID: questionnaireId.value,
+    问卷类型: questionnaireType.value, // 添加文件类型信息
     问题数量: totalQuestions.value,
     开始时间: startTime.value,
     结束时间: endTime.value,
@@ -342,17 +430,37 @@ const handleExport = () => {
   link.click()
   URL.revokeObjectURL(url)
   
-  showToast('问卷信息导出成功')
+  message.success('问卷信息导出成功')
 }
 
 const copyLink = async (inputId) => {
   try {
     const input = document.getElementById(inputId)
     await navigator.clipboard.writeText(input.value)
-    showToast('链接已复制到剪贴板')
+    message.success('链接已复制到剪贴板')
   } catch (error) {
     console.error('复制失败:', error)
-    showToast('复制失败，请手动复制')
+    message.error('复制失败，请手动复制')
+  }
+}
+
+const copyQuestionnaireId = async () => {
+  try {
+    await navigator.clipboard.writeText(questionnaireId.value)
+    message.success('问卷ID已复制到剪贴板')
+  } catch (error) {
+    console.error('复制失败:', error)
+    message.error('复制失败，请手动复制')
+  }
+}
+
+const copyQuestionnaireCode = async () => {
+  try {
+    await navigator.clipboard.writeText(questionnaireId.value)
+    message.success('问卷代码已复制到剪贴板')
+  } catch (error) {
+    console.error('复制失败:', error)
+    message.error('复制失败，请手动复制')
   }
 }
 
@@ -366,21 +474,15 @@ const shareEmail = () => {
   const body = encodeURIComponent(`请填写以下问卷：\n\n问卷标题：${questionnaireTitle.value}\n填写链接：${fillLink.value}\n\n感谢您的参与！`)
   window.open(`mailto:?subject=${subject}&body=${body}`)
   closeShareModal()
-  showToast('邮件分享功能已启动')
+  message.info('邮件分享功能已启动')
 }
 
 const shareWechat = () => {
-  showToast('微信分享功能开发中...')
+  message.info('微信分享功能开发中...')
   closeShareModal()
 }
 
-const showToast = (msg) => {
-  toastMessage.value = msg
-  toastVisible.value = true
-  setTimeout(() => {
-    toastVisible.value = false
-  }, 3000)
-}
+
 
 // 格式化时间
 const formatDate = (date) => {
@@ -418,6 +520,14 @@ onMounted(() => {
   // 设置创建者信息
   creatorName.value = params.creator || query.creator || '当前用户'
   
+  // 设置文件类型信息 - 如果是从后端返回的数字，需要转换为中文
+  const rawType = params.questionnaireType || query.questionnaireType
+  if (typeof rawType === 'number' || (typeof rawType === 'string' && /^\d+$/.test(rawType))) {
+    questionnaireType.value = convertNumberToChineseType(parseInt(rawType))
+  } else {
+    questionnaireType.value = rawType || '调查问卷'
+  }
+  
   // 生成链接
   const baseUrl = window.location.origin
   fillLink.value = `${baseUrl}/questionnaire/fill/${questionnaireId.value}`
@@ -427,6 +537,9 @@ onMounted(() => {
   if (!questionnaireId.value || questionnaireId.value === 'N/A') {
     message.warning('未获取到问卷ID，部分功能可能无法正常使用')
   }
+  
+  // 生成问卷代码（问卷ID）
+  const questionnaireCode = questionnaireId.value
   
   // 根据操作类型设置页面标题
   const actionInfo = getActionInfo()
@@ -442,10 +555,12 @@ onMounted(() => {
 
 /* 结果头部样式 */
 .result-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: #1a1a1a;
   padding: 32px 24px;
   margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
@@ -463,8 +578,8 @@ onMounted(() => {
 }
 
 .btn-back {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #1890ff;
+  border: 1px solid #1890ff;
   color: white;
   padding: 8px 16px;
   border-radius: 6px;
@@ -477,8 +592,10 @@ onMounted(() => {
 }
 
 .btn-back:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .completion-info {
@@ -490,10 +607,11 @@ onMounted(() => {
 .completion-text {
   font-size: 18px;
   font-weight: 500;
+  color: #1a1a1a;
 }
 
 .completion-badge {
-  background: rgba(255, 255, 255, 0.2);
+  background: #52c41a;
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -511,9 +629,9 @@ onMounted(() => {
 
 .btn-print,
 .btn-export {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: white;
+  border: 1px solid #d9d9d9;
+  color: #595959;
   padding: 8px 16px;
   border-radius: 6px;
   cursor: pointer;
@@ -526,8 +644,9 @@ onMounted(() => {
 
 .btn-print:hover,
 .btn-export:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: #40a9ff;
+  color: #40a9ff;
+  transform: translateY(-1px);
 }
 
 .creation-time {
@@ -535,7 +654,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  opacity: 0.9;
+  color: #666;
 }
 
 /* 问卷结果内容区域 */
@@ -583,9 +702,82 @@ onMounted(() => {
   font-size: 14px;
 }
 
+.questionnaire-code {
+  font-weight: bold;
+  color: #1890ff;
+  margin-right: 8px;
+}
+
 .meta-item span {
   color: #1a1a1a;
   font-weight: 500;
+}
+
+/* 填写说明样式 */
+.fill-instructions {
+  margin-bottom: 32px;
+}
+
+.fill-instructions h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.instruction-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.instruction-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.instruction-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.card-icon svg {
+  color: white;
+}
+
+.card-content h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.card-content p {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.code-hint {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
 }
 
 /* 结果统计 */
@@ -671,6 +863,14 @@ onMounted(() => {
 .link-input-group {
   display: flex;
   gap: 12px;
+}
+
+.link-hint {
+  color: #999;
+  font-size: 14px;
+  margin-top: 8px;
+  text-align: center;
+  font-style: italic;
 }
 
 .link-input {
@@ -847,31 +1047,7 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 成功提示 */
-.toast {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background: #52c41a;
-  color: white;
-  padding: 16px 24px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1001;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-}
 
-.toast.show {
-  transform: translateX(0);
-}
-
-.toast-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-}
 
 /* 响应式设计 */
 @media (max-width: 768px) {

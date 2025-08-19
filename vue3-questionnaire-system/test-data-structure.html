@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据结构测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #1890ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-button {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            width: 100%;
+        }
+        .test-button:hover {
+            background-color: #40a9ff;
+        }
+        .result-box {
+            background-color: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .status.success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .status.error {
+            background-color: #fff2f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        .status.warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        .info-box {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #1890ff;
+        }
+        .data-analysis {
+            background-color: #fff7e6;
+            border: 1px solid #ffd591;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+        .data-analysis h4 {
+            margin: 0 0 10px 0;
+            color: #fa8c16;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">API数据结构分析</h1>
+        
+        <div class="info-box">
+            <h4>📋 测试说明</h4>
+            <p>这个页面用于分析API返回的数据结构，帮助诊断前端数据处理问题。</p>
+            <p><strong>目标：</strong>查看 `/api/questionCreate/all` 返回的确切数据结构</p>
+        </div>
+        
+        <button class="test-button" onclick="analyzeDataStructure()">
+            🔍 分析API数据结构
+        </button>
+        
+        <div id="result" class="result-box">
+            点击按钮开始分析数据结构...
+        </div>
+    </div>
+
+    <script>
+        async function analyzeDataStructure() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<span class="status warning">⏳ 正在分析数据结构...</span>';
+            
+            try {
+                console.log('开始分析: GET /api/questionCreate/all');
+                const response = await fetch('/api/questionCreate/all');
+                console.log('响应状态:', response.status);
+                
+                const data = await response.json();
+                console.log('完整响应数据:', data);
+                
+                if (response.ok) {
+                    // 分析数据结构
+                    const analysis = analyzeDataStructure(data);
+                    
+                    resultDiv.innerHTML = `
+                        <span class="status success">✅ 数据结构分析完成</span>
+                        
+                        <div class="data-analysis">
+                            <h4>📊 数据结构分析结果</h4>
+                            ${analysis}
+                        </div>
+                        
+                        <strong>完整响应数据:</strong>
+                        ${JSON.stringify(data, null, 2)}
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <span class="status error">❌ API调用失败</span>
+                        
+                        状态码: ${response.status}
+                        错误信息: ${data.message || '未知错误'}
+                        
+                        完整响应:
+                        ${JSON.stringify(data, null, 2)}
+                    `;
+                }
+            } catch (error) {
+                console.error('分析失败:', error);
+                resultDiv.innerHTML = `
+                    <span class="status error">❌ 分析异常</span>
+                    
+                    错误类型: ${error.name}
+                    错误信息: ${error.message}
+                    
+                    请检查后端服务状态和网络连接
+                `;
+            }
+        }
+        
+        function analyzeDataStructure(data) {
+            let analysis = '';
+            
+            // 检查顶层结构
+            analysis += `<p><strong>顶层结构:</strong></p>`;
+            analysis += `<ul>`;
+            analysis += `<li>code: ${data.code} (类型: ${typeof data.code})</li>`;
+            analysis += `<li>message: ${data.message} (类型: ${typeof data.message})</li>`;
+            analysis += `<li>data: ${data.data ? typeof data.data : 'undefined'} (类型: ${typeof data.data})</li>`;
+            analysis += `</ul>`;
+            
+            // 检查data字段
+            if (data.data) {
+                analysis += `<p><strong>data字段分析:</strong></p>`;
+                
+                if (Array.isArray(data.data)) {
+                    analysis += `<p>✅ data是一个数组，长度为: ${data.data.length}</p>`;
+                    if (data.data.length > 0) {
+                        analysis += `<p>第一个元素结构:</p>`;
+                        analysis += `<pre>${JSON.stringify(data.data[0], null, 2)}</pre>`;
+                    }
+                } else if (typeof data.data === 'object') {
+                    analysis += `<p>✅ data是一个对象，包含以下字段:</p>`;
+                    analysis += `<ul>`;
+                    for (const [key, value] of Object.entries(data.data)) {
+                        const type = Array.isArray(value) ? `Array(${value.length})` : typeof value;
+                        analysis += `<li>${key}: ${type}</li>`;
+                    }
+                    analysis += `</ul>`;
+                    
+                    // 检查是否有list字段
+                    if (data.data.list && Array.isArray(data.data.list)) {
+                        analysis += `<p>✅ 找到list字段，包含${data.data.list.length}个问卷</p>`;
+                        if (data.data.list.length > 0) {
+                            analysis += `<p>第一个问卷结构:</p>`;
+                            analysis += `<pre>${JSON.stringify(data.data.list[0], null, 2)}</pre>`;
+                        }
+                    } else {
+                        analysis += `<p>⚠️ 没有找到list字段或list不是数组</p>`;
+                    }
+                } else {
+                    analysis += `<p>❌ data不是数组也不是对象</p>`;
+                }
+            } else {
+                analysis += `<p>❌ data字段不存在或为null/undefined</p>`;
+            }
+            
+            // 提供修复建议
+            analysis += `<p><strong>🔧 修复建议:</strong></p>`;
+            if (data.data && data.data.list && Array.isArray(data.data.list)) {
+                analysis += `<p>✅ 使用 data.data.list 来获取问卷列表</p>`;
+                analysis += `<p>代码示例: const questionnaires = data.data.list;</p>`;
+            } else if (data.data && Array.isArray(data.data)) {
+                analysis += `<p>✅ 直接使用 data.data 来获取问卷列表</p>`;
+                analysis += `<p>代码示例: const questionnaires = data.data;</p>`;
+            } else {
+                analysis += `<p>❌ 数据结构不符合预期，需要检查后端API</p>`;
+            }
+            
+            return analysis;
+        }
+        
+        // 页面加载时显示提示
+        window.onload = function() {
+            console.log('数据结构分析页面已加载');
+            console.log('请确保后端服务已启动');
+        };
+    </script>
+</body>
+</html>
