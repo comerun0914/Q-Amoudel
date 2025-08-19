@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>退出登录功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+        .form-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        input {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+        }
+        .log {
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>退出登录功能测试</h1>
+        <p>用于测试退出登录功能是否正常工作，以及错误处理是否完善</p>
+
+        <div class="test-section">
+            <h3>功能说明</h3>
+            <p>此页面测试退出登录API调用和错误处理机制。</p>
+            <ul>
+                <li>测试正确的退出登录流程</li>
+                <li>测试错误情况下的处理</li>
+                <li>验证本地数据清理是否正常</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>测试配置</h3>
+            <div class="form-group">
+                <label>用户ID:</label>
+                <input type="text" id="userId" value="1" placeholder="输入用户ID">
+            </div>
+            <div class="form-group">
+                <label>Token:</label>
+                <input type="text" id="token" value="test-token" placeholder="输入测试Token">
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>API测试</h3>
+            <button onclick="testLogoutSuccess()">测试正常退出</button>
+            <button onclick="testLogoutWithoutUserId()">测试无用户ID退出</button>
+            <button onclick="testLogoutWithoutToken()">测试无Token退出</button>
+            <button onclick="testLogoutAPIError()">测试API错误</button>
+            <button onclick="clearResults()">清空结果</button>
+        </div>
+
+        <div class="test-section">
+            <h3>测试结果</h3>
+            <div id="results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>调试日志</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            BACKEND_BASE_URL: 'http://localhost:7070/api',
+            API_ENDPOINTS: {
+                LOGOUT: '/users/logout'
+            }
+        };
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        }
+
+        // 显示结果
+        function showResult(title, content, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultElement = document.createElement('div');
+            resultElement.className = `result ${type}`;
+            resultElement.innerHTML = `<strong>${title}:</strong>\n${content}`;
+            resultsDiv.appendChild(resultElement);
+        }
+
+        // 清空结果
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // 获取表单数据
+        function getFormData() {
+            return {
+                userId: document.getElementById('userId').value,
+                token: document.getElementById('token').value
+            };
+        }
+
+        // 模拟用户store的logout函数
+        async function mockLogout(userId, token) {
+            try {
+                // 调用登出接口 - 传递用户ID参数
+                if (token && userId) {
+                    const response = await fetch(`${CONFIG.BACKEND_BASE_URL}${CONFIG.API_ENDPOINTS.LOGOUT}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ userId: userId })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    return result;
+                } else {
+                    throw new Error('缺少必要参数');
+                }
+            } catch (error) {
+                console.error('登出接口调用失败:', error);
+                throw error;
+            } finally {
+                // 模拟清除本地数据
+                log('清理本地数据: token, userInfo, permissions', 'info');
+            }
+        }
+
+        // 测试正常退出
+        async function testLogoutSuccess() {
+            const formData = getFormData();
+            log('开始测试正常退出...');
+            
+            try {
+                const result = await mockLogout(formData.userId, formData.token);
+                
+                if (result.code === 200) {
+                    showResult('正常退出测试成功', JSON.stringify(result, null, 2), 'success');
+                    log('正常退出测试成功', 'success');
+                } else {
+                    showResult('正常退出测试失败', JSON.stringify(result, null, 2), 'error');
+                    log(`正常退出测试失败: ${result.message || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                const errorMessage = `正常退出测试异常: ${error.message}`;
+                showResult('正常退出测试异常', errorMessage, 'error');
+                log(errorMessage, 'error');
+            }
+        }
+
+        // 测试无用户ID退出
+        async function testLogoutWithoutUserId() {
+            const formData = getFormData();
+            log('开始测试无用户ID退出...');
+            
+            try {
+                const result = await mockLogout('', formData.token);
+                showResult('无用户ID退出测试', '应该抛出错误', 'info');
+            } catch (error) {
+                showResult('无用户ID退出测试', `正确抛出错误: ${error.message}`, 'success');
+                log(`无用户ID退出测试: ${error.message}`, 'success');
+            }
+        }
+
+        // 测试无Token退出
+        async function testLogoutWithoutToken() {
+            const formData = getFormData();
+            log('开始测试无Token退出...');
+            
+            try {
+                const result = await mockLogout(formData.userId, '');
+                showResult('无Token退出测试', '应该抛出错误', 'info');
+            } catch (error) {
+                showResult('无Token退出测试', `正确抛出错误: ${error.message}`, 'success');
+                log(`无Token退出测试: ${error.message}`, 'success');
+            }
+        }
+
+        // 测试API错误
+        async function testLogoutAPIError() {
+            log('开始测试API错误情况...');
+            
+            try {
+                // 使用错误的URL来模拟API错误
+                const response = await fetch(`${CONFIG.BACKEND_BASE_URL}/invalid-endpoint`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: '1' })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                showResult('API错误测试', `正确捕获错误: ${error.message}`, 'success');
+                log(`API错误测试: ${error.message}`, 'success');
+            }
+        }
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            log('退出登录功能测试页面加载完成', 'info');
+            log('请确保后端服务正在运行 (http://localhost:7070)', 'info');
+            log('建议按顺序执行：1.测试正常退出 2.测试各种错误情况', 'info');
+        });
+    </script>
+</body>
+</html>

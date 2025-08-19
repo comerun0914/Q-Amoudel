@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码扫描功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1890ff;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+        .error {
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+        }
+        .info {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #1890ff;
+        }
+        .qr-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        #qr-reader {
+            width: 100%;
+            border: 2px solid #e8e8e8;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .qr-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .qr-placeholder {
+            text-align: center;
+        }
+        .qr-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .log {
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>二维码扫描功能测试</h1>
+        <p>用于测试二维码扫描功能是否正常工作</p>
+
+        <div class="test-section">
+            <h3>功能说明</h3>
+            <p>此页面测试二维码扫描库是否正确加载，以及摄像头权限是否正常。</p>
+            <ul>
+                <li>确保网络连接正常（需要加载CDN库）</li>
+                <li>确保浏览器支持摄像头访问</li>
+                <li>确保已授予摄像头权限</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>库加载状态</h3>
+            <div id="library-status">检查中...</div>
+            <button onclick="checkLibraryStatus()">重新检查</button>
+        </div>
+
+        <div class="test-section">
+            <h3>摄像头权限</h3>
+            <div id="camera-permission">检查中...</div>
+            <button onclick="checkCameraPermission()">检查权限</button>
+        </div>
+
+        <div class="test-section">
+            <h3>二维码扫描</h3>
+            <div class="qr-container">
+                <div id="qr-reader"></div>
+                <div id="qr-overlay" class="qr-overlay" onclick="startScan()">
+                    <div class="qr-placeholder">
+                        <div class="qr-icon">📱</div>
+                        <p>点击开始扫描二维码</p>
+                    </div>
+                </div>
+            </div>
+            <div class="qr-controls">
+                <button id="start-scan" onclick="startScan()">开始扫描</button>
+                <button id="stop-scan" onclick="stopScan()" style="display: none;">停止扫描</button>
+                <button onclick="switchCamera()">切换摄像头</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>扫描结果</h3>
+            <div id="scan-result">等待扫描...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>调试日志</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <!-- 引入二维码扫描库 -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        // 全局变量
+        let html5QrCode = null;
+        let isScanning = false;
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        }
+
+        // 检查库加载状态
+        function checkLibraryStatus() {
+            const statusElement = document.getElementById('library-status');
+            if (typeof Html5Qrcode !== 'undefined') {
+                statusElement.innerHTML = '<span style="color: green;">✅ 二维码扫描库已加载</span>';
+                log('二维码扫描库加载成功', 'success');
+            } else {
+                statusElement.innerHTML = '<span style="color: red;">❌ 二维码扫描库未加载</span>';
+                log('二维码扫描库加载失败', 'error');
+            }
+        }
+
+        // 检查摄像头权限
+        async function checkCameraPermission() {
+            const permissionElement = document.getElementById('camera-permission');
+            
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const permission = await navigator.permissions.query({ name: 'camera' });
+                    let status = '';
+                    switch (permission.state) {
+                        case 'granted':
+                            status = '<span style="color: green;">✅ 已授权</span>';
+                            break;
+                        case 'denied':
+                            status = '<span style="color: red;">❌ 已拒绝</span>';
+                            break;
+                        case 'prompt':
+                            status = '<span style="color: orange;">⚠️ 需要授权</span>';
+                            break;
+                        default:
+                            status = '<span style="color: gray;">❓ 未知状态</span>';
+                    }
+                    permissionElement.innerHTML = `摄像头权限: ${status}`;
+                    log(`摄像头权限状态: ${permission.state}`, 'info');
+                } else {
+                    permissionElement.innerHTML = '<span style="color: orange;">⚠️ 无法检测权限状态</span>';
+                    log('无法检测权限状态，请手动检查', 'info');
+                }
+            } catch (error) {
+                permissionElement.innerHTML = '<span style="color: red;">❌ 检查权限失败</span>';
+                log(`检查权限失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 开始扫描
+        function startScan() {
+            if (typeof Html5Qrcode === 'undefined') {
+                log('二维码扫描库未加载', 'error');
+                return;
+            }
+
+            if (isScanning) {
+                log('扫描已在进行中', 'info');
+                return;
+            }
+
+            try {
+                // 创建扫描器
+                html5QrCode = new Html5Qrcode("qr-reader");
+                
+                // 配置扫描选项
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
+
+                // 开始扫描
+                html5QrCode.start(
+                    { facingMode: "environment" }, // 使用后置摄像头
+                    config,
+                    (decodedText, decodedResult) => {
+                        // 扫描成功回调
+                        log(`扫描成功: ${decodedText}`, 'success');
+                        document.getElementById('scan-result').innerHTML = 
+                            `<div class="result success"><strong>扫描结果:</strong>\n${decodedText}</div>`;
+                        
+                        // 停止扫描
+                        stopScan();
+                    },
+                    (errorMessage) => {
+                        // 扫描错误回调（忽略）
+                        // log('扫描中...', 'info');
+                    }
+                ).then(() => {
+                    isScanning = true;
+                    document.getElementById('qr-overlay').style.display = 'none';
+                    document.getElementById('start-scan').style.display = 'none';
+                    document.getElementById('stop-scan').style.display = 'inline-block';
+                    log('扫描功能已启动', 'success');
+                }).catch((err) => {
+                    log(`启动扫描失败: ${err.message}`, 'error');
+                });
+
+            } catch (error) {
+                log(`启动扫描失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 停止扫描
+        function stopScan() {
+            if (html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    log('扫描器已停止', 'info');
+                    html5QrCode = null;
+                    isScanning = false;
+                    document.getElementById('qr-overlay').style.display = 'flex';
+                    document.getElementById('start-scan').style.display = 'inline-block';
+                    document.getElementById('stop-scan').style.display = 'none';
+                }).catch((err) => {
+                    log(`停止扫描器失败: ${err.message}`, 'error');
+                });
+            } else {
+                isScanning = false;
+                document.getElementById('qr-overlay').style.display = 'flex';
+                document.getElementById('start-scan').style.display = 'inline-block';
+                document.getElementById('stop-scan').style.display = 'none';
+            }
+        }
+
+        // 切换摄像头
+        function switchCamera() {
+            log('正在切换摄像头...', 'info');
+            
+            if (html5QrCode) {
+                // 停止当前扫描器
+                stopScan();
+                
+                // 延迟后重新启动
+                setTimeout(() => {
+                    startScan();
+                }, 500);
+            }
+        }
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            log('二维码扫描功能测试页面加载完成', 'info');
+            
+            // 检查库状态
+            checkLibraryStatus();
+            
+            // 检查摄像头权限
+            checkCameraPermission();
+            
+            log('请确保网络连接正常，以便加载二维码扫描库', 'info');
+            log('建议在移动设备上测试，以获得最佳效果', 'info');
+        });
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', function() {
+            if (html5QrCode && isScanning) {
+                stopScan();
+            }
+        });
+    </script>
+</body>
+</html>
