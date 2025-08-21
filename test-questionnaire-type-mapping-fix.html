@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷类型映射修复测试</title>
+    <title>问卷类型映射测试</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4/dist/reset.css">
     <script src="https://unpkg.com/ant-design-vue@4/dist/antd.min.js"></script>
@@ -71,11 +71,11 @@
             <div class="test-section">
                 <h3>1. 问卷类型映射工具测试</h3>
                 <p>测试问卷类型映射工具函数是否正常工作：</p>
-                
+
                 <a-button type="primary" @click="testMappingFunctions" class="btn-test">
                     测试映射函数
                 </a-button>
-                
+
                 <div v-if="mappingTestResults" class="result-box">
                     <h4>映射函数测试结果：</h4>
                     <pre>{{ JSON.stringify(mappingTestResults, null, 2) }}</pre>
@@ -85,7 +85,7 @@
             <div class="test-section">
                 <h3>2. 创建问卷表单测试</h3>
                 <p>模拟创建问卷时的类型选择和数据提交：</p>
-                
+
                 <a-form :model="createForm" layout="vertical">
                     <a-form-item label="问卷类型" name="type">
                         <a-select v-model:value="createForm.type" placeholder="请选择问卷类型">
@@ -96,11 +96,11 @@
                         </a-select>
                     </a-form-item>
                 </a-form>
-                
+
                 <a-button type="primary" @click="testCreateForm" class="btn-test">
                     测试创建表单数据
                 </a-button>
-                
+
                 <div v-if="createFormResult" class="result-box">
                     <h4>创建表单测试结果：</h4>
                     <pre>{{ JSON.stringify(createFormResult, null, 2) }}</pre>
@@ -110,7 +110,7 @@
             <div class="test-section">
                 <h3>3. 编辑问卷表单测试</h3>
                 <p>模拟编辑问卷时的数据加载和显示：</p>
-                
+
                 <a-form :model="editForm" layout="vertical">
                     <a-form-item label="问卷类型" name="type">
                         <a-select v-model:value="editForm.type" placeholder="请选择问卷类型">
@@ -121,11 +121,11 @@
                         </a-select>
                     </a-form-item>
                 </a-form>
-                
+
                 <a-button type="primary" @click="testEditForm" class="btn-test">
                     测试编辑表单数据
                 </a-button>
-                
+
                 <div v-if="editFormResult" class="result-box">
                     <h4>编辑表单测试结果：</h4>
                     <pre>{{ JSON.stringify(editFormResult, null, 2) }}</pre>
@@ -135,7 +135,7 @@
             <div class="test-section">
                 <h3>4. 问卷管理列表测试</h3>
                 <p>模拟问卷管理页面的类型显示：</p>
-                
+
                 <a-table :columns="tableColumns" :data-source="tableData" :pagination="false" size="small">
                     <template #bodyCell="{ column, record }">
                         <template v-if="column.key === 'questionnaire_type'">
@@ -143,11 +143,11 @@
                         </template>
                     </template>
                 </a-table>
-                
+
                 <a-button type="primary" @click="testTableDisplay" class="btn-test">
                     测试表格显示
                 </a-button>
-                
+
                 <div v-if="tableTestResult" class="result-box">
                     <h4>表格显示测试结果：</h4>
                     <pre>{{ JSON.stringify(tableTestResult, null, 2) }}</pre>
@@ -157,11 +157,11 @@
             <div class="test-section">
                 <h3>5. 完整数据流程测试</h3>
                 <p>测试从创建到显示的完整数据流程：</p>
-                
+
                 <a-button type="primary" @click="testCompleteFlow" class="btn-test">
                     测试完整流程
                 </a-button>
-                
+
                 <div v-if="completeFlowResult" class="result-box">
                     <h4>完整流程测试结果：</h4>
                     <pre>{{ JSON.stringify(completeFlowResult, null, 2) }}</pre>
@@ -171,11 +171,11 @@
             <div class="test-section">
                 <h3>6. 错误处理测试</h3>
                 <p>测试各种边界情况和错误处理：</p>
-                
+
                 <a-button type="primary" @click="testErrorHandling" class="btn-test">
                     测试错误处理
                 </a-button>
-                
+
                 <div v-if="errorHandlingResult" class="result-box">
                     <h4>错误处理测试结果：</h4>
                     <pre>{{ JSON.stringify(errorHandlingResult, null, 2) }}</pre>
